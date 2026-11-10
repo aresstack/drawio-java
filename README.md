@@ -181,6 +181,19 @@ See [docs/XML-PARSING.md](docs/XML-PARSING.md) for supported formats,
 limits, API and security requirements. A general graph renderer
 still requires #9–#11.
 
+## Original headless mxGraph model (Issue #9, first slice)
+
+The pinned `drawio-model.js` bundle contains twelve unmodified original
+mxGraph model, geometry, event and transaction classes. Headless GraalJS
+tests create an actual `mxGraphModel`, insert vertices and edges with
+real parent/terminal relationships, receive model events, and render an
+original BPMN gateway using geometry retrieved from that model.
+
+This is a **model-core integration proof**, not yet a complete
+`mxGraphView` layout/renderer. XML-to-model decoding, edge routing,
+DOM-dependent validation and text metrics remain work for #9.
+See [docs/HEADLESS-MXGRAPH.md](docs/HEADLESS-MXGRAPH.md).
+
 ## Roadmap
 
 1. [#2 Bootstrap and reuse inventory](https://github.com/aresstack/drawio-java/issues/2)

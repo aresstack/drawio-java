@@ -18,33 +18,40 @@ function verifySourceHash(path, content, expectedHash) {
     }
 }
 
-const verifiedSources = [];
-for (const source of manifest.sources) {
-    const sourceText = normalizeLineEndings(
-        await readFile(join(projectRoot, source.path), 'utf8')
-    );
-    verifySourceHash(source.path, sourceText, source.sha256NormalizedLf);
-    verifiedSources.push(sourceText.trimEnd());
+async function buildBundle(sources, outputPath) {
+    const verifiedSources = [];
+    for (const source of sources) {
+        const sourceText = normalizeLineEndings(
+            await readFile(join(projectRoot, source.path), 'utf8')
+        );
+        verifySourceHash(source.path, sourceText, source.sha256NormalizedLf);
+        verifiedSources.push(sourceText.trimEnd());
+    }
+
+    const banner = [
+        '/*',
+        ' * Bundle original draw.io scripts from pinned upstream sources.',
+        ' * Upstream commit: ' + manifest.upstreamCommit,
+        ' * Apache-2.0; see upstream/LICENSE and THIRD-PARTY-NOTICES.md.',
+        ' */'
+    ].join('\n');
+
+    const bundle = banner + '\n' + verifiedSources.join('\n;\n') + '\n';
+    const bundlePath = join(projectRoot, outputPath);
+
+    if (process.argv.includes('--verify')) {
+        const committedBundle = normalizeLineEndings(await readFile(bundlePath, 'utf8'));
+        if (committedBundle !== bundle) {
+            throw new Error('Draw.io bundle differs from pinned upstream sources: ' + outputPath);
+        }
+        process.stdout.write('Verified pinned Draw.io bundle: ' + outputPath + '\n');
+    } else {
+        await writeFile(bundlePath, bundle, 'utf8');
+        process.stdout.write('Generated ' + outputPath + ' (' + bundle.length + ' characters)\n');
+    }
 }
 
-const banner = [
-    '/*',
-    ' * Bundle original draw.io scripts from pinned upstream sources.',
-    ' * Upstream commit: ' + manifest.upstreamCommit,
-    ' * Apache-2.0; see upstream/LICENSE and THIRD-PARTY-NOTICES.md.',
-    ' */'
-].join('\n');
-
-const bundle = banner + '\n' + verifiedSources.join('\n;\n') + '\n';
-const bundlePath = join(projectRoot, manifest.bundle);
-
-if (process.argv.includes('--verify')) {
-    const committedBundle = normalizeLineEndings(await readFile(bundlePath, 'utf8'));
-    if (committedBundle !== bundle) {
-        throw new Error('Draw.io bundle differs from pinned upstream sources. Regenerate it.');
-    }
-    process.stdout.write('Verified pinned Draw.io bundle (' + bundle.length + ' characters)\n');
-} else {
-    await writeFile(bundlePath, bundle, 'utf8');
-    process.stdout.write('Generated ' + manifest.bundle + ' (' + bundle.length + ' characters)\n');
+await buildBundle(manifest.sources, manifest.bundle);
+if (manifest.modelSources && manifest.modelBundle) {
+    await buildBundle(manifest.modelSources, manifest.modelBundle);
 }
