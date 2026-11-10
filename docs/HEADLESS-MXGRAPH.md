@@ -84,9 +84,12 @@ for a completed production runtime. In particular:
    feature-by-feature test environment. Identify the precise
    `document` and `createElementNS` calls needed during
    view validation and rendering.
-3. Add a dedicated, testable `TextMetrics` port based on AWT
-   `FontRenderContext`, referring to the existing
-   `mermaid-java` text-measurement implementation.
+3. Use the new testable `TextMetrics` port based on
+   `FontMetrics` and the original `mermaid-java` approach.
+   Its separate implementation slice supports string width,
+   ascent/descent, CSS font fallbacks and multiline height;
+   complete DOM/CSS layout is still pending. See
+   [TEXT-METRICS.md](TEXT-METRICS.md).
 4. Render connected multi-shape XML diagrams with labels and
    nested groups, then compare against the pinned official viewer.
 5. Close #9 only when its full acceptance criteria pass.
