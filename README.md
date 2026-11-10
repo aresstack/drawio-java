@@ -194,6 +194,19 @@ This is a **model-core integration proof**, not yet a complete
 DOM-dependent validation and text metrics remain work for #9.
 See [docs/HEADLESS-MXGRAPH.md](docs/HEADLESS-MXGRAPH.md).
 
+## Headless font measurement (Issue #9, separate slice)
+
+`TextMetrics` and `AwtTextMetrics` provide offscreen Java2D font
+measurements (width, ascent, descent and multiline height), using a
+bounded immutable `FontDescriptor` and `TextBounds`. The optional
+`DrawioHost.measureText` capability exposes a plain value to GraalJS,
+not a Java AWT object. Existing host callers remain source-compatible.
+
+The implementation follows the font-measurement approach already
+used by `mermaid-java`. It is **not yet complete CSS/HTML label
+layout**; missing typography and SVG layout remain part of #9/#10.
+See [docs/TEXT-METRICS.md](docs/TEXT-METRICS.md).
+
 ## Roadmap
 
 1. [#2 Bootstrap and reuse inventory](https://github.com/aresstack/drawio-java/issues/2)
