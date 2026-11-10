@@ -14,7 +14,6 @@ java {
         languageVersion = JavaLanguageVersion.of(8)
     }
     withSourcesJar()
-    withJavadocJar()
 }
 
 dependencies {
