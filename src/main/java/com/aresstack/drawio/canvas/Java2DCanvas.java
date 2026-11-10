@@ -208,19 +208,22 @@ public final class Java2DCanvas implements DrawioCanvas {
     @Override
     public void moveTo(double x, double y) {
         validateFinite(x, y);
-        requirePath().moveTo(x, y);
+        double[] point = canvasCoordinates(x, y);
+        requirePath().moveTo(point[0], point[1]);
     }
 
     @Override
     public void lineTo(double x, double y) {
         validateFinite(x, y);
-        requirePath().lineTo(x, y);
+        double[] point = canvasCoordinates(x, y);
+        requirePath().lineTo(point[0], point[1]);
     }
 
     @Override
     public void quadTo(double controlX, double controlY, double x, double y) {
         validateFinite(controlX, controlY, x, y);
-        requirePath().quadTo(controlX, controlY, x, y);
+        double[] points = canvasCoordinates(controlX, controlY, x, y);
+        requirePath().quadTo(points[0], points[1], points[2], points[3]);
     }
 
     @Override
@@ -228,7 +231,10 @@ public final class Java2DCanvas implements DrawioCanvas {
                         double secondControlX, double secondControlY,
                         double x, double y) {
         validateFinite(firstControlX, firstControlY, secondControlX, secondControlY, x, y);
-        requirePath().curveTo(firstControlX, firstControlY, secondControlX, secondControlY, x, y);
+        double[] points = canvasCoordinates(
+                firstControlX, firstControlY, secondControlX, secondControlY, x, y);
+        requirePath().curveTo(points[0], points[1], points[2],
+                points[3], points[4], points[5]);
     }
 
     @Override
@@ -240,7 +246,8 @@ public final class Java2DCanvas implements DrawioCanvas {
     public void rect(double x, double y, double width, double height) {
         validateGeometry(x, y, width, height);
         begin();
-        path.append(new Rectangle2D.Double(x, y, width, height), false);
+        path.append(state.canvasTransform().createTransformedShape(
+                new Rectangle2D.Double(x, y, width, height)), false);
     }
 
     @Override
@@ -252,20 +259,22 @@ public final class Java2DCanvas implements DrawioCanvas {
             throw new IllegalArgumentException("Corner radii must be nonnegative");
         }
         begin();
-        path.append(new RoundRectangle2D.Double(
-                x, y, width, height, 2 * radiusX, 2 * radiusY), false);
+        path.append(state.canvasTransform().createTransformedShape(
+                new RoundRectangle2D.Double(
+                        x, y, width, height, 2 * radiusX, 2 * radiusY)), false);
     }
 
     @Override
     public void ellipse(double x, double y, double width, double height) {
         validateGeometry(x, y, width, height);
         begin();
-        path.append(new Ellipse2D.Double(x, y, width, height), false);
+        path.append(state.canvasTransform().createTransformedShape(
+                new Ellipse2D.Double(x, y, width, height)), false);
     }
 
     @Override
     public void clip() {
-        graphics.setTransform(state.currentTransform());
+        graphics.setTransform(state.paintTransform());
         graphics.clip(requirePath());
     }
 
@@ -316,21 +325,34 @@ public final class Java2DCanvas implements DrawioCanvas {
     }
 
     private void applyPaint(Color color, float alpha) {
-        graphics.setTransform(state.currentTransform());
+        graphics.setTransform(state.paintTransform());
         graphics.setPaint(color);
         graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     }
 
     private BasicStroke createStroke() {
+        double scaledWidth = state.strokeWidth * state.scaleFactor;
+        if (!Double.isFinite(scaledWidth) || scaledWidth > Float.MAX_VALUE) {
+            throw new IllegalArgumentException("Scaled stroke width is not finite");
+        }
+
+        float width = (float) scaledWidth;
         float[] dashPattern = state.dashed ? state.dashPattern.clone() : null;
         if (dashPattern != null) {
-            float dashScale = Math.max(state.strokeWidth, 0.01f);
+            float dashScale = Math.max(width, 0.01f);
             for (int index = 0; index < dashPattern.length; index++) {
                 dashPattern[index] *= dashScale;
             }
         }
-        return new BasicStroke(state.strokeWidth, state.lineCap, state.lineJoin,
+        return new BasicStroke(width, state.lineCap, state.lineJoin,
                 state.miterLimit, dashPattern, 0);
+    }
+
+    private double[] canvasCoordinates(double... coordinates) {
+        double[] transformed = coordinates.clone();
+        state.canvasTransform().transform(transformed, 0, transformed, 0,
+                transformed.length / 2);
+        return transformed;
     }
 
     private Path2D.Double requirePath() {
@@ -419,12 +441,16 @@ public final class Java2DCanvas implements DrawioCanvas {
             this.initialTransform = new AffineTransform(transform);
         }
 
-        private AffineTransform currentTransform() {
-            AffineTransform transform = new AffineTransform(initialTransform);
+        private AffineTransform canvasTransform() {
+            AffineTransform transform = new AffineTransform();
             transform.scale(scaleFactor, scaleFactor);
             transform.concatenate(orientation);
             transform.translate(translationX, translationY);
             return transform;
+        }
+
+        private AffineTransform paintTransform() {
+            return new AffineTransform(initialTransform);
         }
 
         private CanvasState copy() {

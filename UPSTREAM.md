@@ -81,8 +81,11 @@ registration objects. The test confirms:
   expected.
 
 **Important limitation:** the test-only bootstrap is *not* a replacement for
-mxGraph. The production JavaScript/Java2D adapter, complete graph model,
-real DOM replacements and end-to-end pixel parity belong to #6–#10.
+mxGraph. Issue #6 adds `drawio-canvas-adapter.js` and a restricted
+`DrawioCanvasBridge` that execute the original BPMN Gateway JavaScript
+directly into Java2D. The end-to-end pixel tests for parallel, exclusive and
+complex gateways have passed. However, the complete graph model, real DOM
+replacements and reference-image parity remain in #7–#10.
 Do not advertise full Draw.io compatibility based on this registration smoke test.
 
 ## Licensing and Atlassian integration

@@ -126,6 +126,29 @@ graphics resources. The future JavaScript adapter maps upstream Draw.io
 embedded resources and complete Draw.io shape coverage belong to #9/#10.
 Invalid colors and geometry are rejected rather than silently misrendered.
 
+## Draw.io JavaScript-to-Java2D canvas bridge (Issue #6)
+
+The original Draw.io JavaScript now sends shape commands to Java2D through
+`DrawioJavaCanvas` in `drawio-canvas-adapter.js`. This adapter extends
+the original `mxAbstractCanvas2D` and forwards explicitly supported
+operations through the `DrawioHost.canvas()` method to the restricted
+`DrawioCanvasBridge` Java object. The JavaScript guest cannot obtain the
+underlying `Graphics2D`, Java classes, the filesystem or network access.
+
+`DrawioJavaCanvasBridgeTest` invokes the **original**
+`mxgraph.bpmn.gateway2` shape method with the `exclusive`, `parallel`
+and `complex` styles, then verifies actual Java2D pixels. It also checks
+curves, save/restore, and blocked reflection. No shape is reimplemented in
+Java, and neither Chromium nor Node.js is needed at runtime.
+
+**Current limitation:** the tests bootstrap the original shape registration
+using a small, test-only mxGraph scaffold. The production draw.io graph
+model and layout engine are not initialized yet. This is a successful
+canvas-interoperability proof, **not yet a general XML diagram renderer**.
+Gradient fills, text, images, shadows and arcs fail explicitly until
+implemented in #9/#10. Full diagram rendering and upstream visual parity
+are tracked in #7–#13.
+
 ## Roadmap
 
 1. [#2 Bootstrap and reuse inventory](https://github.com/aresstack/drawio-java/issues/2)

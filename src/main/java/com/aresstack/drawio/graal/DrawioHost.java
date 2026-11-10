@@ -12,9 +12,23 @@ import org.graalvm.polyglot.HostAccess;
 public final class DrawioHost {
 
     private final ScriptResourceProvider resources;
+    private final DrawioCanvasBridge canvas;
 
     public DrawioHost(ScriptResourceProvider resources) {
+        this(resources, null);
+    }
+
+    public DrawioHost(ScriptResourceProvider resources, DrawioCanvasBridge canvas) {
         this.resources = Objects.requireNonNull(resources, "resources");
+        this.canvas = canvas;
+    }
+
+    @HostAccess.Export
+    public DrawioCanvasBridge canvas() {
+        if (canvas == null) {
+            throw new IllegalStateException("No drawing canvas is configured for this script");
+        }
+        return canvas;
     }
 
     @HostAccess.Export
