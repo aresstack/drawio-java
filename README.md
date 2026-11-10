@@ -36,9 +36,45 @@ On Linux/macOS:
 ```bash ./gradlew clean test jar
 ```
 
-The current build intentionally does **not** depend on a GraalJS runtime: choosing
-a compatible pinned version and implementing restricted host access belong to
-[Issue #3](https://github.com/aresstack/drawio-java/issues/3).
+## GraalJS runtime (Issue #3)
+
+The library now contains a small Java 8-compatible GraalJS execution adapter,
+pinned to GraalVM JavaScript **21.2.0**, following patterns from Mermaid Java
+and Playwright4J.
+
+```java
+DrawioHost host = new DrawioHost(resourceId -> {
+    if ("greeting".equals(resourceId)) {
+        return "hello";
+    }
+    throw new IllegalArgumentException("Unknown resource");
+});
+
+try (GraalJsRuntime runtime = new GraalJsRuntime(Duration.ofSeconds(10))) {
+    ScriptExecutionResult result = runtime.execute(
+            "greeting.js", "drawioHost.loadResource('greeting')", host);
+    if (!result.isSuccessful()) {
+        throw new IllegalStateException(result.getErrorMessage());
+    }
+    System.out.println(result.getOutput());
+}
+```
+
+The runtime creates a separate JavaScript context for every evaluation and
+only exposes annotated host bridge methods. Arbitrary host-class lookup,
+native access, JavaScript-managed threads and direct guest file I/O are disabled.
+Bundled scripts are read from the `/drawio/` classpath area, not fetched online.
+An execution timeout forcibly closes the active context and renders that
+runtime unusable; create another runtime to retry.
+
+**Security boundary:** This is a restricted embedding environment, **not**
+a hardened sandbox guaranteeing resource isolation from malicious JavaScript.
+Use trusted, pinned Draw.io JavaScript bundles; treat diagram XML as untrusted
+*data*, not JavaScript source. Complete memory/resource limits, security audits
+and a stable consumer-facing API remain in #12/#15. JavaScript 21.2.0 is an
+older version that must be reassessed for support and vulnerabilities before
+releasing or using untrusted scripts. The actual Draw.io bundle and renderer
+remain future work in #4–#7.
 
 ## Roadmap
 

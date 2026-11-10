@@ -6,9 +6,9 @@ import java.util.Objects;
  * Carry an execution result without exposing GraalJS types to its callers.
  *
  * <p>Adapt the result concept from mermaid-java's JsExecutionResult.
- * Keep this type internal until the rendering API is designed.
+ * Keep this infrastructure result separate from the future rendering API.
  */
-final class ScriptExecutionResult {
+public final class ScriptExecutionResult {
 
     private final boolean successful;
     private final String output;
