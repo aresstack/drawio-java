@@ -149,6 +149,19 @@ Gradient fills, text, images, shadows and arcs fail explicitly until
 implemented in #9/#10. Full diagram rendering and upstream visual parity
 are tracked in #7–#13.
 
+## Verified BPMN reference rendering (Issue #7)
+
+The original `mxgraph.bpmn.gateway2` JavaScript now passes a visual
+comparison against the official Draw.io viewer at the same pinned
+upstream version. A synthetic three-gateway `mxGraphModel` fixture
+and its independently generated viewer SVG are stored under
+`src/test/resources/drawio/golden/`. A test-only Batik rasterization
+compares stable pixels against our Java2D output.
+
+See [GO-NO-GO.md](GO-NO-GO.md) for the **GO** decision for this
+shape-canvas architecture, the explicit production limitations and
+remaining prerequisites for full diagram rendering.
+
 ## Roadmap
 
 1. [#2 Bootstrap and reuse inventory](https://github.com/aresstack/drawio-java/issues/2)

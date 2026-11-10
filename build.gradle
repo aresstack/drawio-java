@@ -21,6 +21,7 @@ dependencies {
     implementation 'org.graalvm.js:js:21.2.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.apache.xmlgraphics:batik-transcoder:1.17'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
 }
 
