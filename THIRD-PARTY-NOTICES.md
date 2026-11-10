@@ -35,5 +35,19 @@ licensed under Apache License 2.0. Its restricted GraalJS-host pattern is a
 reference only; no Playwright4J implementation source has been copied at
 bootstrap time.
 
-When bundling upstream Draw.io JavaScript, Stencils or other dependencies,
-add their notices and licenses under #4 and #15 before distribution.
+## Original Draw.io JavaScript sources
+
+The two vendored JavaScript source files and their deterministic combined bundle
+are derived from [jgraph/drawio](https://github.com/jgraph/drawio), commit
+`c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3`.
+
+Original source copyrights remain in their respective headers. The original
+repository's Apache License 2.0 is included at
+`src/main/resources/drawio/upstream/LICENSE`.
+
+The upstream README imposes additional restrictions on icon sets, stencil
+libraries and templates (including certain Atlassian-related distributions).
+The bundled source selection currently excludes the stencil/icon/template
+assets; see [UPSTREAM.md](UPSTREAM.md) for provenance, legal cautions and
+unsupported resources. Reassess the license implications before adding
+further upstream packages or publishing an Atlassian-related integration (#15).

@@ -73,8 +73,27 @@ Use trusted, pinned Draw.io JavaScript bundles; treat diagram XML as untrusted
 *data*, not JavaScript source. Complete memory/resource limits, security audits
 and a stable consumer-facing API remain in #12/#15. JavaScript 21.2.0 is an
 older version that must be reassessed for support and vulnerabilities before
-releasing or using untrusted scripts. The actual Draw.io bundle and renderer
-remain future work in #4–#7.
+releasing or using untrusted scripts. The pinned original Draw.io scripts
+are now included for the registration proof; the full renderer is still work in #6–#10.
+
+## Pinned Draw.io source bundle (Issue #4)
+
+The repository includes the original `mxAbstractCanvas2D.js` and
+`mxBpmnShape2.js` from a pinned upstream Git commit, bundled locally
+without a browser or runtime network connection. A GraalJS smoke test
+runs the **original** `mxgraph.bpmn.gateway2` painting method against
+a test-only command recorder. The full upstream Viewer/DOM, XML stencils
+and fonts are **not** bundled.
+
+Regenerate or verify the bundle offline from checked-in sources:
+
+```bash
+node js-bundle/build.mjs
+node js-bundle/build.mjs --verify
+```
+
+See [UPSTREAM.md](UPSTREAM.md) for commit hashes, licensing conditions,
+unsupported assets and the exact upstream JavaScript entry points.
 
 ## Java2D canvas (Issue #5)
 

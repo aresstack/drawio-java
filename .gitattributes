@@ -1,0 +1,2 @@
+src/main/resources/drawio/**/*.js text eol=lf
+js-bundle/*.mjs text eol=lf

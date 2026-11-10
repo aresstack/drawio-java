@@ -1,0 +1,18 @@
+{
+  "upstreamRepository": "https://github.com/jgraph/drawio",
+  "upstreamBranch": "dev",
+  "upstreamCommit": "c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3",
+  "sources": [
+    {
+      "path": "src/main/resources/drawio/upstream/mxAbstractCanvas2D.js",
+      "upstreamPath": "src/main/webapp/mxgraph/src/util/mxAbstractCanvas2D.js",
+      "sha256NormalizedLf": "e263367c0ac7a9a56cc6424c8827c6305a6e522736c37de9b7a3cfb0e730692f"
+    },
+    {
+      "path": "src/main/resources/drawio/upstream/mxBpmnShape2.js",
+      "upstreamPath": "src/main/webapp/shapes/bpmn/mxBpmnShape2.js",
+      "sha256NormalizedLf": "a95f550de67cb50e775f7693ee5937458933ffd8a438d2748eb40c4ade48b3c7"
+    }
+  ],
+  "bundle": "src/main/resources/drawio/drawio-shapes.js"
+}
