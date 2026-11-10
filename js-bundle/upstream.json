@@ -1,18 +1,81 @@
 {
-  "upstreamRepository": "https://github.com/jgraph/drawio",
-  "upstreamBranch": "dev",
-  "upstreamCommit": "c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3",
-  "sources": [
-    {
-      "path": "src/main/resources/drawio/upstream/mxAbstractCanvas2D.js",
-      "upstreamPath": "src/main/webapp/mxgraph/src/util/mxAbstractCanvas2D.js",
-      "sha256NormalizedLf": "e263367c0ac7a9a56cc6424c8827c6305a6e522736c37de9b7a3cfb0e730692f"
-    },
-    {
-      "path": "src/main/resources/drawio/upstream/mxBpmnShape2.js",
-      "upstreamPath": "src/main/webapp/shapes/bpmn/mxBpmnShape2.js",
-      "sha256NormalizedLf": "a95f550de67cb50e775f7693ee5937458933ffd8a438d2748eb40c4ade48b3c7"
-    }
-  ],
-  "bundle": "src/main/resources/drawio/drawio-shapes.js"
+    "upstreamRepository":  "https://github.com/jgraph/drawio",
+    "upstreamBranch":  "dev",
+    "upstreamCommit":  "c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3",
+    "sources":  [
+                    {
+                        "path":  "src/main/resources/drawio/upstream/mxAbstractCanvas2D.js",
+                        "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxAbstractCanvas2D.js",
+                        "sha256NormalizedLf":  "e263367c0ac7a9a56cc6424c8827c6305a6e522736c37de9b7a3cfb0e730692f"
+                    },
+                    {
+                        "path":  "src/main/resources/drawio/upstream/mxBpmnShape2.js",
+                        "upstreamPath":  "src/main/webapp/shapes/bpmn/mxBpmnShape2.js",
+                        "sha256NormalizedLf":  "a95f550de67cb50e775f7693ee5937458933ffd8a438d2748eb40c4ade48b3c7"
+                    }
+                ],
+    "bundle":  "src/main/resources/drawio/drawio-shapes.js",
+    "modelSources":  [
+                         {
+                             "sha256NormalizedLf":  "68724f1d5442f81980aa90681de33d6fb2c9600f39ae957c8e9a01c8e103a56e",
+                             "path":  "src/main/resources/drawio/upstream/model/mxPoint.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxPoint.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "abe50cbe6485d31048bb8a06bd8992d1bb8bacfa1ae562b608af453501ed6f4a",
+                             "path":  "src/main/resources/drawio/upstream/model/mxRectangle.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxRectangle.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "a0b99a4a7e1d5abf3317b365720441ff6eb20e4e296ad5b1acbfb8480e927598",
+                             "path":  "src/main/resources/drawio/upstream/model/mxGeometry.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxGeometry.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "ffcdff4f93173be45213eaf8d22d43ab8eebc3db5ade3a1d5710ffa98d4aadba",
+                             "path":  "src/main/resources/drawio/upstream/model/mxEventObject.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxEventObject.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "ba91199ec54059e270ebf815a965d101d360b750dd225ede58f3b9bf4f434ddd",
+                             "path":  "src/main/resources/drawio/upstream/model/mxEventSource.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxEventSource.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "758400d94135bed3892e0944bdab47eafbe5e7312ea26f3671c46d4dc7a1b28f",
+                             "path":  "src/main/resources/drawio/upstream/model/mxEvent.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxEvent.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "fd22a7a8f3e9c11fcaa44d08c9ab2b0584da4d922d18f37fcba3a68f8ada6d87",
+                             "path":  "src/main/resources/drawio/upstream/model/mxUndoableEdit.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxUndoableEdit.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "7e2c38a7639ecb2f5e27ad50460ff0e228efeb9eba5d74cb728249fe0f6af1bd",
+                             "path":  "src/main/resources/drawio/upstream/model/mxObjectIdentity.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxObjectIdentity.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "b3bcf5864f1b1c694f6b3eb143508ae29a70b06f44fdfe4365fbf54f226588b1",
+                             "path":  "src/main/resources/drawio/upstream/model/mxDictionary.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxDictionary.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "ec86bd53653bff01e903c29be42d90e5938f7f563627ce09a026b7a570959818",
+                             "path":  "src/main/resources/drawio/upstream/model/mxCellPath.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxCellPath.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "c54d8963ade47fdea1b97ef969b156a085fb47ac0dca25b007e562bb2028402a",
+                             "path":  "src/main/resources/drawio/upstream/model/mxCell.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxCell.js"
+                         },
+                         {
+                             "sha256NormalizedLf":  "e5069535c34eb10e1b3cfb122c8d820b6c7d0bffcfcd67466554af786a0d6330",
+                             "path":  "src/main/resources/drawio/upstream/model/mxGraphModel.js",
+                             "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxGraphModel.js"
+                         }
+                     ],
+    "modelBundle":  "src/main/resources/drawio/drawio-model.js"
 }

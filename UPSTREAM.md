@@ -54,6 +54,18 @@ bundle ships in the Java JAR and is read from the classpath.
 7. Review the registered shape names and the test fixture requirements before
    declaring compatibility. Do not auto-upgrade upstream without review.
 
+## Additional pinned headless mxGraph-model sources
+
+Issue #9 introduces an independent `drawio-model.js` bundle of
+original `mxCell`, `mxGraphModel`, geometry, events and supporting
+model classes. Its twelve source paths and normalized SHA-256 digests
+are pinned in the same manifest. `node js-bundle/build.mjs --verify`
+now validates **both** generated bundles. No source from the larger
+browser UI/viewer has been added to the runtime.
+
+See [docs/HEADLESS-MXGRAPH.md](docs/HEADLESS-MXGRAPH.md) for the
+verified scope and known, still-missing DOM/View/Renderer dependencies.
+
 ## Original JavaScript API entry points
 
 - `mxAbstractCanvas2D.prototype.translate` stores `state.dx`/`state.dy`.
