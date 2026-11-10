@@ -76,6 +76,37 @@ older version that must be reassessed for support and vulnerabilities before
 releasing or using untrusted scripts. The actual Draw.io bundle and renderer
 remain future work in #4–#7.
 
+## Java2D canvas (Issue #5)
+
+The `DrawioCanvas` interface expresses drawing operations independently
+of JavaScript and Swing. `Java2DCanvas` implements them using a caller-supplied
+`Graphics2D`, including `Path2D`, ellipses, rounded rectangles, transforms,
+horizontal/vertical mirroring, nested drawing-state stacks, clipping,
+separate fill/stroke opacity and dashed strokes.
+
+Pass an ordinary `BufferedImage.createGraphics()` context for raster output.
+In #11, the same drawing implementation will be tested against Batik's
+`SVGGraphics2D` for vector output.
+
+```java
+BufferedImage image = new BufferedImage(120, 80, BufferedImage.TYPE_INT_ARGB);
+Graphics2D graphics = image.createGraphics();
+try (DrawioCanvas canvas = new Java2DCanvas(graphics)) {
+    canvas.setFillColor("#ff0000");
+    canvas.rect(10, 10, 40, 30);
+    canvas.fill();
+} finally {
+    graphics.dispose();
+}
+```
+
+Call `closePath()` to close a path; `close()` releases the canvas's child
+graphics resources. The future JavaScript adapter maps upstream Draw.io
+`close()` to `closePath()`. Text and image methods currently throw
+`UnsupportedOperationException` deliberately; full text, gradients, shadows,
+embedded resources and complete Draw.io shape coverage belong to #9/#10.
+Invalid colors and geometry are rejected rather than silently misrendered.
+
 ## Roadmap
 
 1. [#2 Bootstrap and reuse inventory](https://github.com/aresstack/drawio-java/issues/2)
