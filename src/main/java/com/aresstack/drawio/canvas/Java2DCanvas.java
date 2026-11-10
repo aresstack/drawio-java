@@ -60,7 +60,8 @@ public final class Java2DCanvas implements DrawioCanvas {
     public void translate(double dx, double dy) {
         ensureOpen();
         validateFinite(dx, dy);
-        state.transform.translate(dx, dy);
+        state.translationX += dx;
+        state.translationY += dy;
     }
 
     @Override
@@ -70,7 +71,9 @@ public final class Java2DCanvas implements DrawioCanvas {
         if (factor <= 0) {
             throw new IllegalArgumentException("Scale must be positive");
         }
-        state.transform.scale(factor, factor);
+        double nextScale = state.scaleFactor * factor;
+        validateFinite(nextScale);
+        state.scaleFactor = nextScale;
     }
 
     @Override
@@ -78,10 +81,10 @@ public final class Java2DCanvas implements DrawioCanvas {
                        double centerX, double centerY) {
         ensureOpen();
         validateFinite(angleDegrees, centerX, centerY);
-        state.transform.translate(centerX, centerY);
-        state.transform.rotate(Math.toRadians(angleDegrees));
-        state.transform.scale(flipHorizontal ? -1 : 1, flipVertical ? -1 : 1);
-        state.transform.translate(-centerX, -centerY);
+        state.orientation.translate(centerX, centerY);
+        state.orientation.rotate(Math.toRadians(angleDegrees));
+        state.orientation.scale(flipHorizontal ? -1 : 1, flipVertical ? -1 : 1);
+        state.orientation.translate(-centerX, -centerY);
     }
 
     @Override
@@ -262,7 +265,7 @@ public final class Java2DCanvas implements DrawioCanvas {
 
     @Override
     public void clip() {
-        graphics.setTransform(state.transform);
+        graphics.setTransform(state.currentTransform());
         graphics.clip(requirePath());
     }
 
@@ -313,13 +316,19 @@ public final class Java2DCanvas implements DrawioCanvas {
     }
 
     private void applyPaint(Color color, float alpha) {
-        graphics.setTransform(state.transform);
+        graphics.setTransform(state.currentTransform());
         graphics.setPaint(color);
         graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     }
 
     private BasicStroke createStroke() {
         float[] dashPattern = state.dashed ? state.dashPattern.clone() : null;
+        if (dashPattern != null) {
+            float dashScale = Math.max(state.strokeWidth, 0.01f);
+            for (int index = 0; index < dashPattern.length; index++) {
+                dashPattern[index] *= dashScale;
+            }
+        }
         return new BasicStroke(state.strokeWidth, state.lineCap, state.lineJoin,
                 state.miterLimit, dashPattern, 0);
     }
@@ -389,9 +398,13 @@ public final class Java2DCanvas implements DrawioCanvas {
     }
 
     private static final class CanvasState {
-        private final AffineTransform transform;
-        private Color fillColor = Color.WHITE;
-        private Color strokeColor = Color.BLACK;
+        private final AffineTransform initialTransform;
+        private final AffineTransform orientation = new AffineTransform();
+        private double translationX;
+        private double translationY;
+        private double scaleFactor = 1;
+        private Color fillColor;
+        private Color strokeColor;
         private float alpha = 1;
         private float fillAlpha = 1;
         private float strokeAlpha = 1;
@@ -403,11 +416,23 @@ public final class Java2DCanvas implements DrawioCanvas {
         private float miterLimit = 10;
 
         private CanvasState(AffineTransform transform) {
-            this.transform = new AffineTransform(transform);
+            this.initialTransform = new AffineTransform(transform);
+        }
+
+        private AffineTransform currentTransform() {
+            AffineTransform transform = new AffineTransform(initialTransform);
+            transform.scale(scaleFactor, scaleFactor);
+            transform.concatenate(orientation);
+            transform.translate(translationX, translationY);
+            return transform;
         }
 
         private CanvasState copy() {
-            CanvasState copy = new CanvasState(transform);
+            CanvasState copy = new CanvasState(initialTransform);
+            copy.orientation.setTransform(orientation);
+            copy.translationX = translationX;
+            copy.translationY = translationY;
+            copy.scaleFactor = scaleFactor;
             copy.fillColor = fillColor;
             copy.strokeColor = strokeColor;
             copy.alpha = alpha;

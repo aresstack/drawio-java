@@ -30,7 +30,7 @@ final class CanvasColors {
             case "blue":
                 return Color.BLUE;
             case "green":
-                return Color.GREEN;
+                return new Color(0x008000);
             case "yellow":
                 return Color.YELLOW;
             case "gray":

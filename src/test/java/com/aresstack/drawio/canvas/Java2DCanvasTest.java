@@ -26,6 +26,19 @@ class Java2DCanvasTest {
     }
 
     @Test
+    void doesNotFillWhenOnlyTheStrokeColorIsSpecified() {
+        try (ImageFixture fixture = new ImageFixture()) {
+            fixture.canvas.setStrokeColor("#ff0000");
+            fixture.canvas.setStrokeWidth(2);
+            fixture.canvas.rect(10, 10, 30, 30);
+            fixture.canvas.fillAndStroke();
+
+            assertEquals(0, fixture.pixel(20, 20));
+            assertEquals(Color.RED.getRGB(), fixture.pixel(10, 20));
+        }
+    }
+
+    @Test
     void fillsAndStrokesTheSameShape() {
         try (ImageFixture fixture = new ImageFixture()) {
             fixture.canvas.setFillColor("#ff0000");
@@ -55,6 +68,34 @@ class Java2DCanvasTest {
             assertEquals(Color.RED.getRGB(), fixture.pixel(5, 5));
             assertEquals(Color.BLUE.getRGB(), fixture.pixel(30, 5));
             assertEquals(0, fixture.pixel(15, 5));
+        }
+    }
+
+    @Test
+    void appliesScalingToPreviouslyEstablishedTranslation() {
+        try (ImageFixture fixture = new ImageFixture()) {
+            fixture.canvas.translate(10, 0);
+            fixture.canvas.scale(2);
+            fixture.canvas.setFillColor("#ff0000");
+            fixture.canvas.rect(0, 10, 5, 5);
+            fixture.canvas.fill();
+
+            assertEquals(Color.RED.getRGB(), fixture.pixel(21, 21));
+            assertEquals(0, fixture.pixel(11, 21));
+        }
+    }
+
+    @Test
+    void appliesTranslationRegardlessOfScaleCallOrder() {
+        try (ImageFixture fixture = new ImageFixture()) {
+            fixture.canvas.scale(2);
+            fixture.canvas.translate(10, 0);
+            fixture.canvas.setFillColor("#0000ff");
+            fixture.canvas.rect(0, 10, 5, 5);
+            fixture.canvas.fill();
+
+            assertEquals(Color.BLUE.getRGB(), fixture.pixel(21, 21));
+            assertEquals(0, fixture.pixel(11, 21));
         }
     }
 
@@ -199,6 +240,39 @@ class Java2DCanvasTest {
 
             assertTrue(fixture.countVisiblePixels() > 8);
             assertNotEquals(Color.BLUE.getRGB(), fixture.pixel(5, 60));
+        }
+    }
+
+    @Test
+    void scalesDashLengthsWithStrokeWidth() {
+        try (ImageFixture fixture = new ImageFixture()) {
+            fixture.canvas.setStrokeColor("#0000ff");
+            fixture.canvas.setStrokeWidth(4);
+            fixture.canvas.setDashed(true);
+            fixture.canvas.setDashPattern("3 3");
+            fixture.canvas.begin();
+            fixture.canvas.moveTo(10, 20);
+            fixture.canvas.lineTo(80, 20);
+            fixture.canvas.stroke();
+
+            assertEquals(Color.BLUE.getRGB(), fixture.pixel(18, 20));
+            assertEquals(0, fixture.pixel(26, 20));
+            assertEquals(Color.BLUE.getRGB(), fixture.pixel(36, 20));
+        }
+    }
+
+    @Test
+    void mapsNamedGreenToItsCssColorValue() {
+        try (ImageFixture fixture = new ImageFixture()) {
+            fixture.canvas.setFillColor("green");
+            fixture.canvas.rect(0, 0, 10, 10);
+            fixture.canvas.fill();
+            fixture.canvas.setFillColor("#008000");
+            fixture.canvas.rect(20, 0, 10, 10);
+            fixture.canvas.fill();
+
+            assertEquals(new Color(0x008000).getRGB(), fixture.pixel(5, 5));
+            assertEquals(fixture.pixel(5, 5), fixture.pixel(25, 5));
         }
     }
 
