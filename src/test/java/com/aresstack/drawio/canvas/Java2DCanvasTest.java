@@ -115,6 +115,22 @@ class Java2DCanvasTest {
     }
 
     @Test
+    void recordsTranslationWhenEachPathPointIsAdded() {
+        try (ImageFixture fixture = new ImageFixture()) {
+            fixture.canvas.setStrokeColor("#ff0000");
+            fixture.canvas.begin();
+            fixture.canvas.moveTo(5, 20);
+            fixture.canvas.translate(20, 0);
+            fixture.canvas.lineTo(15, 20);
+            fixture.canvas.translate(-20, 0);
+            fixture.canvas.stroke();
+
+            assertEquals(Color.RED.getRGB(), fixture.pixel(30, 20));
+            assertEquals(0, fixture.pixel(40, 20));
+        }
+    }
+
+    @Test
     void closesPathsBeforeFillingThem() {
         try (ImageFixture fixture = new ImageFixture()) {
             fixture.canvas.begin();

@@ -64,7 +64,7 @@
 
     DrawioJavaCanvas.prototype.setStrokeWidth = function (width) {
         this.state.strokeWidth = width;
-        this.bridge.setStrokeWidth(width);
+        this.bridge.setStrokeWidth(width / this.state.scale);
     };
 
     DrawioJavaCanvas.prototype.setDashed = function (dashed, fixDash) {

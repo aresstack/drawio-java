@@ -91,6 +91,49 @@ class DrawioJavaCanvasBridgeTest {
     }
 
     @Test
+    void recordsMidPathTranslationsBeforeRestoringOriginalCoordinates() {
+        try (GraphicsFixture fixture = new GraphicsFixture()) {
+            String drawing = "var canvas = new DrawioJavaCanvas();"
+                    + "canvas.setStrokeColor('#ff0000');"
+                    + "canvas.begin();"
+                    + "canvas.moveTo(5, 20);"
+                    + "canvas.translate(20, 0);"
+                    + "canvas.lineTo(15, 20);"
+                    + "canvas.translate(-20, 0);"
+                    + "canvas.stroke(); 'done';";
+
+            ScriptExecutionResult result = executeDrawing(fixture, drawing);
+
+            assertTrue(result.isSuccessful(), result.getErrorMessage());
+            assertEquals(Color.RED.getRGB(), fixture.image.getRGB(30, 20));
+            assertEquals(0, fixture.image.getRGB(40, 20));
+        }
+    }
+
+    @Test
+    void preservesStrokeWidthWhenScaledJavaScriptStateIsRestored() {
+        try (GraphicsFixture fixture = new GraphicsFixture()) {
+            String drawing = "var canvas = new DrawioJavaCanvas();"
+                    + "canvas.setStrokeColor('#ff0000');"
+                    + "canvas.setStrokeWidth(2);"
+                    + "canvas.scale(2);"
+                    + "var original = canvas.state.strokeWidth;"
+                    + "canvas.setStrokeWidth(original);"
+                    + "canvas.begin();"
+                    + "canvas.moveTo(5, 30);"
+                    + "canvas.lineTo(35, 30);"
+                    + "canvas.stroke(); original;";
+
+            ScriptExecutionResult result = executeDrawing(fixture, drawing);
+
+            assertTrue(result.isSuccessful(), result.getErrorMessage());
+            assertEquals("4", result.getOutput());
+            assertEquals(Color.RED.getRGB(), fixture.image.getRGB(20, 60));
+            assertEquals(0, fixture.image.getRGB(20, 56));
+        }
+    }
+
+    @Test
     void keepsJavaReflectionUnavailableOnCanvasBridge() {
         try (GraphicsFixture fixture = new GraphicsFixture()) {
             ScriptExecutionResult result = executeDrawing(fixture,
