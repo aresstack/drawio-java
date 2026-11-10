@@ -162,6 +162,25 @@ See [GO-NO-GO.md](GO-NO-GO.md) for the **GO** decision for this
 shape-canvas architecture, the explicit production limitations and
 remaining prerequisites for full diagram rendering.
 
+## Secure multi-page document reader (Issue #8)
+
+`DrawioDocumentParser` can now read direct `mxGraphModel` XML and
+`mxfile` documents with multiple pages, including compressed
+Base64/raw-Deflate/URL-encoded page contents. Each immutable
+`DiagramPage` preserves its id, name, index and graph XML.
+Pages can be selected by name or index without silently losing
+additional pages.
+
+The parser is independent of GraalJS, Java2D, UI and Confluence.
+It disables XML external entities and DTDs, validates the XML
+structure before DOM materialization, and caps compressed output
+and page/document complexity. Unsupported input produces a typed
+`DiagramFormatException`.
+
+See [docs/XML-PARSING.md](docs/XML-PARSING.md) for supported formats,
+limits, API and security requirements. A general graph renderer
+still requires #9–#11.
+
 ## Roadmap
 
 1. [#2 Bootstrap and reuse inventory](https://github.com/aresstack/drawio-java/issues/2)
