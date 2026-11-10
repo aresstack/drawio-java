@@ -1,0 +1,1 @@
+drawioHost.loadResource('greeting') + ' world';
