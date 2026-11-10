@@ -170,6 +170,46 @@ class DrawioDocumentParserTest {
     }
 
     @Test
+    void capsTheTotalInflatedBytesAcrossAllPages() throws Exception {
+        char[] repeated = new char[4 * 1024 * 1024];
+        Arrays.fill(repeated, 'x');
+
+        String expandedXml = "<mxGraphModel><root><mxCell value=\""
+                + new String(repeated) + "\"/></root></mxGraphModel>";
+        String compressedPage = compress(expandedXml);
+        String page = "<diagram>" + compressedPage + "</diagram>";
+
+        assertTrue(compressedPage.length() < 10000,
+                "Regression must exercise a high-compression-ratio document");
+        DrawioDocument accepted = parser.parse("<mxfile>" + page + page + "</mxfile>");
+        assertEquals(2, accepted.getPages().size());
+
+        assertReason(DiagramFormatException.Reason.LIMIT_EXCEEDED,
+                () -> parser.parse("<mxfile>" + page + page + page + page + "</mxfile>"));
+    }
+
+    @Test
+    void rejectsInvalidUtf8AfterPercentDecoding() throws Exception {
+        assertReason(DiagramFormatException.Reason.INVALID_COMPRESSION,
+                () -> parseCompressedPage(percentEncodedModel("%FF")));
+        assertReason(DiagramFormatException.Reason.INVALID_COMPRESSION,
+                () -> parseCompressedPage(percentEncodedModel("%C3%28")));
+        assertReason(DiagramFormatException.Reason.INVALID_COMPRESSION,
+                () -> parseCompressedPage(percentEncodedModel("%ED%A0%80")));
+        assertReason(DiagramFormatException.Reason.INVALID_COMPRESSION,
+                () -> parseCompressedPage(percentEncodedModel("%G1")));
+    }
+
+    @Test
+    void decodesValidPercentEncodedUtf8WithoutReplacementCharacters() throws Exception {
+        String page = percentEncodedModel("%C3%BC");
+        DrawioDocument parsed = parseCompressedPage(page);
+
+        assertTrue(parsed.firstPage().getGraphModelXml().contains("Grüße".substring(2, 3)));
+        assertFalse(parsed.firstPage().getGraphModelXml().contains("\uFFFD"));
+    }
+
+    @Test
     void rejectsTooManyPages() {
         StringBuilder xml = new StringBuilder("<mxfile>");
         for (int page = 0; page < 101; page++) {
@@ -190,9 +230,23 @@ class DrawioDocumentParserTest {
                 () -> parser.parse("<mxfile><diagram>" + truncated + "</diagram></mxfile>"));
     }
 
+    private DrawioDocument parseCompressedPage(String percentEncodedXml) throws Exception {
+        return parser.parse("<mxfile><diagram>"
+                + compressEscaped(percentEncodedXml) + "</diagram></mxfile>");
+    }
+
+    private String percentEncodedModel(String escapedCharacter) throws Exception {
+        return URLEncoder.encode("<mxGraphModel><root><mxCell value=\"Gr", "UTF-8")
+                + escapedCharacter
+                + URLEncoder.encode("ße\"/></root></mxGraphModel>", "UTF-8");
+    }
+
     private static String compress(String xml) throws Exception {
-        String encoded = URLEncoder.encode(xml, StandardCharsets.UTF_8.name());
-        byte[] input = encoded.getBytes(StandardCharsets.UTF_8);
+        return compressEscaped(URLEncoder.encode(xml, StandardCharsets.UTF_8.name()));
+    }
+
+    private static String compressEscaped(String escaped) throws Exception {
+        byte[] input = escaped.getBytes(StandardCharsets.UTF_8);
         Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true);
         deflater.setInput(input);
         deflater.finish();

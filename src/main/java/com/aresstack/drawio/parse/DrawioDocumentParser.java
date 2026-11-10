@@ -2,11 +2,6 @@ package com.aresstack.drawio.parse;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -29,6 +24,8 @@ public final class DrawioDocumentParser {
     private static final int MAX_SOURCE_CHARACTERS = 16 * 1024 * 1024;
     private static final int MAX_UNPACKED_BYTES = 16 * 1024 * 1024;
     private static final int MAX_PAGES = 100;
+
+    private final DrawioPercentDecoder percentDecoder = new DrawioPercentDecoder();
 
     public DrawioDocument parse(String xml) throws DiagramFormatException {
         if (xml == null) {
@@ -58,6 +55,7 @@ public final class DrawioDocumentParser {
 
     private DrawioDocument readMxfile(Element root) throws DiagramFormatException {
         List<DiagramPage> pages = new ArrayList<DiagramPage>();
+        DiagramReadBudget budget = new DiagramReadBudget(MAX_UNPACKED_BYTES);
 
         for (Node child = root.getFirstChild(); child != null; child = child.getNextSibling()) {
             if (!(child instanceof Element)
@@ -69,7 +67,7 @@ public final class DrawioDocumentParser {
                         "The draw.io document contains too many pages");
             }
             Element diagram = (Element) child;
-            pages.add(readPage(diagram, pages.size()));
+            pages.add(readPage(diagram, pages.size(), budget));
         }
 
         if (pages.isEmpty()) {
@@ -79,9 +77,11 @@ public final class DrawioDocumentParser {
         return new DrawioDocument(pages);
     }
 
-    private DiagramPage readPage(Element diagram, int index) throws DiagramFormatException {
+    private DiagramPage readPage(Element diagram, int index, DiagramReadBudget budget)
+            throws DiagramFormatException {
         Element nested = directGraphModel(diagram);
         String graphModel;
+        int expandedBytes = 0;
 
         if (nested != null) {
             graphModel = StrictXml.serialize(nested);
@@ -93,7 +93,14 @@ public final class DrawioDocumentParser {
             }
 
             String content = data.trim();
-            String unpacked = content.startsWith("<") ? content : unpack(content);
+            String unpacked;
+            if (content.startsWith("<")) {
+                unpacked = content;
+            } else {
+                ExpandedPage expanded = unpack(content, budget.remainingBytes());
+                unpacked = expanded.graphModelXml;
+                expandedBytes = expanded.inflatedBytes;
+            }
             Element model = StrictXml.parse(unpacked).getDocumentElement();
             if (!"mxGraphModel".equals(model.getTagName())) {
                 throw formatError(DiagramFormatException.Reason.INVALID_DIAGRAM,
@@ -101,6 +108,8 @@ public final class DrawioDocumentParser {
             }
             graphModel = StrictXml.serialize(model);
         }
+
+        budget.charge(expandedBytes, graphModel.length());
 
         String name = diagram.getAttribute("name");
         if (name.isEmpty()) {
@@ -124,7 +133,8 @@ public final class DrawioDocumentParser {
         return found;
     }
 
-    private String unpack(String compressed) throws DiagramFormatException {
+    private ExpandedPage unpack(String compressed, int remainingBytes)
+            throws DiagramFormatException {
         if (compressed.length() > MAX_SOURCE_CHARACTERS) {
             throw formatError(DiagramFormatException.Reason.LIMIT_EXCEEDED,
                     "The compressed diagram exceeds the input limit");
@@ -137,26 +147,17 @@ public final class DrawioDocumentParser {
                     "Invalid Base64 data in draw.io page", exception);
         }
 
-        byte[] expanded = inflate(zipped);
-        String urlEncoded = decodeUtf8(expanded);
-
-        try {
-            String xml = URLDecoder.decode(urlEncoded, StandardCharsets.UTF_8.name());
-            if (xml.length() > MAX_SOURCE_CHARACTERS) {
-                throw formatError(DiagramFormatException.Reason.LIMIT_EXCEEDED,
-                        "The uncompressed diagram exceeds the input limit");
-            }
-            return xml;
-        } catch (IllegalArgumentException exception) {
-            throw new DiagramFormatException(DiagramFormatException.Reason.INVALID_COMPRESSION,
-                    "The compressed page has invalid URL encoding", exception);
-        } catch (IOException exception) {
-            throw new DiagramFormatException(DiagramFormatException.Reason.INVALID_COMPRESSION,
-                    "Cannot decode compressed draw.io page", exception);
+        byte[] expanded = inflate(zipped, remainingBytes);
+        String xml = percentDecoder.decode(expanded);
+        if (xml.length() > MAX_SOURCE_CHARACTERS) {
+            throw formatError(DiagramFormatException.Reason.LIMIT_EXCEEDED,
+                    "The uncompressed diagram exceeds the input limit");
         }
+        return new ExpandedPage(xml, expanded.length);
     }
 
-    private byte[] inflate(byte[] compressed) throws DiagramFormatException {
+    private byte[] inflate(byte[] compressed, int remainingBytes)
+            throws DiagramFormatException {
         Inflater inflater = new Inflater(true);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
@@ -169,7 +170,7 @@ public final class DrawioDocumentParser {
                     throw formatError(DiagramFormatException.Reason.INVALID_COMPRESSION,
                             "Compressed draw.io page is incomplete or invalid");
                 }
-                if (output.size() > MAX_UNPACKED_BYTES - count) {
+                if (output.size() > remainingBytes - count) {
                     throw formatError(DiagramFormatException.Reason.LIMIT_EXCEEDED,
                             "Expanded draw.io page exceeds the output limit");
                 }
@@ -184,21 +185,18 @@ public final class DrawioDocumentParser {
         }
     }
 
-    private String decodeUtf8(byte[] bytes) throws DiagramFormatException {
-        try {
-            return StandardCharsets.UTF_8.newDecoder()
-                    .onMalformedInput(CodingErrorAction.REPORT)
-                    .onUnmappableCharacter(CodingErrorAction.REPORT)
-                    .decode(ByteBuffer.wrap(bytes))
-                    .toString();
-        } catch (CharacterCodingException exception) {
-            throw new DiagramFormatException(DiagramFormatException.Reason.INVALID_COMPRESSION,
-                    "Compressed page contains invalid UTF-8", exception);
-        }
-    }
-
     private DiagramFormatException formatError(DiagramFormatException.Reason reason,
                                                String message) {
         return new DiagramFormatException(reason, message);
+    }
+
+    private static final class ExpandedPage {
+        private final String graphModelXml;
+        private final int inflatedBytes;
+
+        private ExpandedPage(String graphModelXml, int inflatedBytes) {
+            this.graphModelXml = graphModelXml;
+            this.inflatedBytes = inflatedBytes;
+        }
     }
 }

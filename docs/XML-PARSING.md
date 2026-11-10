@@ -36,13 +36,13 @@ graph model/layout renderer (#9), but **does not render diagrams**.
 ## Default security limits
 
 - Input XML: at most 16 MiB of Java `char`s.
-- Inflated URL-encoded payload: at most 16 MiB of bytes.
+- **Cumulative** inflated/retained output for all pages: at most 16 MiB, charged against a single document budget. Each page consumes the larger of its inflated byte count and its normalized XML character count; no fresh 16-MiB allowance per page.
 - XML depth: at most 128 nested elements.
 - XML elements: at most 100,000 per parsed XML document.
 - Pages per `mxfile`: at most 100.
 - Base64: strict decoder; no silent acceptance of invalid characters.
 - Deflate: fail on incomplete/corrupt streams or no forward progress.
-- UTF-8: reject malformed/unmappable byte sequences.
+- UTF-8: reject malformed/unmappable byte sequences both before and **after** decoding `%XX` URL escapes. Do not use the replacement-character behavior of `URLDecoder`.
 - XML: disable DTD/DOCTYPE, external entities, XInclude and external
   DTD/stylesheet resolution. Validate element depth/count through a
   streaming SAX pass *before* constructing a DOM document.
@@ -74,7 +74,7 @@ uncompressed mxfile pages, page selection, duplicate names,
 malformed XML, unknown roots, invalid compressed streams,
 DOCTYPE/external entities, deep XML structures, the 100-page
 limit, and a high-compression-ratio input that would expand
-past the 16 MiB cap.
+past the 16 MiB cap, a multi-page expansion bomb that exceeds the cumulative budget, and malformed UTF-8 carried inside percent-encoded payload bytes.
 
 The older parser in Space Harvester's `DrawioDiagramRenderer`
 was reviewed for compatibility. Unlike that implementation,
