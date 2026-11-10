@@ -1,6 +1,11 @@
 package com.aresstack.drawio.graal;
 
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
@@ -95,6 +100,50 @@ class GraalJsRuntimeTest {
             assertTrue(result.getErrorMessage().contains("timed out"));
             assertThrows(IllegalStateException.class,
                     () -> runtime.execute("next.js", "true", APPROVED_HOST));
+        }
+    }
+
+    @Test
+    void returnsFromTimeoutEvenWhenHostCallbackIgnoresInterrupts() throws Exception {
+        CountDownLatch callbackEntered = new CountDownLatch(1);
+        CountDownLatch releaseCallback = new CountDownLatch(1);
+
+        DrawioHost blockingHost = new DrawioHost(resourceId -> {
+            callbackEntered.countDown();
+            awaitReleaseIgnoringInterrupts(releaseCallback);
+            return "released";
+        });
+
+        GraalJsRuntime runtime = new GraalJsRuntime(Duration.ofSeconds(3));
+        ExecutorService caller = Executors.newSingleThreadExecutor();
+        Future<ScriptExecutionResult> result = caller.submit(() ->
+                runtime.execute("blocked.js", "drawioHost.loadResource('blocked')", blockingHost));
+
+        try {
+            assertTrue(callbackEntered.await(3, TimeUnit.SECONDS),
+                    "The host callback must enter before its execution times out");
+            ScriptExecutionResult execution = result.get(5, TimeUnit.SECONDS);
+            assertFalse(execution.isSuccessful());
+            assertTrue(execution.getErrorMessage().contains("timed out"));
+        } finally {
+            releaseCallback.countDown();
+            runtime.close();
+            caller.shutdownNow();
+        }
+    }
+
+    private void awaitReleaseIgnoringInterrupts(CountDownLatch releaseCallback) {
+        boolean interrupted = false;
+        while (true) {
+            try {
+                releaseCallback.await();
+                break;
+            } catch (InterruptedException exception) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
         }
     }
 

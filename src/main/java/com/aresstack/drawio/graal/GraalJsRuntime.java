@@ -163,17 +163,27 @@ public final class GraalJsRuntime implements AutoCloseable {
     }
 
     private void stopActiveExecution() {
-        if (closed.compareAndSet(false, true)) {
-            Context context = activeContext.get();
-            if (context != null) {
-                try {
-                    context.close(true);
-                } catch (IllegalStateException ignored) {
-                    // Keep cancellation best-effort when the guest is already closed.
-                }
-            }
-            executor.shutdownNow();
+        if (!closed.compareAndSet(false, true)) {
+            return;
         }
+
+        executor.shutdownNow();
+        Context context = activeContext.get();
+        if (context != null) {
+            cancelContextWithoutBlockingCaller(context);
+        }
+    }
+
+    private void cancelContextWithoutBlockingCaller(Context context) {
+        Thread cancellation = new Thread(() -> {
+            try {
+                context.close(true);
+            } catch (IllegalStateException ignored) {
+                // Ignore an already closed context during cancellation.
+            }
+        }, "drawio-graaljs-context-cancel");
+        cancellation.setDaemon(true);
+        cancellation.start();
     }
 
     @Override
