@@ -37,6 +37,10 @@ async function buildBundle(sources, outputPath) {
     ].join('\n');
 
     const bundle = banner + '\n' + verifiedSources.join('\n;\n') + '\n';
+    await writeOrVerify(bundle, outputPath);
+}
+
+async function writeOrVerify(bundle, outputPath) {
     const bundlePath = join(projectRoot, outputPath);
 
     if (process.argv.includes('--verify')) {
@@ -51,7 +55,78 @@ async function buildBundle(sources, outputPath) {
     }
 }
 
+// Matches one stencil set entry of the original js/stencils.min.js, which
+// stores each set as a single line: f['<set>.xml'] = '<base64>';
+const STENCIL_ENTRY = /^f\['([A-Za-z0-9_\-\/]+\.xml)'\] = '[A-Za-z0-9+\/=]*';$/;
+
+/*
+ * Copy a subset of the original stencils.min.js: its preamble, the selected
+ * f['...'] entry lines and its original decoder tail, all verbatim and in the
+ * original order. Nothing inside the copied lines is rewritten.
+ */
+async function buildStencilBundle(stencils) {
+    const source = stencils.source;
+    const sourceText = normalizeLineEndings(
+        await readFile(join(projectRoot, source.path), 'utf8')
+    );
+    verifySourceHash(source.path, sourceText, source.sha256NormalizedLf);
+
+    const lines = sourceText.split('\n');
+    let first = -1;
+    let last = -1;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith("f['")) {
+            if (!STENCIL_ENTRY.test(lines[i])) {
+                throw new Error('Unexpected stencil entry format at line ' + (i + 1));
+            }
+            if (first < 0) {
+                first = i;
+            } else if (last !== i - 1) {
+                throw new Error('Stencil entries are not contiguous at line ' + (i + 1));
+            }
+            last = i;
+        }
+    }
+    if (first < 0) {
+        throw new Error('No stencil entries found in ' + source.path);
+    }
+
+    const wanted = new Set(stencils.include);
+    if (wanted.size !== stencils.include.length) {
+        throw new Error('Duplicate stencil set in manifest include list');
+    }
+    const selected = [];
+    for (let i = first; i <= last; i++) {
+        const name = STENCIL_ENTRY.exec(lines[i])[1];
+        if (wanted.delete(name)) {
+            selected.push(lines[i]);
+        }
+    }
+    if (wanted.size > 0) {
+        throw new Error('Stencil sets not found upstream: ' + Array.from(wanted).join(', '));
+    }
+
+    const banner = [
+        '/*',
+        ' * Offline subset of the original draw.io js/stencils.min.js.',
+        ' * Upstream commit: ' + manifest.upstreamCommit,
+        ' * Included stencil sets: ' + stencils.include.join(', '),
+        ' * Preamble, entries and decoder are copied verbatim by js-bundle/build.mjs.',
+        ' * Apache-2.0 plus upstream stencil restrictions; see docs/STENCILS.md.',
+        ' */'
+    ].join('\n');
+
+    const bundle = banner + '\n'
+        + lines.slice(0, first).join('\n') + '\n'
+        + selected.join('\n') + '\n'
+        + lines.slice(last + 1).join('\n');
+    await writeOrVerify(bundle, stencils.bundle);
+}
+
 await buildBundle(manifest.sources, manifest.bundle);
 if (manifest.modelSources && manifest.modelBundle) {
     await buildBundle(manifest.modelSources, manifest.modelBundle);
+}
+if (manifest.stencils) {
+    await buildStencilBundle(manifest.stencils);
 }

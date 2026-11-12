@@ -1,2 +1,3 @@
 src/main/resources/drawio/**/*.js text eol=lf
 js-bundle/*.mjs text eol=lf
+js-bundle/upstream/*.js text eol=lf linguist-vendored -diff

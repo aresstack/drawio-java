@@ -77,5 +77,19 @@
                              "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxGraphModel.js"
                          }
                      ],
-    "modelBundle":  "src/main/resources/drawio/drawio-model.js"
+    "modelBundle":  "src/main/resources/drawio/drawio-model.js",
+    "stencils":  {
+                     "source":  {
+                                    "path":  "js-bundle/upstream/stencils.min.js",
+                                    "upstreamPath":  "src/main/webapp/js/stencils.min.js",
+                                    "sha256NormalizedLf":  "b6acdcf854ae27368cbc3108564d93de1eec91090126d2ebca9a69664bbecb3d"
+                                },
+                     "bundle":  "src/main/resources/drawio/drawio-stencils.js",
+                     "include":  [
+                                     "arrows.xml",
+                                     "basic.xml",
+                                     "bpmn.xml",
+                                     "flowchart.xml"
+                                 ]
+                 }
 }

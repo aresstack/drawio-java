@@ -18,6 +18,7 @@ public final class DrawioHost {
     private final ScriptResourceProvider resources;
     private final DrawioCanvasBridge canvas;
     private final TextMetrics textMetrics;
+    private final DrawioBinaryCodec binaryCodec;
 
     public DrawioHost(ScriptResourceProvider resources) {
         this(resources, null, null);
@@ -29,9 +30,27 @@ public final class DrawioHost {
 
     public DrawioHost(ScriptResourceProvider resources, DrawioCanvasBridge canvas,
                       TextMetrics textMetrics) {
+        this(resources, canvas, textMetrics, new DrawioBinaryCodec());
+    }
+
+    /**
+     * Create a host with an explicit binary codec budget for offline stencils.
+     */
+    public DrawioHost(ScriptResourceProvider resources, DrawioCanvasBridge canvas,
+                      TextMetrics textMetrics, DrawioBinaryCodec binaryCodec) {
         this.resources = Objects.requireNonNull(resources, "resources");
         this.canvas = canvas;
         this.textMetrics = textMetrics;
+        this.binaryCodec = Objects.requireNonNull(binaryCodec, "binaryCodec");
+    }
+
+    /**
+     * Return the budgeted base64, raw-inflate and UTF-8 capability used by
+     * {@code drawio-stencil-runtime.js}.
+     */
+    @HostAccess.Export
+    public DrawioBinaryCodec binaryCodec() {
+        return binaryCodec;
     }
 
     @HostAccess.Export
