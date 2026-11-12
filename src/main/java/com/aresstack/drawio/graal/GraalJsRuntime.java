@@ -3,6 +3,9 @@ package com.aresstack.drawio.graal;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -40,7 +43,6 @@ public final class GraalJsRuntime implements AutoCloseable {
 
     private final long timeoutMillis;
     private final ExecutorService executor;
-    private final ClasspathScriptLoader scriptLoader = new ClasspathScriptLoader();
     private final AtomicReference<Context> activeContext = new AtomicReference<Context>();
     private final AtomicBoolean closed = new AtomicBoolean();
 
@@ -56,20 +58,41 @@ public final class GraalJsRuntime implements AutoCloseable {
     public ScriptExecutionResult execute(String sourceName, String script, DrawioHost host) {
         Objects.requireNonNull(sourceName, "sourceName");
         Objects.requireNonNull(script, "script");
+        return execute(Collections.singletonList(ScriptSource.inline(sourceName, script)), host);
+    }
+
+    /**
+     * Evaluate several trusted scripts, in order, inside one fresh context.
+     *
+     * <p>Use this to load pinned bundles followed by a small entry script.
+     * The result is the value of the last script. Errors name the failing
+     * source. The context is closed afterwards, as with {@link #execute}.
+     */
+    public ScriptExecutionResult execute(List<ScriptSource> sources, DrawioHost host) {
+        Objects.requireNonNull(sources, "sources");
         Objects.requireNonNull(host, "host");
         ensureOpen();
-        if (script.length() > MAX_SOURCE_CHARACTERS) {
+        if (sources.isEmpty()) {
+            throw new IllegalArgumentException("sources must not be empty");
+        }
+        final List<ScriptSource> ordered = new ArrayList<ScriptSource>(sources);
+        long totalCharacters = 0;
+        for (ScriptSource source : ordered) {
+            Objects.requireNonNull(source, "source");
+            totalCharacters += source.getText().length();
+        }
+        if (totalCharacters > MAX_SOURCE_CHARACTERS) {
             return ScriptExecutionResult.failure("JavaScript source exceeds size limit");
         }
 
         Future<ScriptExecutionResult> evaluation = executor.submit(
-                () -> evaluateInNewContext(sourceName, script, host));
+                () -> evaluateInNewContext(ordered, host));
         return awaitResult(evaluation);
     }
 
     public ScriptExecutionResult executeBundled(String resourceName, DrawioHost host) {
         ensureOpen();
-        return execute(resourceName, scriptLoader.load(resourceName), host);
+        return execute(Collections.singletonList(ScriptSource.bundled(resourceName)), host);
     }
 
     private ScriptExecutionResult awaitResult(Future<ScriptExecutionResult> evaluation) {
@@ -89,7 +112,7 @@ public final class GraalJsRuntime implements AutoCloseable {
     }
 
     private ScriptExecutionResult evaluateInNewContext(
-            String sourceName, String script, DrawioHost host) {
+            List<ScriptSource> sources, DrawioHost host) {
         if (closed.get()) {
             return ScriptExecutionResult.failure("JavaScript runtime has been closed");
         }
@@ -102,7 +125,11 @@ public final class GraalJsRuntime implements AutoCloseable {
                 return ScriptExecutionResult.failure("JavaScript runtime has been closed");
             }
             context.getBindings(LANGUAGE).putMember("drawioHost", host);
-            Value result = context.eval(Source.newBuilder(LANGUAGE, script, sourceName).build());
+            Value result = null;
+            for (ScriptSource source : sources) {
+                result = context.eval(Source.newBuilder(
+                        LANGUAGE, source.getText(), source.getName()).build());
+            }
             return convertResult(result);
         } catch (PolyglotException exception) {
             return ScriptExecutionResult.failure(formatGuestError(exception));
@@ -151,7 +178,11 @@ public final class GraalJsRuntime implements AutoCloseable {
         }
         String message = exception.getMessage();
         if (message == null || message.trim().isEmpty()) {
-            return "JavaScript execution failed";
+            message = "JavaScript execution failed";
+        }
+        org.graalvm.polyglot.SourceSection location = exception.getSourceLocation();
+        if (location != null && location.getSource() != null) {
+            message = location.getSource().getName() + ":" + location.getStartLine() + ": " + message;
         }
         return message.substring(0, Math.min(message.length(), 512));
     }

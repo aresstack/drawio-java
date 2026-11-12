@@ -155,4 +155,21 @@ class GraalJsRuntimeTest {
         assertThrows(IllegalStateException.class,
                 () -> runtime.execute("late.js", "1 + 1", APPROVED_HOST));
     }
+
+    @Test
+    void evaluatesSeveralSourcesInOneContextAndNamesTheFailingSource() {
+        try (GraalJsRuntime runtime = new GraalJsRuntime(Duration.ofSeconds(15))) {
+            ScriptExecutionResult shared = runtime.execute(java.util.Arrays.asList(
+                    ScriptSource.inline("first.js", "var shared = 20;"),
+                    ScriptSource.inline("second.js", "shared + 22")), APPROVED_HOST);
+            ScriptExecutionResult failing = runtime.execute(java.util.Arrays.asList(
+                    ScriptSource.inline("ok.js", "var a = 1;"),
+                    ScriptSource.inline("broken.js", "\nundefinedFunction();")), APPROVED_HOST);
+
+            assertTrue(shared.isSuccessful(), shared.getErrorMessage());
+            assertEquals("42", shared.getOutput());
+            assertFalse(failing.isSuccessful());
+            assertTrue(failing.getErrorMessage().startsWith("broken.js:2:"), failing.getErrorMessage());
+        }
+    }
 }
