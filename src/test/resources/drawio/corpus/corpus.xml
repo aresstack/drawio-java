@@ -123,6 +123,7 @@
   </fixture>
   <fixture id="labels-unicode" file="labels-unicode.drawio" sha256="c5f546c704be15358290dfdaf981d4fa9cd1c7edcfbed3d9f491030d45f45194" features="labels html-labels unicode umlauts cjk wrap vertical-text font-styles xml-escaping" render="match" issue="#9/#10">
     <note>Text-heavy: browser and Java2D fonts differ, so the score threshold is lower; assert text through SVG structure.</note>
+    <note>Plain-text wrapped labels are escaped like Graph.js getLabelValue (#9) and painted with their HTML runs, bold/italic and fontFamily through the shared LabelLayout (#10). Fonts missing on the host (CJK, Courier) fall back to SansSerif.</note>
     <page index="0" name="Beschriftungen" vertices="14" edges="0" minScore="0.75" png="reference/labels-unicode.png" pngSha256="61825a4e80fbe5f57882302db47fa0c5714b08732770ec25f1dc1049a1935767" svg="reference/labels-unicode.svg" svgSha256="5f4b02af2437b922bcd6122d782c93ee63078fc2d562bec624049cc7f0befc8a">
       <label cell="umlaut" text="Grüße aus Köln – ÄÖÜ äöü ß"/>
       <label cell="cjk" text="日本語 / 中文 / 한국어"/>
