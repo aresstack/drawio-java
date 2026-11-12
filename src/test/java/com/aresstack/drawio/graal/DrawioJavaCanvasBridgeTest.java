@@ -126,10 +126,14 @@ class DrawioJavaCanvasBridgeTest {
 
             ScriptExecutionResult result = executeDrawing(fixture, drawing);
 
+            // Upstream semantics (mxAbstractCanvas2D.scale and
+            // mxSvgCanvas2D.getCurrentStrokeWidth): the state width becomes 4
+            // and the painted width is state width * scale = 8.
             assertTrue(result.isSuccessful(), result.getErrorMessage());
             assertEquals("4", result.getOutput());
             assertEquals(Color.RED.getRGB(), fixture.image.getRGB(20, 60));
-            assertEquals(0, fixture.image.getRGB(20, 56));
+            assertEquals(Color.RED.getRGB(), fixture.image.getRGB(20, 57));
+            assertEquals(0, fixture.image.getRGB(20, 54));
         }
     }
 
@@ -147,14 +151,14 @@ class DrawioJavaCanvasBridgeTest {
     }
 
     @Test
-    void rejectsShadowsInsteadOfSilentlyRenderingWrongDiagram() {
+    void reportsSketchFillStylesInsteadOfSilentlyRenderingWrongDiagram() {
         try (GraphicsFixture fixture = new GraphicsFixture()) {
             ScriptExecutionResult result = executeDrawing(fixture,
-                    "var canvas = new DrawioJavaCanvas(); canvas.setShadow(true);");
+                    "var canvas = new DrawioJavaCanvas(); canvas.setFillStyle('hachure');");
 
             assertFalse(result.isSuccessful());
-            assertTrue(result.getErrorMessage().contains("Shadow")
-                    || result.getErrorMessage().contains("shadow"));
+            assertTrue(result.getErrorMessage().contains("canvas:fillStyle:hachure"),
+                    result.getErrorMessage());
         }
     }
 

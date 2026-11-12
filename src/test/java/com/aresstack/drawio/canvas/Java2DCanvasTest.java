@@ -309,12 +309,11 @@ class Java2DCanvasTest {
     }
 
     @Test
-    void reportsUnsupportedTextAndImageRendering() {
+    void refusesExternalImageReferences() {
         try (ImageFixture fixture = new ImageFixture()) {
-            assertThrows(UnsupportedOperationException.class,
-                    () -> fixture.canvas.text(0, 0, 10, 10, "hello"));
-            assertThrows(UnsupportedOperationException.class,
-                    () -> fixture.canvas.image(0, 0, 10, 10, "source"));
+            assertThrows(IllegalArgumentException.class,
+                    () -> fixture.canvas.image(0, 0, 10, 10, "https://example.invalid/a.png",
+                            true, false, false));
         }
     }
 
