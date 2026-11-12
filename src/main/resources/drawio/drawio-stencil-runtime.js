@@ -83,9 +83,12 @@
 
     if (typeof scope.pako === 'undefined') {
         scope.pako = Object.freeze({
-            inflateRaw: function (data) {
-                return binaryStringToBytes(
-                    binaryCodec().inflateRaw(bytesToBinaryString(toBytes(data))));
+            inflateRaw: function (data, options) {
+                var inflated = binaryCodec().inflateRaw(bytesToBinaryString(toBytes(data)));
+                // pako's {to: 'string'} decodes the output as UTF-8.
+                return (options != null && options.to === 'string')
+                    ? binaryCodec().decodeUtf8(inflated)
+                    : binaryStringToBytes(inflated);
             }
         });
     }
@@ -371,6 +374,83 @@
             }
         }
     };
+
+    // ---------------------------------------------------------------------
+    // Inline stencils: shape=stencil(<data>) (js/grapheditor/Graph.js)
+    // ---------------------------------------------------------------------
+
+    var MAX_INLINE_STENCILS = 256;
+    var inlineStencils = Object.create(null);
+    var inlineStencilCount = 0;
+
+    /**
+     * Port of Graph.decompress(data) without the zlib variant: base64, raw
+     * DEFLATE, URI decoding, then mxUtils.zapGremlins, all through the
+     * budgeted host codec.
+     */
+    DrawioStencils.decompress = function (data) {
+        if (data == null || data.length == 0) {
+            return data;
+        }
+        var codec = binaryCodec();
+        var inflated = codec.decodeUtf8(codec.inflateRaw(codec.decodeBase64(String(data))));
+        return mxUtils.zapGremlins(decodeURIComponent(inflated));
+    };
+
+    /**
+     * Parse an inline stencil definition into an original mxStencil. Headless,
+     * mxUtils.parseXml is replaced by the host's strict XML parser (no DTDs,
+     * no entities, size and depth limits) and the drawio-xml-dom.js nodes.
+     */
+    DrawioStencils.parseInline = function (data) {
+        var cached = inlineStencils[data];
+        if (cached != null) {
+            return cached;
+        }
+        if (typeof DrawioXml === 'undefined' || DrawioXml == null) {
+            throw new Error('Inline stencils need drawio-xml-dom.js');
+        }
+        var doc = DrawioXml.fromJson(drawioHost.parseXml(DrawioStencils.decompress(data)));
+        if (doc.documentElement == null || doc.documentElement.nodeName != 'shape') {
+            throw new Error('Inline stencil is not a <shape> definition');
+        }
+        var stencil = new mxStencil(doc.documentElement);
+        if (inlineStencilCount < MAX_INLINE_STENCILS) {
+            inlineStencils[data] = stencil;
+            inlineStencilCount++;
+        }
+        return stencil;
+    };
+
+    if (typeof mxCellRenderer !== 'undefined') {
+        // Graph.js: "Adds custom stencils defined via shape=stencil(value)
+        // style". Upstream logs decoding errors to the console and falls back
+        // to the default shape; headless, the error is reported as
+        // stencil:inline and the cell is not painted.
+        var mxCellRendererCreateShape = mxCellRenderer.prototype.createShape;
+        mxCellRenderer.prototype.createShape = function (state) {
+            if (state.style != null) {
+                var shape = mxUtils.getValue(state.style, mxConstants.STYLE_SHAPE, null);
+
+                if (shape != null && typeof shape === 'string' && shape.substring(0, 8) == 'stencil(') {
+                    try {
+                        return new mxShape(DrawioStencils.parseInline(shape.substring(8, shape.length - 1)));
+                    } catch (e) {
+                        var id = (state.cell != null) ? state.cell.id : '?';
+                        var detail = 'cell ' + id + ': ' + ((e != null && e.message != null) ? e.message : e);
+                        DrawioStencils.report(null, null, 'inline:' + id, 'inline-stencil-invalid');
+                        if (typeof DrawioHeadless !== 'undefined' && DrawioHeadless != null
+                                && typeof DrawioHeadless.report === 'function') {
+                            DrawioHeadless.report('stencil:inline', detail);
+                        }
+                        return null;
+                    }
+                }
+            }
+
+            return mxCellRendererCreateShape.apply(this, arguments);
+        };
+    }
 
     scope.DrawioStencils = DrawioStencils;
 })(this);
