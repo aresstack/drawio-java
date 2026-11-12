@@ -1,26 +1,24 @@
 package com.aresstack.drawio.graal;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotException;
-import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
 /**
@@ -34,25 +32,36 @@ public final class GraalJsRuntime implements AutoCloseable {
     private static final String LANGUAGE = "js";
     private static final int MAX_SOURCE_CHARACTERS = 32 * 1024 * 1024;
     private static final int MAX_RESULT_CHARACTERS = 4 * 1024 * 1024;
-    private static final OutputStream DISCARD_OUTPUT = new OutputStream() {
-        @Override
-        public void write(int value) throws IOException {
-            // Discard guest output to avoid exposing host streams.
-        }
-    };
+    private static final String SHARED_ENGINE_PROPERTY = "drawio.graaljs.sharedEngine";
+    private static final long IDLE_THREAD_MILLIS = 5000;
 
     private final long timeoutMillis;
-    private final ExecutorService executor;
+    private final Engine engine;
+    private final ThreadPoolExecutor executor;
     private final AtomicReference<Context> activeContext = new AtomicReference<Context>();
     private final AtomicBoolean closed = new AtomicBoolean();
 
+    /**
+     * Create a runtime whose contexts use the process-wide shared engine.
+     * Set the system property {@code drawio.graaljs.sharedEngine=false} to
+     * give every runtime its own engine instead (slower; for diagnostics).
+     */
     public GraalJsRuntime(Duration timeout) {
+        this(timeout, !"false".equalsIgnoreCase(System.getProperty(SHARED_ENGINE_PROPERTY)));
+    }
+
+    GraalJsRuntime(Duration timeout, boolean useSharedEngine) {
         Objects.requireNonNull(timeout, "timeout");
         if (timeout.isNegative() || timeout.isZero() || timeout.toMillis() < 1) {
             throw new IllegalArgumentException("timeout must be at least one millisecond");
         }
         timeoutMillis = timeout.toMillis();
-        executor = Executors.newSingleThreadExecutor(new DaemonThreadFactory());
+        engine = useSharedEngine ? SharedEngine.get() : null;
+        // One worker thread that ends when idle, so a runtime that is never
+        // closed does not pin a thread for the rest of the JVM's life.
+        executor = new ThreadPoolExecutor(1, 1, IDLE_THREAD_MILLIS, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(), new DaemonThreadFactory());
+        executor.allowCoreThreadTimeOut(true);
     }
 
     public ScriptExecutionResult execute(String sourceName, String script, DrawioHost host) {
@@ -127,8 +136,7 @@ public final class GraalJsRuntime implements AutoCloseable {
             context.getBindings(LANGUAGE).putMember("drawioHost", host);
             Value result = null;
             for (ScriptSource source : sources) {
-                result = context.eval(Source.newBuilder(
-                        LANGUAGE, source.getText(), source.getName()).build());
+                result = context.eval(source.polyglotSource());
             }
             return convertResult(result);
         } catch (PolyglotException exception) {
@@ -149,16 +157,18 @@ public final class GraalJsRuntime implements AutoCloseable {
     }
 
     private Context createRestrictedContext() {
-        return Context.newBuilder(LANGUAGE)
+        Context.Builder builder = Context.newBuilder(LANGUAGE)
                 .allowHostAccess(HostAccess.EXPLICIT)
                 .allowHostClassLookup(className -> false)
                 .allowIO(false)
                 .allowCreateThread(false)
                 .allowNativeAccess(false)
-                .out(DISCARD_OUTPUT)
-                .err(DISCARD_OUTPUT)
-                .option("engine.WarnInterpreterOnly", "false")
-                .build();
+                .out(SharedEngine.DISCARD_OUTPUT)
+                .err(SharedEngine.DISCARD_OUTPUT);
+        if (engine != null) {
+            return builder.engine(engine).build();
+        }
+        return builder.option("engine.WarnInterpreterOnly", "false").build();
     }
 
     private ScriptExecutionResult convertResult(Value value) {

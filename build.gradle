@@ -44,3 +44,15 @@ tasks.named('jar', Jar) {
                 'Implementation-Version': project.version)
     }
 }
+
+tasks.register('benchmark', JavaExec) {
+    description = 'Measure GraalJS context cost for a render-shaped workload (#14).'
+    group = 'verification'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.aresstack.drawio.graal.GraalJsBenchmark'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+    maxHeapSize = '1g'
+    systemProperties System.getProperties().findAll { it.key.toString().startsWith('bench.') }
+}
