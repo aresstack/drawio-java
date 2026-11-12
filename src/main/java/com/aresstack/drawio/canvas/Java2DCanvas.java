@@ -536,6 +536,9 @@ public final class Java2DCanvas implements DrawioCanvas {
                 (state.fontStyle & FONT_BOLD) != 0, (state.fontStyle & FONT_ITALIC) != 0)
                 .withUnderline((state.fontStyle & FONT_UNDERLINE) != 0)
                 .withStrikeThrough((state.fontStyle & FONT_STRIKETHROUGH) != 0);
+        // RunStyle bounds the size like the headless label measurement does,
+        // so painting stays consistent with the bounds the graph computed.
+        size = base.getSize();
         // The same layout measures labels in the headless view (DrawioHost.measureLabel),
         // so painted lines match the bounds the graph computed. Plain text never wraps,
         // as in mxSvgCanvas2D.plainText.
@@ -603,21 +606,34 @@ public final class Java2DCanvas implements DrawioCanvas {
                 } else {
                     baseline = lineTop + size - 1;
                 }
-                double left = alignedLeft(x, line.getWidth(), align);
+                // Position runs with the advances of the fonts they are painted
+                // with (fractional metrics of this context); the layout only
+                // decides the line breaks.
                 List<TextRun> runs = line.getRuns();
+                Font[] fonts = new Font[runs.size()];
+                double[] advances = new double[runs.size()];
+                double lineWidth = 0;
+                for (int index = 0; index < runs.size(); index++) {
+                    TextRun run = runs.get(index);
+                    fonts[index] = CanvasFonts.resolve(run.getStyle().getFamily(),
+                            fontStyleBits(run.getStyle()), run.getStyle().getSize());
+                    advances[index] = run.getText().isEmpty() ? 0
+                            : fonts[index].getStringBounds(run.getText(),
+                                    textGraphics.getFontRenderContext()).getWidth();
+                    lineWidth += advances[index];
+                }
+                double left = alignedLeft(x, lineWidth, align);
                 for (int index = 0; index < runs.size(); index++) {
                     TextRun run = runs.get(index);
                     if (!run.getText().trim().isEmpty()) {
-                        RunStyle style = run.getStyle();
-                        Color color = runColor(style.getColor());
+                        Color color = runColor(run.getStyle().getColor());
                         if (color != null) {
                             textGraphics.setPaint(color);
-                            textGraphics.setFont(CanvasFonts.resolve(style.getFamily(),
-                                    fontStyleBits(style), style.getSize()));
+                            textGraphics.setFont(fonts[index]);
                             textGraphics.drawString(run.getText(), (float) left, (float) baseline);
                         }
                     }
-                    left += line.getRunWidth(index);
+                    left += advances[index];
                 }
                 lineTop += lineHeight;
             }

@@ -132,6 +132,25 @@ class Java2DCanvasExtensionsTest {
     }
 
     @Test
+    void alignsRunsWithTheAdvancesOfThePaintingFont() {
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 60; i++) {
+            text.append('i');
+        }
+        try (Fixture fixture = new Fixture(400, 40)) {
+            fixture.canvas.setFontColor("#000000");
+            fixture.canvas.setFontSize(12);
+            fixture.canvas.text(300, 20, 0, 0, "<b>" + text + "</b>" + text, "right", "middle",
+                    false, "html", null, false, 0, null);
+
+            int[] box = fixture.inkBounds();
+            // Right-aligned at x=300: neither past the anchor nor short of it.
+            assertTrue(box[2] <= 301, "ink ends at " + box[2]);
+            assertTrue(box[2] >= 296, "ink ends at " + box[2]);
+        }
+    }
+
+    @Test
     void rejectsTruncatedImagesAtThePolicyBoundary() throws IOException {
         String source = twoColorImage();
         byte[] bytes = Base64.getDecoder().decode(source.substring(source.indexOf(',') + 1));

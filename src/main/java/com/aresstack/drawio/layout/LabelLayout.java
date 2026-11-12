@@ -67,28 +67,55 @@ public final class LabelLayout {
 
     private static void wrap(List<TextRun> paragraph, RunStyle base, double wrapWidth,
                              TextMetrics metrics, List<Line> out) {
+        // A word may span several styled runs (<b>hel</b>lo): break only at
+        // spaces, as CSS word-wrap: normal does, never at a style change.
         List<TextRun> line = new ArrayList<TextRun>();
-        double lineWidth = 0;
+        double[] lineWidth = {0};
+        List<TextRun> word = new ArrayList<TextRun>();
         for (TextRun run : paragraph) {
             String text = run.getText();
             int start = 0;
             while (start < text.length()) {
                 int space = text.indexOf(' ', start);
                 int end = space < 0 ? text.length() : space + 1;
-                String word = text.substring(start, end);
-                double wordWidth = measure(word.trim(), run.getStyle(), metrics);
-                double advance = measure(word, run.getStyle(), metrics);
-                if (!line.isEmpty() && lineWidth + wordWidth > wrapWidth && out.size() < MAX_LINES) {
-                    out.add(Line.of(trimEnd(line), base, metrics));
-                    line = new ArrayList<TextRun>();
-                    lineWidth = 0;
+                word.add(new TextRun(text.substring(start, end), run.getStyle()));
+                if (space >= 0) {
+                    line = placeWord(word, line, lineWidth, base, wrapWidth, metrics, out);
+                    word.clear();
                 }
-                append(line, word, run.getStyle());
-                lineWidth += advance;
                 start = end;
             }
         }
+        line = placeWord(word, line, lineWidth, base, wrapWidth, metrics, out);
         out.add(Line.of(trimEnd(line), base, metrics));
+    }
+
+    private static List<TextRun> placeWord(List<TextRun> word, List<TextRun> line, double[] lineWidth,
+                                           RunStyle base, double wrapWidth, TextMetrics metrics,
+                                           List<Line> out) {
+        if (word.isEmpty()) {
+            return line;
+        }
+        double advance = 0;
+        double ink = 0;
+        for (int i = 0; i < word.size(); i++) {
+            TextRun fragment = word.get(i);
+            double width = measure(fragment.getText(), fragment.getStyle(), metrics);
+            ink = advance + (i == word.size() - 1
+                    ? measure(fragment.getText().trim(), fragment.getStyle(), metrics) : width);
+            advance += width;
+        }
+        List<TextRun> current = line;
+        if (!current.isEmpty() && lineWidth[0] + ink > wrapWidth && out.size() < MAX_LINES) {
+            out.add(Line.of(trimEnd(current), base, metrics));
+            current = new ArrayList<TextRun>();
+            lineWidth[0] = 0;
+        }
+        for (TextRun fragment : word) {
+            append(current, fragment.getText(), fragment.getStyle());
+        }
+        lineWidth[0] += advance;
+        return current;
     }
 
     private static void append(List<TextRun> line, String text, RunStyle style) {
