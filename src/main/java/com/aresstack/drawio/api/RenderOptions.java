@@ -24,6 +24,7 @@ public final class RenderOptions {
 
     private final PageSelector page;
     private final double scale;
+    private final int fitWidth;
     private final int padding;
     private final String background;
     private final UnsupportedFeaturePolicy unsupportedFeaturePolicy;
@@ -33,6 +34,7 @@ public final class RenderOptions {
     private RenderOptions(Builder builder) {
         this.page = builder.page;
         this.scale = builder.scale;
+        this.fitWidth = builder.fitWidth;
         this.padding = builder.padding;
         this.background = builder.background;
         this.unsupportedFeaturePolicy = builder.unsupportedFeaturePolicy;
@@ -52,6 +54,7 @@ public final class RenderOptions {
         Builder builder = new Builder()
                 .page(page)
                 .scale(scale)
+                .fitWidth(fitWidth)
                 .padding(padding)
                 .unsupportedFeaturePolicy(unsupportedFeaturePolicy)
                 .resourcePolicy(resourcePolicy)
@@ -66,6 +69,14 @@ public final class RenderOptions {
     /** Output scale; {@code 1.0} means one draw.io unit is one pixel. */
     public double getScale() {
         return scale;
+    }
+
+    /**
+     * Total output width in pixels the diagram is scaled to fit (padding
+     * included, aspect ratio kept), or {@code 0} to use {@link #getScale()}.
+     */
+    public int getFitWidth() {
+        return fitWidth;
     }
 
     /** Padding in output pixels around the diagram bounds. */
@@ -94,6 +105,7 @@ public final class RenderOptions {
 
         private PageSelector page = PageSelector.first();
         private double scale = 1.0;
+        private int fitWidth = 0;
         private int padding = 0;
         private String background;
         private UnsupportedFeaturePolicy unsupportedFeaturePolicy = UnsupportedFeaturePolicy.FAIL;
@@ -113,6 +125,20 @@ public final class RenderOptions {
                 throw new IllegalArgumentException("scale must be > 0 and <= " + MAX_SCALE);
             }
             this.scale = scale;
+            return this;
+        }
+
+        /**
+         * Scale the diagram so the whole output is this many pixels wide
+         * (padding included), keeping the aspect ratio; {@code 0} turns it
+         * off. Takes precedence over {@link #scale(double)}.
+         */
+        public Builder fitWidth(int width) {
+            if (width < 0 || width > RenderLimits.DEFAULT_MAX_OUTPUT_DIMENSION) {
+                throw new IllegalArgumentException("fitWidth must be between 0 and "
+                        + RenderLimits.DEFAULT_MAX_OUTPUT_DIMENSION);
+            }
+            this.fitWidth = width;
             return this;
         }
 
