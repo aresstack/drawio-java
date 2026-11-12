@@ -4,20 +4,40 @@ import java.util.Objects;
 
 import org.graalvm.polyglot.HostAccess;
 
+import com.aresstack.drawio.canvas.CanvasDiagnostics;
+import com.aresstack.drawio.canvas.DataUriImages;
 import com.aresstack.drawio.canvas.DrawioCanvas;
+import com.aresstack.drawio.canvas.ImageSourcePolicy;
 
 /**
  * Forward permitted Draw.io canvas commands to the Java drawing port.
  *
  * <p>Expose only commands explicitly implemented by the drawing port.
  * Keep Graphics2D and all other Java host objects invisible to scripts.
+ *
+ * <p>The bridge is the policy boundary between guest JavaScript and the
+ * canvas: image references are resolved through an {@link ImageSourcePolicy}
+ * (default: no images) and unsupported features are reported to
+ * {@link CanvasDiagnostics} (default: fail fast) instead of being painted
+ * as a silent substitute.
  */
 public final class DrawioCanvasBridge {
 
+    private static final int MAX_TEXT_ARGUMENT = 64;
+
     private final DrawioCanvas canvas;
+    private final ImageSourcePolicy images;
+    private final CanvasDiagnostics diagnostics;
 
     public DrawioCanvasBridge(DrawioCanvas canvas) {
+        this(canvas, ImageSourcePolicy.NONE, CanvasDiagnostics.STRICT);
+    }
+
+    public DrawioCanvasBridge(DrawioCanvas canvas, ImageSourcePolicy images,
+                              CanvasDiagnostics diagnostics) {
         this.canvas = Objects.requireNonNull(canvas, "canvas");
+        this.images = Objects.requireNonNull(images, "images");
+        this.diagnostics = Objects.requireNonNull(diagnostics, "diagnostics");
     }
 
     @HostAccess.Export
@@ -102,10 +122,71 @@ public final class DrawioCanvasBridge {
     }
 
     @HostAccess.Export
+    public void setFixDash(boolean fixDash) {
+        canvas.setFixDash(fixDash);
+    }
+
+    @HostAccess.Export
+    public void setGradient(String color1, String color2, double x, double y,
+                            double width, double height, String direction,
+                            double alpha1, double alpha2) {
+        canvas.setGradient(color1, color2, x, y, width, height, direction, alpha1, alpha2);
+    }
+
+    @HostAccess.Export
     public void setShadow(boolean enabled) {
-        if (enabled) {
-            throw new UnsupportedOperationException("Shadows require a dedicated adapter (#10)");
-        }
+        canvas.setShadow(enabled);
+    }
+
+    @HostAccess.Export
+    public void setShadowStyle(String color, double alpha, double dx, double dy, double blur) {
+        canvas.setShadowColor(color);
+        canvas.setShadowAlpha(Math.max(0, Math.min(1, alpha)));
+        canvas.setShadowOffset(dx, dy);
+        canvas.setShadowBlur(Math.max(0, blur));
+    }
+
+    @HostAccess.Export
+    public void setFontColor(String color) {
+        canvas.setFontColor(color);
+    }
+
+    @HostAccess.Export
+    public void setFontBackgroundColor(String color) {
+        canvas.setFontBackgroundColor(color);
+    }
+
+    @HostAccess.Export
+    public void setFontBorderColor(String color) {
+        canvas.setFontBorderColor(color);
+    }
+
+    @HostAccess.Export
+    public void setFontBorderWidth(double width) {
+        canvas.setFontBorderWidth(width);
+    }
+
+    @HostAccess.Export
+    public void setFontSize(double size) {
+        canvas.setFontSize(size);
+    }
+
+    @HostAccess.Export
+    public void setFontFamily(String family) {
+        canvas.setFontFamily(family);
+    }
+
+    @HostAccess.Export
+    public void setFontStyle(int style) {
+        canvas.setFontStyle(style);
+    }
+
+    /**
+     * Report a canvas capability the adapter cannot map, e.g. a sketch fill style.
+     */
+    @HostAccess.Export
+    public void unsupported(String capabilityId, String message) {
+        diagnostics.unsupported(bounded(capabilityId), bounded(message));
     }
 
     @HostAccess.Export
@@ -176,12 +257,58 @@ public final class DrawioCanvasBridge {
     }
 
     @HostAccess.Export
-    public void text(double x, double y, double width, double height, String text) {
-        canvas.text(x, y, width, height, text);
+    public void text(double x, double y, double width, double height, String text,
+                     String align, String valign, boolean wrap, String format,
+                     String overflow, boolean clip, double rotation, String direction) {
+        if (direction != null && direction.startsWith("vertical")) {
+            diagnostics.unsupported("canvas:text-direction:" + bounded(direction),
+                    "Vertical writing modes are not supported");
+            return;
+        }
+        if (format != null && !format.isEmpty() && !"html".equals(format)) {
+            diagnostics.unsupported("canvas:text-format:" + bounded(format),
+                    "Unknown label format");
+            return;
+        }
+        canvas.text(x, y, width, height, text, align, valign, wrap, format, overflow,
+                clip, rotation, direction);
     }
 
     @HostAccess.Export
-    public void image(double x, double y, double width, double height, String resourceId) {
-        canvas.image(x, y, width, height, resourceId);
+    public void image(double x, double y, double width, double height, String source,
+                      boolean preserveAspect, boolean flipHorizontal, boolean flipVertical) {
+        if (source == null || source.trim().isEmpty()) {
+            diagnostics.missingResource("image:empty", "Image without source");
+            return;
+        }
+        if (DataUriImages.isSvgDataUri(source)) {
+            diagnostics.unsupported("image:svg", "Embedded SVG images are not supported");
+            return;
+        }
+        String resolved;
+        try {
+            resolved = images.resolve(source);
+        } catch (IllegalArgumentException exception) {
+            diagnostics.missingResource(imageCapability(source),
+                    "Image rejected: " + exception.getMessage());
+            return;
+        }
+        if (resolved == null) {
+            diagnostics.missingResource(imageCapability(source),
+                    "Image is not available under the resource policy");
+            return;
+        }
+        canvas.image(x, y, width, height, resolved, preserveAspect, flipHorizontal, flipVertical);
+    }
+
+    private static String imageCapability(String source) {
+        return DataUriImages.isDataUri(source) ? "image:data-uri" : "image:external";
+    }
+
+    private static String bounded(String value) {
+        if (value == null) {
+            return "null";
+        }
+        return value.length() > MAX_TEXT_ARGUMENT ? value.substring(0, MAX_TEXT_ARGUMENT) : value;
     }
 }

@@ -3,15 +3,28 @@ package com.aresstack.drawio.canvas;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.LinearGradientPaint;
+import java.awt.MultipleGradientPaint;
+import java.awt.Paint;
+import java.awt.RadialGradientPaint;
+import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -20,18 +33,47 @@ import java.util.Objects;
  *
  * <p>Create and own a child graphics context. Leave the caller's Graphics2D
  * open, so either a raster graphics backend or a Batik SVG backend may be used.
+ * Every painting operation ends in a plain {@code Graphics2D} call
+ * ({@code fill}, {@code draw}, {@code drawString}, {@code drawImage}).
+ *
+ * <p>Semantics follow the SVG reference canvas {@code mxSvgCanvas2D} of the
+ * pinned upstream version: gradients span the bounding box of each filled
+ * path in the shape's unrotated coordinate system, shadows are offset copies
+ * in the shadow color (blur is not rendered, see docs/CANVAS.md), dash
+ * lengths scale with the stroke width unless {@code fixDash} is set, and
+ * plain-text labels are positioned exactly like {@code plainText}.
  */
 public final class Java2DCanvas implements DrawioCanvas {
 
+    private static final double LINE_HEIGHT = 1.2;
+    private static final FontRenderContext TEXT_CONTEXT = new FontRenderContext(null, true, true);
+
     private final Deque<SavedGraphics> saved = new ArrayDeque<SavedGraphics>();
+    private final int maxImageBytes;
+    private final long maxImagePixels;
 
     private Graphics2D graphics;
     private CanvasState state;
     private Path2D.Double path;
     private boolean disposed;
 
+    private String cachedImageSource;
+    private BufferedImage cachedImage;
+
     public Java2DCanvas(Graphics2D graphics) {
+        this(graphics, DataUriImages.DEFAULT_MAX_BYTES, DataUriImages.DEFAULT_MAX_PIXELS);
+    }
+
+    /**
+     * Create a canvas with explicit limits for embedded {@code data:} images.
+     */
+    public Java2DCanvas(Graphics2D graphics, int maxImageBytes, long maxImagePixels) {
         Objects.requireNonNull(graphics, "graphics");
+        if (maxImageBytes < 1 || maxImagePixels < 1) {
+            throw new IllegalArgumentException("Image limits must be positive");
+        }
+        this.maxImageBytes = maxImageBytes;
+        this.maxImagePixels = maxImagePixels;
         this.graphics = (Graphics2D) graphics.create();
         this.state = new CanvasState(this.graphics.getTransform());
     }
@@ -72,8 +114,13 @@ public final class Java2DCanvas implements DrawioCanvas {
             throw new IllegalArgumentException("Scale must be positive");
         }
         double nextScale = state.scaleFactor * factor;
-        validateFinite(nextScale);
+        double nextStrokeWidth = state.strokeWidth * factor;
+        validateFinite(nextScale, nextStrokeWidth);
+        if (nextStrokeWidth > Float.MAX_VALUE) {
+            throw new IllegalArgumentException("Scaled stroke width is not finite");
+        }
         state.scaleFactor = nextScale;
+        state.strokeWidth = (float) nextStrokeWidth;
     }
 
     @Override
@@ -109,6 +156,35 @@ public final class Java2DCanvas implements DrawioCanvas {
     public void setFillColor(String color) {
         ensureOpen();
         state.fillColor = CanvasColors.parse(color);
+        state.gradientColor = null;
+    }
+
+    @Override
+    public void setGradient(String color1, String color2, double x, double y,
+                            double width, double height, String direction,
+                            double alpha1, double alpha2) {
+        ensureOpen();
+        validateFinite(x, y, width, height);
+        Color start = CanvasColors.parse(color1);
+        Color end = CanvasColors.parse(color2);
+        float startAlpha = validatedAlpha(alpha1);
+        float endAlpha = validatedAlpha(alpha2);
+        String normalized = direction == null ? "south" : normalize(direction);
+        switch (normalized) {
+            case "south":
+            case "north":
+            case "east":
+            case "west":
+            case "radial":
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown gradient direction: " + direction);
+        }
+        state.fillColor = start;
+        state.gradientColor = end;
+        state.gradientFillAlpha = startAlpha;
+        state.gradientAlpha = endAlpha;
+        state.gradientDirection = normalized;
     }
 
     @Override
@@ -134,6 +210,19 @@ public final class Java2DCanvas implements DrawioCanvas {
     }
 
     @Override
+    public void setFixDash(boolean fixDash) {
+        ensureOpen();
+        state.fixDash = fixDash;
+    }
+
+    /**
+     * Set the dash pattern.
+     *
+     * <p>Like {@code mxSvgCanvas2D.createDashPattern}, ignore tokens that are
+     * not numbers (e.g. {@code none} in stencils); a pattern without numbers
+     * paints a solid line. Reject non-positive lengths.
+     */
+    @Override
     public void setDashPattern(String pattern) {
         ensureOpen();
         Objects.requireNonNull(pattern, "pattern");
@@ -141,15 +230,25 @@ public final class Java2DCanvas implements DrawioCanvas {
         if (values.length == 0 || values.length == 1 && values[0].isEmpty()) {
             throw new IllegalArgumentException("Dash pattern must not be empty");
         }
+        if (values.length > 64) {
+            throw new IllegalArgumentException("Dash pattern exceeds size limit");
+        }
 
         float[] dash = new float[values.length];
-        for (int index = 0; index < values.length; index++) {
-            dash[index] = Float.parseFloat(values[index]);
-            if (!Float.isFinite(dash[index]) || dash[index] <= 0) {
+        int count = 0;
+        for (String value : values) {
+            float length;
+            try {
+                length = Float.parseFloat(value);
+            } catch (NumberFormatException exception) {
+                continue;
+            }
+            if (!Float.isFinite(length) || length <= 0) {
                 throw new IllegalArgumentException("Dash lengths must be positive");
             }
+            dash[count++] = length;
         }
-        state.dashPattern = dash;
+        state.dashPattern = count == 0 ? null : java.util.Arrays.copyOf(dash, count);
     }
 
     @Override
@@ -197,6 +296,92 @@ public final class Java2DCanvas implements DrawioCanvas {
             throw new IllegalArgumentException("Miter limit must be >= 1");
         }
         state.miterLimit = (float) limit;
+    }
+
+    @Override
+    public void setShadow(boolean enabled) {
+        ensureOpen();
+        state.shadow = enabled;
+    }
+
+    @Override
+    public void setShadowColor(String color) {
+        ensureOpen();
+        state.shadowColor = CanvasColors.parse(color);
+    }
+
+    @Override
+    public void setShadowAlpha(double alpha) {
+        ensureOpen();
+        state.shadowAlpha = validatedAlpha(alpha);
+    }
+
+    @Override
+    public void setShadowOffset(double dx, double dy) {
+        ensureOpen();
+        validateFinite(dx, dy);
+        state.shadowDx = dx;
+        state.shadowDy = dy;
+    }
+
+    @Override
+    public void setShadowBlur(double blur) {
+        ensureOpen();
+        validateFinite(blur);
+        if (blur < 0) {
+            throw new IllegalArgumentException("Shadow blur must not be negative");
+        }
+        state.shadowBlur = blur;
+    }
+
+    @Override
+    public void setFontColor(String color) {
+        ensureOpen();
+        state.fontColor = CanvasColors.parse(color);
+    }
+
+    @Override
+    public void setFontBackgroundColor(String color) {
+        ensureOpen();
+        state.fontBackgroundColor = CanvasColors.parse(color);
+    }
+
+    @Override
+    public void setFontBorderColor(String color) {
+        ensureOpen();
+        state.fontBorderColor = CanvasColors.parse(color);
+    }
+
+    @Override
+    public void setFontBorderWidth(double width) {
+        ensureOpen();
+        state.fontBorderWidth = Double.isFinite(width) && width >= 0 ? width : 1;
+    }
+
+    @Override
+    public void setFontSize(double size) {
+        ensureOpen();
+        validateFinite(size);
+        if (size <= 0 || size > 1024) {
+            throw new IllegalArgumentException("Font size must be within (0, 1024]");
+        }
+        state.fontSize = size;
+    }
+
+    @Override
+    public void setFontFamily(String family) {
+        ensureOpen();
+        Objects.requireNonNull(family, "family");
+        if (family.length() > 256) {
+            throw new IllegalArgumentException("Font family list exceeds size limit");
+        }
+        state.fontFamily = family;
+    }
+
+    @Override
+    public void setFontStyle(int style) {
+        ensureOpen();
+        state.fontStyle = Math.max(0, style);
     }
 
     @Override
@@ -280,39 +465,309 @@ public final class Java2DCanvas implements DrawioCanvas {
 
     @Override
     public void fill() {
-        drawFill(requirePath());
+        Shape shape = requirePath();
+        if (state.shadow) {
+            drawShadow(state.fillColor != null ? shape : null, null);
+        }
+        drawFill(shape);
     }
 
     @Override
     public void stroke() {
-        drawStroke(requirePath());
+        Shape shape = requirePath();
+        if (state.shadow) {
+            drawShadow(null, state.strokeColor != null ? shape : null);
+        }
+        drawStroke(shape);
     }
 
     @Override
     public void fillAndStroke() {
         Shape shape = requirePath();
+        if (state.shadow) {
+            drawShadow(state.fillColor != null ? shape : null,
+                    state.strokeColor != null ? shape : null);
+        }
         drawFill(shape);
         drawStroke(shape);
     }
 
     @Override
-    public void text(double x, double y, double width, double height, String text) {
+    public void text(double x, double y, double width, double height, String text,
+                     String align, String valign, boolean wrap, String format,
+                     String overflow, boolean clip, double rotation, String direction) {
         ensureOpen();
-        throw new UnsupportedOperationException("Text layout belongs to the future text adapter (#9)");
+        validateFinite(x, y, width, height, rotation);
+        Objects.requireNonNull(text, "text");
+        if (state.fontColor == null && state.fontBackgroundColor == null
+                && state.fontBorderColor == null) {
+            return;
+        }
+
+        boolean html = "html".equals(format);
+        Font font = CanvasFonts.resolve(state.fontFamily, state.fontStyle, state.fontSize);
+        List<String> lines = html ? LabelLines.html(text) : LabelLines.plain(text);
+        if (html && wrap) {
+            lines = LabelLines.wrap(lines, font, TEXT_CONTEXT, width);
+        }
+
+        double size = state.fontSize;
+        double lineHeight = html ? size * LINE_HEIGHT : Math.round(size * LINE_HEIGHT);
+        double textHeight = html ? lines.size() * lineHeight : size + (lines.size() - 1) * lineHeight;
+        boolean fill = "fill".equals(overflow);
+        double top = y;
+        if ("middle".equals(valign)) {
+            top -= fill ? height / 2 : textHeight / 2;
+        } else if ("bottom".equals(valign)) {
+            top -= fill ? height : textHeight + (html ? 0 : 1);
+        }
+
+        double maxWidth = 0;
+        double[] advances = new double[lines.size()];
+        for (int index = 0; index < lines.size(); index++) {
+            advances[index] = LabelLines.advance(font, TEXT_CONTEXT, lines.get(index));
+            maxWidth = Math.max(maxWidth, advances[index]);
+        }
+
+        Graphics2D textGraphics = (Graphics2D) graphics.create();
+        try {
+            AffineTransform transform = state.paintTransform();
+            transform.concatenate(state.canvasTransform());
+            if (rotation != 0) {
+                transform.rotate(Math.toRadians(rotation), x, y);
+            }
+            textGraphics.setTransform(transform);
+            textGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, state.alpha));
+            textGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            textGraphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+                    RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+            if (clip && width > 0 && height > 0) {
+                double clipX = alignedLeft(x, width, align);
+                double clipY = fill ? y : verticalBoxTop(y, height, valign);
+                double margin = 2 / state.scaleFactor;
+                textGraphics.clip(new Rectangle2D.Double(clipX - margin, clipY - margin,
+                        width + 2 * margin, height + 2 * margin));
+            }
+
+            paintTextBackground(textGraphics, x, y, width, height, align, valign, overflow,
+                    top, textHeight, maxWidth);
+
+            if (state.fontColor == null) {
+                return;
+            }
+            textGraphics.setPaint(state.fontColor);
+            textGraphics.setFont(font);
+            LineMetrics metrics = font.getLineMetrics("Ag", TEXT_CONTEXT);
+            double baseline = html
+                    ? top + (lineHeight - metrics.getAscent() - metrics.getDescent()) / 2 + metrics.getAscent()
+                    : top + size - 1;
+            for (int index = 0; index < lines.size(); index++) {
+                String line = lines.get(index);
+                if (!line.trim().isEmpty()) {
+                    double left = alignedLeft(x, advances[index], align);
+                    textGraphics.drawString(line, (float) left, (float) baseline);
+                }
+                baseline += lineHeight;
+            }
+        } finally {
+            textGraphics.dispose();
+        }
     }
 
     @Override
-    public void image(double x, double y, double width, double height, String resourceId) {
+    public void image(double x, double y, double width, double height, String source,
+                      boolean preserveAspect, boolean flipHorizontal, boolean flipVertical) {
         ensureOpen();
-        throw new UnsupportedOperationException("Image rendering belongs to the future image adapter (#10)");
+        validateGeometry(x, y, width, height);
+        Objects.requireNonNull(source, "source");
+        if (width == 0 || height == 0) {
+            return;
+        }
+        BufferedImage image = decodeImage(source);
+
+        double drawX = x;
+        double drawY = y;
+        double drawWidth = width;
+        double drawHeight = height;
+        if (preserveAspect) {
+            double scale = Math.min(width / image.getWidth(), height / image.getHeight());
+            drawWidth = image.getWidth() * scale;
+            drawHeight = image.getHeight() * scale;
+            drawX = x + (width - drawWidth) / 2;
+            drawY = y + (height - drawHeight) / 2;
+        }
+
+        AffineTransform placement = state.paintTransform();
+        placement.concatenate(state.canvasTransform());
+        placement.translate(drawX + (flipHorizontal ? drawWidth : 0),
+                drawY + (flipVertical ? drawHeight : 0));
+        placement.scale((flipHorizontal ? -1 : 1) * drawWidth / image.getWidth(),
+                (flipVertical ? -1 : 1) * drawHeight / image.getHeight());
+
+        graphics.setTransform(new AffineTransform());
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, state.alpha));
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        graphics.drawImage(image, placement, null);
+        graphics.setTransform(state.paintTransform());
+    }
+
+    private BufferedImage decodeImage(String source) {
+        if (source.equals(cachedImageSource)) {
+            return cachedImage;
+        }
+        BufferedImage image = DataUriImages.decode(source, maxImageBytes, maxImagePixels);
+        cachedImageSource = source;
+        cachedImage = image;
+        return image;
+    }
+
+    private void paintTextBackground(Graphics2D target, double x, double y, double width,
+                                     double height, String align, String valign, String overflow,
+                                     double top, double textHeight, double textWidth) {
+        if (state.fontBackgroundColor == null && state.fontBorderColor == null) {
+            return;
+        }
+        Rectangle2D box;
+        if ("fill".equals(overflow) || "width".equals(overflow)) {
+            double boxHeight = "fill".equals(overflow) ? height : textHeight;
+            double boxTop = "fill".equals(overflow) ? verticalBoxTop(y, height, valign) : top;
+            box = new Rectangle2D.Double(alignedLeft(x, width, align) + 1, boxTop,
+                    Math.max(0, width - 2), boxHeight + 2);
+        } else {
+            box = new Rectangle2D.Double(alignedLeft(x, textWidth, align) - 1, top - 1,
+                    textWidth + 2, textHeight + 2);
+        }
+        if (state.fontBackgroundColor != null) {
+            target.setPaint(state.fontBackgroundColor);
+            target.fill(box);
+        }
+        if (state.fontBorderColor != null) {
+            target.setPaint(state.fontBorderColor);
+            target.setStroke(new BasicStroke((float) state.fontBorderWidth));
+            target.draw(box);
+        }
+    }
+
+    private static double alignedLeft(double x, double width, String align) {
+        if ("center".equals(align)) {
+            return x - width / 2;
+        }
+        if ("right".equals(align)) {
+            return x - width;
+        }
+        return x;
+    }
+
+    private static double verticalBoxTop(double y, double height, String valign) {
+        if ("middle".equals(valign)) {
+            return y - height / 2;
+        }
+        if ("bottom".equals(valign)) {
+            return y - height;
+        }
+        return y;
+    }
+
+    private void drawShadow(Shape filled, Shape stroked) {
+        if (state.shadowColor == null || (filled == null && stroked == null)) {
+            return;
+        }
+        Area area = new Area();
+        if (filled != null) {
+            area.add(new Area(filled));
+        }
+        if (stroked != null) {
+            area.add(new Area(createStroke().createStrokedShape(stroked)));
+        }
+        AffineTransform offset = AffineTransform.getTranslateInstance(
+                state.shadowDx * state.scaleFactor, state.shadowDy * state.scaleFactor);
+        float alpha = state.alpha * state.shadowAlpha
+                * (filled != null ? state.fillAlpha : state.strokeAlpha);
+        applyPaint(state.shadowColor, alpha);
+        graphics.fill(offset.createTransformedShape(area));
     }
 
     private void drawFill(Shape shape) {
         if (state.fillColor == null) {
             return;
         }
-        applyPaint(state.fillColor, state.alpha * state.fillAlpha);
-        graphics.fill(shape);
+        float alpha = state.alpha * state.fillAlpha;
+        if (state.gradientColor == null) {
+            applyPaint(state.fillColor, alpha);
+            graphics.fill(shape);
+            return;
+        }
+
+        // Like SVG objectBoundingBox gradients: span the path bounds in the
+        // shape's unrotated system, then rotate the painted result with it.
+        AffineTransform orientation = state.scaledOrientation();
+        Shape unrotated;
+        try {
+            unrotated = orientation.createInverse().createTransformedShape(shape);
+        } catch (NoninvertibleTransformException exception) {
+            throw new IllegalStateException("Canvas orientation is not invertible", exception);
+        }
+        AffineTransform paintTransform = state.paintTransform();
+        paintTransform.concatenate(orientation);
+        graphics.setTransform(paintTransform);
+        graphics.setPaint(gradientPaint(unrotated.getBounds2D()));
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        graphics.fill(unrotated);
+        graphics.setTransform(state.paintTransform());
+    }
+
+    private Paint gradientPaint(Rectangle2D bounds) {
+        Color start = withAlpha(state.fillColor, state.gradientFillAlpha);
+        Color end = withAlpha(state.gradientColor, state.gradientAlpha);
+        float[] fractions = {0f, 1f};
+        Color[] colors = {start, end};
+        if (bounds.getWidth() <= 0 && bounds.getHeight() <= 0) {
+            return start;
+        }
+        if ("radial".equals(state.gradientDirection)) {
+            Rectangle2D square = bounds.getWidth() > 0 && bounds.getHeight() > 0 ? bounds
+                    : new Rectangle2D.Double(bounds.getX(), bounds.getY(),
+                    Math.max(bounds.getWidth(), 1e-6), Math.max(bounds.getHeight(), 1e-6));
+            return new RadialGradientPaint(square, fractions, colors,
+                    MultipleGradientPaint.CycleMethod.NO_CYCLE);
+        }
+        double minX = bounds.getMinX();
+        double minY = bounds.getMinY();
+        double maxX = bounds.getMaxX();
+        double maxY = bounds.getMaxY();
+        Point2D from;
+        Point2D to;
+        switch (state.gradientDirection) {
+            case "east":
+                from = new Point2D.Double(minX, minY);
+                to = new Point2D.Double(maxX, minY);
+                break;
+            case "west":
+                from = new Point2D.Double(maxX, minY);
+                to = new Point2D.Double(minX, minY);
+                break;
+            case "north":
+                from = new Point2D.Double(minX, maxY);
+                to = new Point2D.Double(minX, minY);
+                break;
+            default:
+                from = new Point2D.Double(minX, minY);
+                to = new Point2D.Double(minX, maxY);
+                break;
+        }
+        if (from.distance(to) < 1e-9) {
+            return start;
+        }
+        return new LinearGradientPaint(from, to, fractions, colors,
+                MultipleGradientPaint.CycleMethod.NO_CYCLE);
+    }
+
+    private static Color withAlpha(Color color, float alpha) {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(),
+                Math.round(color.getAlpha() * alpha));
     }
 
     private void drawStroke(Shape shape) {
@@ -337,9 +792,10 @@ public final class Java2DCanvas implements DrawioCanvas {
         }
 
         float width = (float) scaledWidth;
-        float[] dashPattern = state.dashed ? state.dashPattern.clone() : null;
+        float[] dashPattern = state.dashed && state.dashPattern != null
+                ? state.dashPattern.clone() : null;
         if (dashPattern != null) {
-            float dashScale = Math.max(width, 0.01f);
+            float dashScale = state.fixDash ? (float) state.scaleFactor : Math.max(width, 0.01f);
             for (int index = 0; index < dashPattern.length; index++) {
                 dashPattern[index] *= dashScale;
             }
@@ -407,6 +863,8 @@ public final class Java2DCanvas implements DrawioCanvas {
             saved.pop().graphics.dispose();
         }
         path = null;
+        cachedImage = null;
+        cachedImageSource = null;
     }
 
     private static final class SavedGraphics {
@@ -436,6 +894,24 @@ public final class Java2DCanvas implements DrawioCanvas {
         private int lineCap = BasicStroke.CAP_BUTT;
         private int lineJoin = BasicStroke.JOIN_MITER;
         private float miterLimit = 10;
+        private boolean fixDash;
+        private Color gradientColor;
+        private float gradientFillAlpha = 1;
+        private float gradientAlpha = 1;
+        private String gradientDirection = "south";
+        private boolean shadow;
+        private Color shadowColor = new Color(0x808080);
+        private float shadowAlpha = 1;
+        private double shadowDx = 2;
+        private double shadowDy = 3;
+        private double shadowBlur = 2;
+        private Color fontColor = Color.BLACK;
+        private Color fontBackgroundColor;
+        private Color fontBorderColor;
+        private double fontBorderWidth = 1;
+        private double fontSize = 11;
+        private String fontFamily = "Arial,Helvetica";
+        private int fontStyle;
 
         private CanvasState(AffineTransform transform) {
             this.initialTransform = new AffineTransform(transform);
@@ -446,6 +922,17 @@ public final class Java2DCanvas implements DrawioCanvas {
             transform.scale(scaleFactor, scaleFactor);
             transform.concatenate(orientation);
             transform.translate(translationX, translationY);
+            return transform;
+        }
+
+        /**
+         * Return the orientation in scaled canvas space: canvasTransform equals
+         * scaledOrientation * scale * translation.
+         */
+        private AffineTransform scaledOrientation() {
+            AffineTransform transform = AffineTransform.getScaleInstance(scaleFactor, scaleFactor);
+            transform.concatenate(orientation);
+            transform.scale(1 / scaleFactor, 1 / scaleFactor);
             return transform;
         }
 
@@ -466,10 +953,28 @@ public final class Java2DCanvas implements DrawioCanvas {
             copy.strokeAlpha = strokeAlpha;
             copy.strokeWidth = strokeWidth;
             copy.dashed = dashed;
-            copy.dashPattern = dashPattern.clone();
+            copy.dashPattern = dashPattern == null ? null : dashPattern.clone();
             copy.lineCap = lineCap;
             copy.lineJoin = lineJoin;
             copy.miterLimit = miterLimit;
+            copy.fixDash = fixDash;
+            copy.gradientColor = gradientColor;
+            copy.gradientFillAlpha = gradientFillAlpha;
+            copy.gradientAlpha = gradientAlpha;
+            copy.gradientDirection = gradientDirection;
+            copy.shadow = shadow;
+            copy.shadowColor = shadowColor;
+            copy.shadowAlpha = shadowAlpha;
+            copy.shadowDx = shadowDx;
+            copy.shadowDy = shadowDy;
+            copy.shadowBlur = shadowBlur;
+            copy.fontColor = fontColor;
+            copy.fontBackgroundColor = fontBackgroundColor;
+            copy.fontBorderColor = fontBorderColor;
+            copy.fontBorderWidth = fontBorderWidth;
+            copy.fontSize = fontSize;
+            copy.fontFamily = fontFamily;
+            copy.fontStyle = fontStyle;
             return copy;
         }
     }
