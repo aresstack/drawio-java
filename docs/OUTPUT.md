@@ -101,6 +101,16 @@ smearing over two pixels, and a fractional origin clips less than one pixel.
   it to `color-interpolation="linearRGB"`, which would change browser colors.
 - `maxSvgChars` aborts serialization once the document grows too large.
 
+## Canvas settings from the caller
+
+`OutputOptions.imageLimits(bytes, pixels)` and `textMetrics(...)` configure
+the `Java2DCanvas` used for **every** pass (painted bounds, raster, SVG). The
+facade passes the request's `ResourcePolicy` image limits and the session's
+`TextMetrics`, so images allowed by the policy are not rejected at replay and
+painted label wraps match what the pipeline measured. Callers that already
+computed an `OutputGeometry` can pass it to `renderImage`/`renderPng`/
+`renderSvg(recording, geometry, options)` to skip a second bounds pass.
+
 ## Limits
 
 | Option | Default |

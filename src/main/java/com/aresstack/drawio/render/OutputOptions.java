@@ -2,6 +2,9 @@ package com.aresstack.drawio.render;
 
 import java.awt.Color;
 
+import com.aresstack.drawio.canvas.DataUriImages;
+import com.aresstack.drawio.layout.TextMetrics;
+
 /**
  * Configure size, resolution, background and limits for scene output.
  *
@@ -32,6 +35,9 @@ public final class OutputOptions {
     private final long maxPixels;
     private final int maxCommands;
     private final long maxSvgChars;
+    private final int maxImageBytes;
+    private final long maxImagePixels;
+    private final TextMetrics textMetrics;
 
     private OutputOptions(Builder builder) {
         this.scale = builder.scale;
@@ -46,6 +52,9 @@ public final class OutputOptions {
         this.maxPixels = builder.maxPixels;
         this.maxCommands = builder.maxCommands;
         this.maxSvgChars = builder.maxSvgChars;
+        this.maxImageBytes = builder.maxImageBytes;
+        this.maxImagePixels = builder.maxImagePixels;
+        this.textMetrics = builder.textMetrics;
     }
 
     /** Return the default options: scale 1, no padding, transparent background. */
@@ -72,6 +81,9 @@ public final class OutputOptions {
         builder.maxPixels = maxPixels;
         builder.maxCommands = maxCommands;
         builder.maxSvgChars = maxSvgChars;
+        builder.maxImageBytes = maxImageBytes;
+        builder.maxImagePixels = maxImagePixels;
+        builder.textMetrics = textMetrics;
         return builder;
     }
 
@@ -135,6 +147,25 @@ public final class OutputOptions {
         return maxSvgChars;
     }
 
+    /** Maximum decoded size of one embedded {@code data:} image, in bytes. */
+    public int getMaxImageBytes() {
+        return maxImageBytes;
+    }
+
+    /** Maximum pixel count of one embedded {@code data:} image. */
+    public long getMaxImagePixels() {
+        return maxImagePixels;
+    }
+
+    /**
+     * Text metrics the output canvas wraps and places labels with, or
+     * {@code null} for the canvas default. Must be the same metrics the
+     * pipeline measured with, so painted text matches the measured bounds.
+     */
+    public TextMetrics getTextMetrics() {
+        return textMetrics;
+    }
+
     /**
      * Build {@link OutputOptions}. Builders are not thread-safe.
      */
@@ -151,6 +182,9 @@ public final class OutputOptions {
         private long maxPixels = DEFAULT_MAX_PIXELS;
         private int maxCommands = CanvasRecorder.DEFAULT_MAX_COMMANDS;
         private long maxSvgChars = DEFAULT_MAX_SVG_CHARS;
+        private int maxImageBytes = DataUriImages.DEFAULT_MAX_BYTES;
+        private long maxImagePixels = DataUriImages.DEFAULT_MAX_PIXELS;
+        private TextMetrics textMetrics;
 
         private Builder() {
         }
@@ -261,6 +295,28 @@ public final class OutputOptions {
                 throw new IllegalArgumentException("Maximum SVG size must be positive");
             }
             this.maxSvgChars = value;
+            return this;
+        }
+
+        /**
+         * Limit embedded {@code data:} images (decoded bytes and pixels per
+         * image), e.g. from the caller's resource policy.
+         */
+        public Builder imageLimits(int maxBytes, long maxPixels) {
+            if (maxBytes <= 0 || maxPixels <= 0) {
+                throw new IllegalArgumentException("Image limits must be positive");
+            }
+            this.maxImageBytes = maxBytes;
+            this.maxImagePixels = maxPixels;
+            return this;
+        }
+
+        /**
+         * Use these text metrics in the output canvas; {@code null} restores
+         * the canvas default. Implementations must be thread-safe.
+         */
+        public Builder textMetrics(TextMetrics value) {
+            this.textMetrics = value;
             return this;
         }
 

@@ -82,7 +82,7 @@ public final class SceneRenderer {
     public BufferedImage renderImage(DrawioScene scene, OutputOptions options) {
         CanvasRecording recording = record(scene, options);
         OutputGeometry geometry = layout(recording, options);
-        return renderImage(recording, geometry, options);
+        return rasterize(recording, geometry, options);
     }
 
     /**
@@ -130,6 +130,54 @@ public final class SceneRenderer {
         CanvasRecording recording = record(scene, options);
         OutputGeometry geometry = layout(recording, options);
         SvgOutput.write(recording, geometry, options, output);
+    }
+
+    /**
+     * Render a recording into a new ARGB image using a geometry from
+     * {@link #layout(DrawioScene, OutputOptions)} with the same options, which
+     * avoids measuring the painted bounds a second time.
+     */
+    public BufferedImage renderImage(CanvasRecording recording, OutputGeometry geometry,
+                                     OutputOptions options) {
+        requireAll(recording, geometry, options);
+        return rasterize(recording, geometry, options);
+    }
+
+    /**
+     * Render a recording as PNG bytes using a precomputed geometry.
+     */
+    public byte[] renderPng(CanvasRecording recording, OutputGeometry geometry,
+                            OutputOptions options) {
+        BufferedImage image = renderImage(recording, geometry, options);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try {
+            writePng(image, options.getDpi(), output);
+        } catch (IOException exception) {
+            throw new UncheckedIOException(exception);
+        }
+        return output.toByteArray();
+    }
+
+    /**
+     * Render a recording as an SVG document using a precomputed geometry.
+     */
+    public String renderSvg(CanvasRecording recording, OutputGeometry geometry,
+                            OutputOptions options) {
+        requireAll(recording, geometry, options);
+        StringWriter writer = new StringWriter();
+        try {
+            SvgOutput.write(recording, geometry, options, writer);
+        } catch (IOException exception) {
+            throw new UncheckedIOException(exception);
+        }
+        return writer.toString();
+    }
+
+    private static void requireAll(CanvasRecording recording, OutputGeometry geometry,
+                                   OutputOptions options) {
+        Objects.requireNonNull(recording, "recording");
+        Objects.requireNonNull(geometry, "geometry");
+        Objects.requireNonNull(options, "options");
     }
 
     static OutputGeometry layout(CanvasRecording recording, OutputOptions options) {
@@ -195,17 +243,26 @@ public final class SceneRenderer {
         if (options.getBoundsMode() == BoundsMode.LOGICAL) {
             graphics.clip(geometry.getSourceBounds());
         }
-        try (Java2DCanvas canvas = new Java2DCanvas(graphics)) {
+        try (Java2DCanvas canvas = newCanvas(graphics, options)) {
             recording.paint(canvas);
         }
+    }
+
+    private static Java2DCanvas newCanvas(Graphics2D graphics, OutputOptions options) {
+        if (options.getTextMetrics() == null) {
+            return new Java2DCanvas(graphics, options.getMaxImageBytes(),
+                    options.getMaxImagePixels());
+        }
+        return new Java2DCanvas(graphics, options.getMaxImageBytes(),
+                options.getMaxImagePixels(), options.getTextMetrics());
     }
 
     static Dimension size(OutputGeometry geometry) {
         return new Dimension(geometry.getWidth(), geometry.getHeight());
     }
 
-    private static BufferedImage renderImage(CanvasRecording recording, OutputGeometry geometry,
-                                             OutputOptions options) {
+    private static BufferedImage rasterize(CanvasRecording recording, OutputGeometry geometry,
+                                           OutputOptions options) {
         BufferedImage image = new BufferedImage(
                 geometry.getWidth(), geometry.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
@@ -227,7 +284,7 @@ public final class SceneRenderer {
             }
             return logical;
         }
-        Rectangle2D painted = paintedBounds(recording);
+        Rectangle2D painted = paintedBounds(recording, options);
         if (mode == BoundsMode.PAINTED || logical == null) {
             return painted == null
                     ? (logical == null ? new Rectangle2D.Double() : logical) : painted;
@@ -243,18 +300,19 @@ public final class SceneRenderer {
     /**
      * Measure what the recording actually paints, in diagram units.
      */
-    static Rectangle2D paintedBounds(CanvasRecording recording) {
+    static Rectangle2D paintedBounds(CanvasRecording recording, OutputOptions options) {
         if (SERIALIZE_JAVA2D) {
             synchronized (JAVA2D_LOCK) {
-                return paintedBoundsUnlocked(recording);
+                return paintedBoundsUnlocked(recording, options);
             }
         }
-        return paintedBoundsUnlocked(recording);
+        return paintedBoundsUnlocked(recording, options);
     }
 
-    private static Rectangle2D paintedBoundsUnlocked(CanvasRecording recording) {
+    private static Rectangle2D paintedBoundsUnlocked(CanvasRecording recording,
+                                                     OutputOptions options) {
         BoundsGraphics2D graphics = new BoundsGraphics2D();
-        try (Java2DCanvas canvas = new Java2DCanvas(graphics)) {
+        try (Java2DCanvas canvas = newCanvas(graphics, options)) {
             recording.paint(canvas);
         }
         return graphics.getPaintedBounds();

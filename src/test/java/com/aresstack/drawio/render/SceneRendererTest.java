@@ -59,7 +59,7 @@ class SceneRendererTest {
     void paintedBoundsIncludeStrokeWidth() {
         CanvasRecording recording = renderer.record(box(null), OutputOptions.defaults());
 
-        Rectangle2D painted = SceneRenderer.paintedBounds(recording);
+        Rectangle2D painted = SceneRenderer.paintedBounds(recording, OutputOptions.defaults());
 
         assertRect(8, 8, 104, 54, painted);
     }
@@ -80,7 +80,7 @@ class SceneRendererTest {
         };
 
         Rectangle2D painted = SceneRenderer.paintedBounds(renderer.record(scene,
-                OutputOptions.defaults()));
+                OutputOptions.defaults()), OutputOptions.defaults());
 
         assertRect(200, 0, 20, 20, painted);
     }
@@ -89,7 +89,8 @@ class SceneRendererTest {
     void emptySceneHasNoPaintedBoundsAndRendersOnePixel() {
         DrawioScene empty = canvas -> { };
 
-        assertNull(SceneRenderer.paintedBounds(renderer.record(empty, OutputOptions.defaults())));
+        assertNull(SceneRenderer.paintedBounds(renderer.record(empty, OutputOptions.defaults()),
+                OutputOptions.defaults()));
         BufferedImage image = renderer.renderImage(empty, OutputOptions.defaults());
         assertEquals(1, image.getWidth());
         assertEquals(1, image.getHeight());
@@ -427,6 +428,75 @@ class SceneRendererTest {
             }
         }
         return dark;
+    }
+
+    private static String redPngDataUri(int size) throws Exception {
+        BufferedImage red = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g = red.createGraphics();
+        g.setColor(Color.RED);
+        g.fillRect(0, 0, size, size);
+        g.dispose();
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        ImageIO.write(red, "png", bytes);
+        return "data:image/png;base64,"
+                + java.util.Base64.getEncoder().encodeToString(bytes.toByteArray());
+    }
+
+    @Test
+    void imageLimitsFromOptionsReachTheOutputCanvas() throws Exception {
+        String dataUri = redPngDataUri(64);
+        DrawioScene scene = canvas -> canvas.image(0, 0, 64, 64, dataUri, false, false, false);
+        OutputOptions tight = OutputOptions.builder().imageLimits(1_000_000, 100).build();
+
+        BufferedImage allowed = renderer.renderImage(scene, OutputOptions.defaults());
+
+        assertEquals(new Color(255, 0, 0), new Color(allowed.getRGB(32, 32)));
+        IllegalArgumentException rejected = assertThrows(IllegalArgumentException.class,
+                () -> renderer.renderImage(scene, tight));
+        assertTrue(rejected.getMessage().contains("pixel") || rejected.getMessage().contains("limit")
+                || rejected.getMessage().contains("decoded"), rejected.getMessage());
+        assertThrows(IllegalArgumentException.class, () -> renderer.renderSvg(scene, tight));
+    }
+
+    @Test
+    void textMetricsFromOptionsAreUsedForPaintingAndBounds() {
+        AtomicInteger measured = new AtomicInteger();
+        com.aresstack.drawio.layout.TextMetrics base = new com.aresstack.drawio.layout.AwtTextMetrics();
+        com.aresstack.drawio.layout.TextMetrics counting = (text, font) -> {
+            measured.incrementAndGet();
+            return base.measure(text, font);
+        };
+        DrawioScene scene = canvas -> {
+            canvas.setFontColor("#000000");
+            canvas.setFontSize(12);
+            canvas.text(50, 20, 80, 30, "wrap this label please", "center", "middle", true, "",
+                    null, false, 0, null);
+        };
+        OutputOptions options = OutputOptions.builder().textMetrics(counting).build();
+        CanvasRecording recording = renderer.record(scene, options);
+
+        OutputGeometry geometry = renderer.layout(recording, options);
+        int afterLayout = measured.get();
+        renderer.renderImage(recording, geometry, options);
+
+        assertTrue(afterLayout > 0, "painted-bounds pass uses the configured metrics");
+        assertTrue(measured.get() > afterLayout, "raster pass uses the configured metrics");
+    }
+
+    @Test
+    void precomputedGeometryGivesTheSameOutput() {
+        OutputOptions options = OutputOptions.builder().scale(2).padding(3).build();
+        CanvasRecording recording = renderer.record(richScene(), options);
+        OutputGeometry geometry = renderer.layout(recording, options);
+
+        BufferedImage direct = renderer.renderImage(recording, options);
+        BufferedImage reused = renderer.renderImage(recording, geometry, options);
+
+        assertEquals(0, TestImages.countDifferentPixels(direct, reused, 0));
+        assertEquals(renderer.renderSvg(recording, options),
+                renderer.renderSvg(recording, geometry, options));
+        assertTrue(java.util.Arrays.equals(renderer.renderPng(recording, options),
+                renderer.renderPng(recording, geometry, options)));
     }
 
     @Test

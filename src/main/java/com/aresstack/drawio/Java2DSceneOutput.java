@@ -29,7 +29,9 @@ final class Java2DSceneOutput implements SceneOutput {
     @SuppressWarnings("unchecked")
     public <T> Rendered<T> write(DrawioScene scene, RenderSession session,
                                  DrawioRenderer.OutputKind kind) throws RenderException {
-        OutputOptions options = outputOptions(session.options());
+        OutputOptions options = outputOptions(session.options()).toBuilder()
+                .textMetrics(session.textMetrics())
+                .build();
         try {
             CanvasRecording recording = renderer.record(scene, options);
             session.checkCancelled();
@@ -40,13 +42,13 @@ final class Java2DSceneOutput implements SceneOutput {
                 }
                 case PNG: {
                     OutputGeometry geometry = renderer.layout(recording, options);
-                    byte[] png = renderer.renderPng(recording, options);
+                    byte[] png = renderer.renderPng(recording, geometry, options);
                     return new Rendered<T>((T) png, geometry.getWidth(), geometry.getHeight());
                 }
                 case SVG:
                 default: {
                     OutputGeometry geometry = renderer.layout(recording, options);
-                    String svg = renderer.renderSvg(recording, options);
+                    String svg = renderer.renderSvg(recording, geometry, options);
                     return new Rendered<T>((T) svg, geometry.getWidth(), geometry.getHeight());
                 }
             }
@@ -66,7 +68,9 @@ final class Java2DSceneOutput implements SceneOutput {
                         ? null : Color.decode(options.getBackground()))
                 .maxDimension(limits.getMaxOutputDimension())
                 .maxPixels(limits.getMaxOutputPixels())
-                .maxSvgChars(limits.getMaxSvgCharacters());
+                .maxSvgChars(limits.getMaxSvgCharacters())
+                .imageLimits(options.getResourcePolicy().getMaxResourceBytes(),
+                        options.getResourcePolicy().getMaxImagePixels());
         if (options.getFitWidth() > 0) {
             builder.width(options.getFitWidth());
         }
