@@ -52,6 +52,8 @@ import com.aresstack.drawio.layout.TextRun;
  */
 public final class Java2DCanvas implements DrawioCanvas {
 
+    private static final float MIN_DASH_LENGTH = 0.01f;
+
     private static final double LINE_HEIGHT = 1.2;
     private static final FontRenderContext TEXT_CONTEXT = new FontRenderContext(null, true, true);
 
@@ -893,7 +895,10 @@ public final class Java2DCanvas implements DrawioCanvas {
         if (dashPattern != null) {
             float dashScale = state.fixDash ? (float) state.scaleFactor : Math.max(width, 0.01f);
             for (int index = 0; index < dashPattern.length; index++) {
-                dashPattern[index] *= dashScale;
+                // Java 8's stroker drops zero-length dashes, so the round-cap
+                // dots of "0 4" would vanish; a minimal length draws them on
+                // every JDK and stays invisible with butt caps.
+                dashPattern[index] = Math.max(dashPattern[index] * dashScale, MIN_DASH_LENGTH);
             }
         }
         return new BasicStroke(width, state.lineCap, state.lineJoin,
