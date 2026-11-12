@@ -12,7 +12,7 @@
         referenceGenerator="tools/reference-viewer/render-references.mjs"
         referenceBrowser="Chromium (Playwright, headless, Linux), deviceScaleFactor 1, network blocked"
         referenceCreated="2026-11-12">
-  <fixture id="bpmn-approval-flow" file="bpmn-approval-flow.drawio" sha256="e4de63a81f9c8b3fc705b22f517aaa4966eb735de2a3a380057e31fb4d971797" features="bpmn gateway2 event task orthogonal-edges edge-labels umlauts exit-entry-constraints" render="pending" issue="#9">
+  <fixture id="bpmn-approval-flow" file="bpmn-approval-flow.drawio" sha256="e4de63a81f9c8b3fc705b22f517aaa4966eb735de2a3a380057e31fb4d971797" features="bpmn gateway2 event task orthogonal-edges edge-labels umlauts exit-entry-constraints" render="match" issue="#9">
     <note>Synthetic stand-in for the Space Harvester gateway2 failure case. No Confluence content.</note>
     <page index="0" name="Genehmigung" vertices="7" edges="6" minScore="0.90" png="reference/bpmn-approval-flow.png" pngSha256="dc0f5c5d6aa5fa0b8cb86300892ee36cab5e9169af1f7f41e7623d1de40dc2a3" svg="reference/bpmn-approval-flow.svg" svgSha256="4b628728f682545c8c29bdbff8d2118876c2a39789dbfcb82bdb2ed5205f29a8">
       <shape name="mxgraph.bpmn.event" count="3"/>
@@ -28,7 +28,7 @@
       <label cell="f4" text="nein"/>
     </page>
   </fixture>
-  <fixture id="bpmn-approval-flow-compressed" file="bpmn-approval-flow-compressed.drawio" sha256="3d4162d60371a8f80ceadc7f165f252c59ed93c2a2a7c0f8e2c6d8c4815a0ccc" features="compressed same-model" render="pending" issue="#9" sameModelAs="bpmn-approval-flow">
+  <fixture id="bpmn-approval-flow-compressed" file="bpmn-approval-flow-compressed.drawio" sha256="3d4162d60371a8f80ceadc7f165f252c59ed93c2a2a7c0f8e2c6d8c4815a0ccc" features="compressed same-model" render="match" issue="#9" sameModelAs="bpmn-approval-flow">
     <note>Same graph model as bpmn-approval-flow, stored as a compressed draw.io page.</note>
     <page index="0" name="Genehmigung" vertices="7" edges="6" minScore="0.90" png="reference/bpmn-approval-flow.png" pngSha256="dc0f5c5d6aa5fa0b8cb86300892ee36cab5e9169af1f7f41e7623d1de40dc2a3" svg="reference/bpmn-approval-flow.svg" svgSha256="4b628728f682545c8c29bdbff8d2118876c2a39789dbfcb82bdb2ed5205f29a8">
       <shape name="mxgraph.bpmn.event" count="3"/>
@@ -44,8 +44,9 @@
       <label cell="f4" text="nein"/>
     </page>
   </fixture>
-  <fixture id="bpmn-shapes-catalog" file="bpmn-shapes-catalog.drawio" sha256="3db709fa3c80e97f079e68775158fbda22c279bff4aeb0f5c0457df85dbd542b" features="bpmn gateway2 event task data conversation xml-stencil" render="pending" issue="#9">
+  <fixture id="bpmn-shapes-catalog" file="bpmn-shapes-catalog.drawio" sha256="3db709fa3c80e97f079e68775158fbda22c279bff4aeb0f5c0457df85dbd542b" features="bpmn gateway2 event task data conversation xml-stencil" render="match" issue="#9">
     <note>Task markers user/service/script come from the bpmn.xml stencil pack, which the reference viewer could not load (network blocked); the reference shows them empty.</note>
+    <note>drawio-java paints them from the bundled offline bpmn.xml stencils (#10), so they are extra ink against this reference; the score still passes.</note>
     <page index="0" name="BPMN-Formen" vertices="20" edges="0" minScore="0.85" png="reference/bpmn-shapes-catalog.png" pngSha256="d1105d666ac5e4fe6f20a8059c037ed87af9917add35a74630dd1347c7f38c13" svg="reference/bpmn-shapes-catalog.svg" svgSha256="20191964c44e1f74a57a270f8484c566d965296783079b56c9b19030cab93e9a">
       <shape name="mxgraph.bpmn.conversation" count="1"/>
       <shape name="mxgraph.bpmn.data" count="1"/>

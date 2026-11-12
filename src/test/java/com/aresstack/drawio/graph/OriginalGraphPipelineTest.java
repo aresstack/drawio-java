@@ -91,4 +91,34 @@ class OriginalGraphPipelineTest {
         assertEquals(RenderErrorCode.UNSUPPORTED_STENCIL, failure.getCode());
         assertEquals("shape:mxgraph.nonexistent.thing", failure.getCapabilityId());
     }
+
+    @Test
+    void reportsStencilsMissingFromTheOfflineSetsThroughTheSession() throws Exception {
+        String xml = "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/>"
+                + "<mxCell id=\"x\" value=\"\" style=\"shape=mxgraph.aws4.lambda_function;\" vertex=\"1\" parent=\"1\">"
+                + "<mxGeometry x=\"10\" y=\"10\" width=\"40\" height=\"40\" as=\"geometry\"/></mxCell></root></mxGraphModel>";
+        RenderException failure = org.junit.jupiter.api.Assertions.assertThrows(RenderException.class,
+                () -> new OriginalGraphPipeline(TEST_SHAPES, 1)
+                        .prepare(new DiagramPage(0, "p", "Page", xml), new RenderSession(RenderOptions.defaults())));
+        assertEquals(RenderErrorCode.UNSUPPORTED_STENCIL, failure.getCode());
+        assertEquals("stencil:mxgraph.aws4.lambda_function", failure.getCapabilityId());
+    }
+
+    @Test
+    void paintsBpmnGatewayFromTheProductionShapeLibrary() throws Exception {
+        String xml = "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/>"
+                + "<mxCell id=\"g\" value=\"\" style=\"shape=mxgraph.bpmn.gateway2;gwType=parallel;html=1;\""
+                + " vertex=\"1\" parent=\"1\">"
+                + "<mxGeometry x=\"10\" y=\"10\" width=\"50\" height=\"50\" as=\"geometry\"/></mxCell></root></mxGraphModel>";
+        RenderSession session = new RenderSession(RenderOptions.defaults());
+
+        String all = String.join("\n", record(new OriginalGraphPipeline(TEST_SHAPES, 1)
+                .prepare(new DiagramPage(0, "p", "Page", xml), session)));
+
+        // The diamond outline of mxgraph.bpmn.gateway2, not a rectangle fallback.
+        assertTrue(all.contains("translate[10.0, 10.0]") && all.contains("moveTo[25.0, 0.0]")
+                && all.contains("lineTo[50.0, 25.0]") && all.contains("lineTo[0.0, 25.0]"), all);
+        assertTrue(!all.contains("rect["), all);
+        assertTrue(session.warnings().isEmpty(), String.valueOf(session.warnings()));
+    }
 }

@@ -149,10 +149,15 @@ commit). The code is copied with these marked deviations:
   to a console and swallowed.
 - When an `mxgraph.*` name is still unknown after loading, it is recorded as
   `unknown-stencil` in `DrawioStencils.missing`. With
-  `DrawioStencils.strict = true`, the default, `getStencil` then throws
-  `Unsupported draw.io stencil: <name>`, so `mxCellRenderer` can never
-  silently substitute a rectangle. With `strict = false`, it returns `null`
-  and the caller must inspect `DrawioStencils.missing`.
+  `DrawioStencils.strict = false`, the default, `getStencil` returns `null`
+  and, when the headless graph pipeline (`drawio-headless.js`) is loaded,
+  reports a `stencil:<name>` diagnostic through `DrawioHeadless.report`.
+  `OriginalGraphPipeline` hands it to the `RenderSession`, whose
+  `UnsupportedFeaturePolicy` decides: `FAIL` (default) ends the render with
+  `UNSUPPORTED_STENCIL`, `WARN` keeps `mxCellRenderer`'s default shape and
+  marks the result incomplete. A substitution is therefore never silent.
+  With `strict = true`, `getStencil` throws
+  `Unsupported draw.io stencil: <name>` instead.
 
 Names that are not `mxgraph.*` (for example `rectangle`) and names registered
 in `mxCellRenderer.defaultShapes` are passed through exactly as upstream does.
@@ -167,7 +172,7 @@ in `mxCellRenderer.defaultShapes` are passed through exactly as upstream does.
 - checks original `mxStencil` parsing (size, `aspect="fixed"`, constraints);
 - resolves stencils on demand through `getStencil` and caches the result;
 - asserts that a missing set (`mxgraph.aws4.*`) throws in strict mode and is
-  recorded in lenient mode, together with an unknown name in a bundled set
+  recorded in lenient mode (the default), together with an unknown name in a bundled set
   and a prototype-pollution style name;
 - enforces the per-set and the cumulative inflate budgets;
 - paints `mxgraph.bpmn.gateway_and` through the original

@@ -140,9 +140,12 @@
                 DrawioStencils.missing.push({
                     name: name, basename: basename, file: file, reason: reason
                 });
-                if (typeof DrawioHeadless !== 'undefined' && DrawioHeadless != null
-                        && typeof DrawioHeadless.report === 'function') {
-                    DrawioHeadless.report('stencil:' + name, reason + ' (' + file + ')');
+                // A missing set is always followed by an unknown-stencil entry
+                // for the requested name; only that one reaches the pipeline.
+                if (name != null && typeof DrawioHeadless !== 'undefined'
+                        && DrawioHeadless != null && typeof DrawioHeadless.report === 'function') {
+                    DrawioHeadless.report('stencil:' + name, 'not defined by the bundled offline'
+                        + ' stencil sets (' + file + ')');
                 }
             }
         },

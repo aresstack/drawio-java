@@ -55,7 +55,7 @@ All 139 stencils paint through the original `mxStencil.drawShape` into Java2D
 
 | Feature | Diagnostic | Reason / next step |
 | --- | --- | --- |
-| Stencil packages not bundled (`mxgraph.aws4.*`, `mxgraph.cisco.*`, `mxgraph.mockup.*`, ...) | `Unsupported draw.io stencil: <name>` (strict) or `DrawioStencils.missing` | Vendor icon/stencil libraries carry the upstream Atlassian distribution restriction; add sets deliberately via the `include` list after the #15 license audit. |
+| Stencil packages not bundled (`mxgraph.aws4.*`, `mxgraph.cisco.*`, `mxgraph.mockup.*`, ...) | `stencil:<name>` diagnostic → `UNSUPPORTED_STENCIL` under the default fail policy (`DrawioStencils.missing` in JS) | Vendor icon/stencil libraries carry the upstream Atlassian distribution restriction; add sets deliberately via the `include` list after the #15 license audit. |
 | JS shape libraries other than basic/BPMN (`mxArrows.js`, `mxFlowchart.js`, `mxAWS4.js`, ...) | unknown shape → reported by the pipeline | Add to `shapeLibrarySources` on demand from the test corpus (#13). |
 | Inline stencils `shape=stencil(<base64>)` | reported by the pipeline | Needs `Graph.decompress` + safe XML parsing through the #9 XML DOM; planned follow-up. |
 | Sketch/rough style, `fillStyle` hachure/dots/cross-hatch | `canvas:fillStyle:<style>` | Requires rough.js; out of scope. |
