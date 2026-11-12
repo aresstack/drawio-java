@@ -163,7 +163,9 @@ public final class DrawioDocumentParser {
         byte[] buffer = new byte[8192];
 
         try {
-            inflater.setInput(compressed);
+            // Inflater(true) documents an extra dummy input byte for raw DEFLATE.
+            byte[] input = java.util.Arrays.copyOf(compressed, compressed.length + 1);
+            inflater.setInput(input);
             while (!inflater.finished()) {
                 int count = inflater.inflate(buffer);
                 if (count <= 0) {

@@ -13,6 +13,8 @@ import java.util.Objects;
 public final class RenderLimits {
 
     public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
+    /** Largest accepted timeout; deadlines are based on {@code System.nanoTime()}. */
+    public static final Duration MAX_TIMEOUT = Duration.ofDays(365);
     public static final int DEFAULT_MAX_INPUT_CHARACTERS = 16 * 1024 * 1024;
     public static final int DEFAULT_MAX_CELLS = 20000;
     public static final long DEFAULT_MAX_OUTPUT_PIXELS = 64L * 1024 * 1024;
@@ -101,6 +103,10 @@ public final class RenderLimits {
             Objects.requireNonNull(timeout, "timeout");
             if (timeout.isNegative() || timeout.toMillis() < 1) {
                 throw new IllegalArgumentException("timeout must be at least one millisecond");
+            }
+            if (timeout.compareTo(MAX_TIMEOUT) > 0) {
+                // Deadlines are System.nanoTime() based and must not overflow.
+                throw new IllegalArgumentException("timeout must be at most " + MAX_TIMEOUT.toDays() + " days");
             }
             this.timeout = timeout;
             return this;

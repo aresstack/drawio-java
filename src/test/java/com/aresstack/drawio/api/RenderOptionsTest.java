@@ -29,6 +29,8 @@ class RenderOptionsTest {
         assertThrows(IllegalArgumentException.class, () -> RenderOptions.builder().padding(-1));
         assertThrows(IllegalArgumentException.class, () -> RenderOptions.builder().background("red"));
         assertThrows(IllegalArgumentException.class,
+                () -> RenderLimits.builder().timeout(java.time.Duration.ofMillis(Long.MAX_VALUE)));
+        assertThrows(IllegalArgumentException.class,
                 () -> RenderLimits.builder().maxInputCharacters(RenderLimits.DEFAULT_MAX_INPUT_CHARACTERS + 1));
     }
 

@@ -10,6 +10,9 @@ import com.aresstack.drawio.api.DiagramFormatException;
 
 /**
  * Decode draw.io's percent-encoded UTF-8 without silently replacing invalid bytes.
+ *
+ * <p>Matches {@code decodeURIComponent} in draw.io's {@code Graph.decompress}:
+ * only {@code %XX} escapes are decoded; {@code +} stays a plus sign.
  */
 final class DrawioPercentDecoder {
 
@@ -21,9 +24,6 @@ final class DrawioPercentDecoder {
             int character = escaped.codePointAt(position);
             if (character == '%') {
                 position = decodeEscape(escaped, position, decoded);
-            } else if (character == '+') {
-                decoded.write(' ');
-                position++;
             } else {
                 appendUnescapedCodePoint(character, decoded);
                 position += Character.charCount(character);

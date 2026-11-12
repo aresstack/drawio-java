@@ -210,6 +210,15 @@ class DrawioDocumentParserTest {
     }
 
     @Test
+    void keepsPlusSignsLikeDecodeUriComponent() throws Exception {
+        DrawioDocument parsed = parseCompressedPage(encodeURIComponent("<mxGraphModel><root>")
+                + "<mxCell%20value=%22C++%22/>" + encodeURIComponent("</root></mxGraphModel>"));
+
+        assertTrue(parsed.firstPage().getGraphModelXml().contains("value=\"C++\""),
+                parsed.firstPage().getGraphModelXml());
+    }
+
+    @Test
     void rejectsTooManyPages() {
         StringBuilder xml = new StringBuilder("<mxfile>");
         for (int page = 0; page < 101; page++) {
@@ -236,13 +245,18 @@ class DrawioDocumentParserTest {
     }
 
     private String percentEncodedModel(String escapedCharacter) throws Exception {
-        return URLEncoder.encode("<mxGraphModel><root><mxCell value=\"Gr", "UTF-8")
+        return encodeURIComponent("<mxGraphModel><root><mxCell value=\"Gr")
                 + escapedCharacter
-                + URLEncoder.encode("ße\"/></root></mxGraphModel>", "UTF-8");
+                + encodeURIComponent("ße\"/></root></mxGraphModel>");
     }
 
     private static String compress(String xml) throws Exception {
-        return compressEscaped(URLEncoder.encode(xml, StandardCharsets.UTF_8.name()));
+        return compressEscaped(encodeURIComponent(xml));
+    }
+
+    /** draw.io's Graph.compress uses encodeURIComponent: spaces become %20. */
+    private static String encodeURIComponent(String text) throws Exception {
+        return URLEncoder.encode(text, StandardCharsets.UTF_8.name()).replace("+", "%20");
     }
 
     private static String compressEscaped(String escaped) throws Exception {
