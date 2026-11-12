@@ -4,32 +4,89 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # Gradle finds the toolchains installed by setup-java through these
+  # variables and never downloads a JDK on its own.
+  GRADLE_TOOLCHAIN_ARGS: >-
+    -Porg.gradle.java.installations.auto-download=false
+    -Porg.gradle.java.installations.fromEnv=JAVA_HOME_8_X64,JAVA_HOME_11_X64,JAVA_HOME_17_X64,JAVA_HOME_21_X64
 
 jobs:
+  # Reference job: Java 8 toolchain, bundle verification, full check
+  # (tests, Java 8 bytecode gate, offline consumer-jar smoke test).
   test:
+    name: Java 8 build (Linux)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Install Java 8 compiler
+      - name: Install JDK 8 (library toolchain) and JDK 17 (Gradle runtime)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '8'
-      - name: Install Gradle runtime JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+          java-version: |
+            8
+            17
+          cache: gradle
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Verify pinned offline Draw.io bundle
         run: node js-bundle/build.mjs --verify
-      - name: Verify Java 8 compatibility and build
-        run: bash ./gradlew --no-daemon clean build
-      - name: Upload build reports
+      - name: Build, test, Java 8 bytecode gate, offline consumer smoke
+        run: bash ./gradlew --no-daemon $GRADLE_TOOLCHAIN_ARGS clean build
+      - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
-          path: build/reports/tests/
+          name: test-reports-linux-java8
+          path: build/reports/
+          if-no-files-found: ignore
+
+  # Consumer JDKs: the same Java 8 jar, tests and consumer smoke test run
+  # on newer JDKs and on Windows.
+  consumer-jdk:
+    name: Consumer JDK ${{ matrix.java }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, java: '11' }
+          - { os: ubuntu-latest, java: '17' }
+          - { os: ubuntu-latest, java: '21' }
+          - { os: windows-latest, java: '8' }
+          - { os: windows-latest, java: '21' }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install JDK 8, consumer JDK ${{ matrix.java }} and JDK 17 (Gradle runtime)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            8
+            ${{ matrix.java }}
+            17
+          cache: gradle
+      - name: Test on consumer JDK ${{ matrix.java }}
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then GRADLE=./gradlew.bat; else GRADLE=./gradlew; fi
+          $GRADLE --no-daemon $GRADLE_TOOLCHAIN_ARGS -PtestJavaVersion=${{ matrix.java }} clean check
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.os }}-java${{ matrix.java }}
+          path: build/reports/
+          if-no-files-found: ignore

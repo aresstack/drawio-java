@@ -30,10 +30,35 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
+// Consumer JDK used to *run* tests and the consumer smoke test (#15).
+// The library is always compiled with the Java 8 toolchain; CI sets
+// -PtestJavaVersion=11/17/21 to prove the Java 8 artifact works on newer
+// consumer JDKs.
+def testJavaVersion = Integer.parseInt((findProperty('testJavaVersion') ?: '8').toString())
+def testLauncher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(testJavaVersion)
+}
+
+// Deterministic, display-independent AWT for all rendering tests: no X11,
+// no desktop accessibility bridge (Ubuntu's openjdk-8 otherwise fails with
+// "Assistive Technology not found" as soon as Batik touches the Toolkit).
+def headlessJvmArgs = [
+        '-Djava.awt.headless=true',
+        '-Djavax.accessibility.assistive_technologies=',
+        '-Dfile.encoding=UTF-8',
+        '-Duser.language=en',
+        '-Duser.country=US'
+]
+
 tasks.named('test', Test) {
     useJUnitPlatform()
+    javaLauncher = testLauncher
+    jvmArgs headlessJvmArgs
+    // GraalJS on a stock JDK runs without the Graal JIT; silence the
+    // one-time interpreter warning so it does not hide real test output.
+    systemProperty 'polyglot.engine.WarnInterpreterOnly', 'false'
     testLogging {
-        events 'failed'
+        events 'failed', 'skipped'
         exceptionFormat 'full'
     }
 }
@@ -54,5 +79,84 @@ tasks.register('benchmark', JavaExec) {
         languageVersion = JavaLanguageVersion.of(8)
     }
     maxHeapSize = '1g'
+    jvmArgs headlessJvmArgs
     systemProperties System.getProperties().findAll { it.key.toString().startsWith('bench.') }
+}
+
+// ---------------------------------------------------------------------------
+// Java 8 bytecode gate (#15): every class in the published jar must be
+// class-file major version 52 (Java 8) or lower.
+// ---------------------------------------------------------------------------
+def verifyJava8Bytecode = tasks.register('verifyJava8Bytecode') {
+    group = 'verification'
+    description = 'Fails if any class in the main jar targets a Java version newer than 8.'
+    def jarTask = tasks.named('jar', Jar)
+    dependsOn jarTask
+    inputs.files(jarTask)
+    doLast {
+        def jarFile = jarTask.get().archiveFile.get().asFile
+        def offenders = []
+        int classes = 0
+        new java.util.zip.ZipFile(jarFile).withCloseable { zip ->
+            zip.entries().each { entry ->
+                if (!entry.name.endsWith('.class')) {
+                    return
+                }
+                classes++
+                zip.getInputStream(entry).withCloseable { stream ->
+                    def data = new DataInputStream(stream)
+                    if (data.readInt() != 0xCAFEBABE as int) {
+                        offenders << "${entry.name} (not a class file)"
+                        return
+                    }
+                    data.readUnsignedShort()
+                    int major = data.readUnsignedShort()
+                    if (major > 52) {
+                        offenders << "${entry.name} (major ${major})"
+                    }
+                }
+            }
+        }
+        if (classes == 0) {
+            throw new GradleException("No classes found in ${jarFile}")
+        }
+        if (!offenders.isEmpty()) {
+            throw new GradleException('Classes newer than Java 8 in jar:\n  ' + offenders.join('\n  '))
+        }
+        logger.lifecycle("verifyJava8Bytecode: ${classes} classes in ${jarFile.name} target Java 8 (major <= 52)")
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Offline consumer smoke test (#15): a separate source set compiled and run
+// against the *packaged jar* plus runtime dependencies only (no main classes
+// directory, no test resources, no Node.js, no browser). Network access is
+// pointed at a dead SOCKS proxy so any accidental download fails loudly.
+// ---------------------------------------------------------------------------
+sourceSets {
+    consumerSmoke {
+        compileClasspath = files(tasks.named('jar')) + configurations.runtimeClasspath
+        runtimeClasspath = output + compileClasspath
+    }
+}
+
+tasks.named('compileConsumerSmokeJava', JavaCompile) {
+    dependsOn tasks.named('jar')
+}
+
+def consumerSmokeTest = tasks.register('consumerSmokeTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs a minimal offline consumer against the packaged jar.'
+    classpath = sourceSets.consumerSmoke.runtimeClasspath
+    mainClass = 'com.aresstack.drawio.consumersmoke.OfflineConsumerSmoke'
+    javaLauncher = testLauncher
+    jvmArgs headlessJvmArgs + [
+            '-DsocksProxyHost=127.0.0.1',
+            '-DsocksProxyPort=9',
+            '-Dpolyglot.engine.WarnInterpreterOnly=false'
+    ]
+}
+
+tasks.named('check') {
+    dependsOn verifyJava8Bytecode, consumerSmokeTest
 }

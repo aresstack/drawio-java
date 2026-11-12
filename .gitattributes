@@ -1,2 +1,9 @@
 src/main/resources/drawio/**/*.js text eol=lf
 js-bundle/*.mjs text eol=lf
+gradlew text eol=lf
+*.bat text eol=crlf
+# Fixtures and reference images are checksummed byte-for-byte (#13):
+# never let Git rewrite their line endings.
+*.drawio -text
+*.svg -text
+*.png binary
