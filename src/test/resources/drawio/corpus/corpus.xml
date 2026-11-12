@@ -121,7 +121,7 @@
       <label cell="external" text="extern"/>
     </page>
   </fixture>
-  <fixture id="labels-unicode" file="labels-unicode.drawio" sha256="c5f546c704be15358290dfdaf981d4fa9cd1c7edcfbed3d9f491030d45f45194" features="labels html-labels unicode umlauts cjk wrap vertical-text font-styles xml-escaping" render="pending" issue="#9/#10">
+  <fixture id="labels-unicode" file="labels-unicode.drawio" sha256="c5f546c704be15358290dfdaf981d4fa9cd1c7edcfbed3d9f491030d45f45194" features="labels html-labels unicode umlauts cjk wrap vertical-text font-styles xml-escaping" render="match" issue="#9/#10">
     <note>Text-heavy: browser and Java2D fonts differ, so the score threshold is lower; assert text through SVG structure.</note>
     <note>Known gaps on 2026-11-12: the plain-text (html=0) label 'A &lt; B ...' loses everything between '&lt;' and '&gt;'; bold/italic in HTML labels and fontFamily are not applied.</note>
     <page index="0" name="Beschriftungen" vertices="14" edges="0" minScore="0.75" png="reference/labels-unicode.png" pngSha256="61825a4e80fbe5f57882302db47fa0c5714b08732770ec25f1dc1049a1935767" svg="reference/labels-unicode.svg" svgSha256="5f4b02af2437b922bcd6122d782c93ee63078fc2d562bec624049cc7f0befc8a">
@@ -139,7 +139,7 @@
       <label cell="nowrap" text="Ohne Umbruch, ragt hinaus"/>
     </page>
   </fixture>
-  <fixture id="multipage-mixed" file="multipage-mixed.drawio" sha256="f9a6b723f9b598389c585ba1bacb5c6ccf3cb447189eebf7bccdf215623dee52" features="multipage compressed uncompressed empty-page unicode-page-name" render="pending" issue="#9">
+  <fixture id="multipage-mixed" file="multipage-mixed.drawio" sha256="f9a6b723f9b598389c585ba1bacb5c6ccf3cb447189eebf7bccdf215623dee52" features="multipage compressed uncompressed empty-page unicode-page-name" render="match" issue="#9">
     <page index="0" name="Übersicht" vertices="2" edges="1" minScore="0.85" png="reference/multipage-mixed.page0.png" pngSha256="3d39622c87944d97e0b579729e7f8149fb3c4235f4d3f1c19da04857b8ac061c" svg="reference/multipage-mixed.page0.svg" svgSha256="6102863c8c8cbac4c64211c984b7316e7d60ffd39fd819133279f2ac4d03f11a">
       <label cell="a" text="Eingang"/>
       <label cell="b" text="Verarbeitung"/>

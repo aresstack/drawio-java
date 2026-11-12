@@ -1,5 +1,11 @@
 # Headless mxGraph model – first integration slice
 
+> **Historical.** This page documents the first model-only slice of #9.
+> The production path is now the full original mxGraph pipeline described
+> in [HEADLESS-GRAPH.md](HEADLESS-GRAPH.md) (`OriginalGraphPipeline`). The
+> `drawio-model.js` and `drawio-shapes.js` bundles below remain only for
+> the older stub-based tests; production rendering does not load them.
+
 Tracking: [Issue #9](https://github.com/aresstack/drawio-java/issues/9).
 
 ## Verified scope
@@ -77,19 +83,6 @@ for a completed production runtime. In particular:
 
 ## Next integration decisions
 
-1. Build a controlled XML-to-upstream-model decoding seam from the
-   safe `DrawioDocumentParser` output. Evaluate the upstream
-   `mxCodec` and its DOM requirements before introducing adapters.
-2. Load the original `mxGraphView` and `mxCellRenderer` in a
-   feature-by-feature test environment. Identify the precise
-   `document` and `createElementNS` calls needed during
-   view validation and rendering.
-3. Use the new testable `TextMetrics` port based on
-   `FontMetrics` and the original `mermaid-java` approach.
-   Its separate implementation slice supports string width,
-   ascent/descent, CSS font fallbacks and multiline height;
-   complete DOM/CSS layout is still pending. See
-   [TEXT-METRICS.md](TEXT-METRICS.md).
-4. Render connected multi-shape XML diagrams with labels and
-   nested groups, then compare against the pinned official viewer.
-5. Close #9 only when its full acceptance criteria pass.
+Done: the codec seam, `mxGraphView`/`mxCellRenderer` in GraalJS, the
+`TextMetrics`/`LabelLayout` port and the comparison against the pinned
+official viewer are implemented. See [HEADLESS-GRAPH.md](HEADLESS-GRAPH.md).
