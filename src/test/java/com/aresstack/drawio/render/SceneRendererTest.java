@@ -382,10 +382,12 @@ class SceneRendererTest {
         assertEquals(0, document.getElementsByTagNameNS(SvgOutput.SVG_NAMESPACE, "text")
                 .getLength());
         assertNoExternalReferences(document);
-        // Glyph rasterization and outline filling differ only along glyph edges.
+        // Glyph rasterization and outline filling differ only along glyph
+        // edges (amount depends on the platform's fonts); compare the pixels
+        // whose 3x3 neighborhood is uniform.
         int total = raster.getWidth() * raster.getHeight();
-        int differences = TestImages.countDifferentPixels(raster, vector, 48);
-        assertTrue(differences < total / 50, "differ at " + differences + " of " + total);
+        int differences = TestImages.countDifferentStablePixels(raster, vector, 48);
+        assertTrue(differences < total / 500, "differ at " + differences + " of " + total);
         assertEquals(darkPixelsInRows(raster, 0, raster.getHeight()),
                 darkPixelsInRows(vector, 0, vector.getHeight()),
                 darkPixelsInRows(raster, 0, raster.getHeight()) / 10.0,

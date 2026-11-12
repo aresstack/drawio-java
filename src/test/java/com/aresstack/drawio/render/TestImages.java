@@ -89,6 +89,37 @@ final class TestImages {
         return different;
     }
 
+    /**
+     * Count differing pixels among those whose 3x3 neighborhood in the
+     * expected image is uniform, ignoring anti-aliased edges.
+     */
+    static int countDifferentStablePixels(BufferedImage expected, BufferedImage actual,
+                                          int tolerance) {
+        countDifferentPixels(expected, actual, 255);
+        int different = 0;
+        for (int y = 1; y < expected.getHeight() - 1; y++) {
+            for (int x = 1; x < expected.getWidth() - 1; x++) {
+                if (isStable(expected, x, y, tolerance)
+                        && channelDistance(expected.getRGB(x, y), actual.getRGB(x, y)) > tolerance) {
+                    different++;
+                }
+            }
+        }
+        return different;
+    }
+
+    private static boolean isStable(BufferedImage image, int x, int y, int tolerance) {
+        int center = image.getRGB(x, y);
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (channelDistance(center, image.getRGB(x + dx, y + dy)) > tolerance) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     static int channelDistance(int first, int second) {
         int max = 0;
         for (int shift = 0; shift <= 24; shift += 8) {
