@@ -7,4 +7,4 @@ gradlew text eol=lf
 *.drawio -text
 *.svg -text
 *.png binary
-js-bundle/upstream/*.js text eol=lf linguist-vendored -diff
+js-bundle/upstream/**/*.js text eol=lf linguist-vendored -diff

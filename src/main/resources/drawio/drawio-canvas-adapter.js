@@ -60,17 +60,21 @@
         this.bridge.rotate(degrees, Boolean(flipH), Boolean(flipV), centerX, centerY);
     };
 
+    // Stencils pass alpha attributes as strings (mxStencil <alpha alpha="0.5"/>).
     DrawioJavaCanvas.prototype.setAlpha = function (alpha) {
+        alpha = numberOr(alpha, 1);
         this.state.alpha = alpha;
         this.bridge.setAlpha(alpha);
     };
 
     DrawioJavaCanvas.prototype.setFillAlpha = function (alpha) {
+        alpha = numberOr(alpha, 1);
         this.state.fillAlpha = alpha;
         this.bridge.setFillAlpha(alpha);
     };
 
     DrawioJavaCanvas.prototype.setStrokeAlpha = function (alpha) {
+        alpha = numberOr(alpha, 1);
         this.state.strokeAlpha = alpha;
         this.bridge.setStrokeAlpha(alpha);
     };
@@ -252,6 +256,8 @@
     };
 
     DrawioJavaCanvas.prototype.begin = function () {
+        this.lastX = 0;
+        this.lastY = 0;
         this.bridge.begin();
     };
 

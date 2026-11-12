@@ -135,6 +135,9 @@ for (const resource of manifest.resources || []) {
     verifySourceHash(resource.path, text, resource.sha256NormalizedLf);
     process.stdout.write('Verified pinned resource: ' + resource.path + '\n');
 }
+if (manifest.shapeLibrarySources && manifest.shapeLibraryBundle) {
+    await buildBundle(manifest.shapeLibrarySources, manifest.shapeLibraryBundle);
+}
 if (manifest.stencils) {
     await buildStencilBundle(manifest.stencils);
 }

@@ -233,6 +233,41 @@ class DrawioOfflineStencilsTest {
         assertEquals(0, image.getRGB(85, 85));
     }
 
+    @Test
+    void paintsEveryBundledStencilThroughTheJavaCanvas() {
+        BufferedImage image = new BufferedImage(120, 120, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+
+        try (Java2DCanvas canvas = new Java2DCanvas(graphics)) {
+            DrawioHost host = new DrawioHost(denyResources(), new DrawioCanvasBridge(canvas));
+            String source = stencilRuntime()
+                    + scripts.load("drawio-canvas-adapter.js") + "\n"
+                    + "['bpmn', 'basic', 'flowchart', 'arrows'].forEach(function (set) {"
+                    + "  mxStencilRegistry.loadStencilSet(STENCIL_PATH + '/' + set + '.xml'); });"
+                    + "var failures = []; var names = DrawioStencils.names();"
+                    + "names.forEach(function (name) {"
+                    + "  try {"
+                    + "    var c = new DrawioJavaCanvas(); c.save();"
+                    + "    c.setFillColor('#ffffff'); c.setStrokeColor('#000000');"
+                    + "    mxStencilRegistry.getStencil(name).drawShape(c,"
+                    + "      {style: {}, fill: '#ffffff', stroke: '#000000', outline: false},"
+                    + "      10, 10, 100, 100);"
+                    + "    c.restore();"
+                    + "  } catch (e) { failures.push(name + ': ' + e); }"
+                    + "});"
+                    + "names.length + '|' + failures.join('; ');";
+
+            ScriptExecutionResult result = evaluate(source, host);
+
+            assertTrue(result.isSuccessful(), result.getErrorMessage());
+            String[] parts = result.getOutput().split("\\|", -1);
+            assertEquals("139", parts[0]);
+            assertEquals("", parts[1], "stencils failing to paint");
+        } finally {
+            graphics.dispose();
+        }
+    }
+
     private String stencilRuntime() {
         return scripts.load("test-bootstrap.js") + "\n"
                 + scripts.load("drawio-shapes.js") + "\n"

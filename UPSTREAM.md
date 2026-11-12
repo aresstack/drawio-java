@@ -156,3 +156,19 @@ load stencil XML dynamically. See the
 This project deliberately does **not** ship `viewer-static.min.js` and does
 not configure a network-based stencil fallback. Unknown assets must be
 reported as unsupported until a licensed offline resolution is available.
+
+## Production shape library (#10)
+
+`drawio-shape-library.js` bundles three original files, pinned with their
+LF-normalized SHA-256 in `shapeLibrarySources` of the manifest:
+
+| Original path relative to `src/main/webapp` | Vendored at |
+| --- | --- |
+| `js/grapheditor/Shapes.js` | `js-bundle/upstream/grapheditor/Shapes.js` |
+| `shapes/mxBasic.js` | `js-bundle/upstream/shapes/mxBasic.js` |
+| `shapes/bpmn/mxBpmnShape2.js` | `src/main/resources/drawio/upstream/mxBpmnShape2.js` |
+
+The files under `js-bundle/upstream/` are build inputs and are not packaged;
+only the generated bundle ships in the JAR. The bundle needs the original
+mxGraph core and the headless `Graph` class from the #9 pipeline at load time.
+See [docs/SHAPES.md](docs/SHAPES.md) for the load order and support matrix.

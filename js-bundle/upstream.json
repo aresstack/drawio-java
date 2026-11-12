@@ -393,6 +393,24 @@
             "sha256NormalizedLf": "e5767817bbbd86639f6db53d753fc9793f5993f892f738bedc35b896b2688ea6"
         }
     ],
+    "shapeLibrarySources": [
+        {
+            "path": "js-bundle/upstream/grapheditor/Shapes.js",
+            "upstreamPath": "src/main/webapp/js/grapheditor/Shapes.js",
+            "sha256NormalizedLf": "d09a4408c2475bdef3456cbe763dc3d09793d296409fd979c94e5a52e8635983"
+        },
+        {
+            "path": "js-bundle/upstream/shapes/mxBasic.js",
+            "upstreamPath": "src/main/webapp/shapes/mxBasic.js",
+            "sha256NormalizedLf": "bf246a11c4caa25a5a41ddcb1be67934bd4e4ab14b5c12f5c07c7459267bfa63"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxBpmnShape2.js",
+            "upstreamPath": "src/main/webapp/shapes/bpmn/mxBpmnShape2.js",
+            "sha256NormalizedLf": "a95f550de67cb50e775f7693ee5937458933ffd8a438d2748eb40c4ade48b3c7"
+        }
+    ],
+    "shapeLibraryBundle": "src/main/resources/drawio/drawio-shape-library.js",
     "stencils": {
         "source": {
             "path": "js-bundle/upstream/stencils.min.js",
