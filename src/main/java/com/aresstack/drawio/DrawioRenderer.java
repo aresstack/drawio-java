@@ -163,7 +163,12 @@ public final class DrawioRenderer implements AutoCloseable {
         if (!closed.compareAndSet(false, true)) {
             return;
         }
-        workers.shutdownNow();
+        for (Runnable neverStarted : workers.shutdownNow()) {
+            // Queued requests would otherwise wait for their full timeout.
+            if (neverStarted instanceof Future) {
+                ((Future<?>) neverStarted).cancel(false);
+            }
+        }
         for (RenderSession session : activeSessions) {
             session.cancel(RenderErrorCode.CANCELLED);
         }

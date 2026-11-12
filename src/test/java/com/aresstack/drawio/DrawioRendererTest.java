@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -301,6 +302,45 @@ class DrawioRendererTest {
         assertThrows(IllegalStateException.class, () -> renderer.renderSvg(MODEL));
         renderer.close();
         waitUntil(() -> workerThreads() == 0 || renderers.size() > 1);
+    }
+
+    @Test
+    void closeCancelsQueuedRequestsPromptly() throws Exception {
+        CountDownLatch entered = new CountDownLatch(1);
+        DrawioRenderer renderer = renderer(1, 4, (page, session) -> {
+            CountDownLatch cancelled = new CountDownLatch(1);
+            session.onCancel(cancelled::countDown);
+            entered.countDown();
+            try {
+                cancelled.await();
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            }
+            session.checkCancelled();
+            return new TestScene("never");
+        });
+        ExecutorService callers = Executors.newFixedThreadPool(2);
+        try {
+            Callable<RenderException> call = () -> {
+                try {
+                    renderer.renderSvg(MODEL);
+                    return null;
+                } catch (RenderException exception) {
+                    return exception;
+                }
+            };
+            Future<RenderException> running = callers.submit(call);
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            Future<RenderException> queued = callers.submit(call);
+            waitUntil(() -> queuedTasks(renderer) == 1);
+            long started = System.nanoTime();
+            renderer.close();
+            assertEquals(RenderErrorCode.CANCELLED, queued.get(5, TimeUnit.SECONDS).getCode());
+            assertEquals(RenderErrorCode.CANCELLED, running.get(5, TimeUnit.SECONDS).getCode());
+            assertTrue(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started) < 5000);
+        } finally {
+            callers.shutdownNow();
+        }
     }
 
     @Test
