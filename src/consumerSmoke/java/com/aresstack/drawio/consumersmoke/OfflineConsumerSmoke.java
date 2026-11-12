@@ -38,14 +38,25 @@ import com.aresstack.drawio.parse.DrawioDocumentParser;
 public final class OfflineConsumerSmoke {
 
     private static final String[] BUNDLED_RESOURCES = {
-            "drawio/drawio-shapes.js",
-            "drawio/drawio-model.js",
+            "drawio/drawio-headless-env.js",
+            "drawio/drawio-graph.js",
+            "drawio/drawio-xml-dom.js",
+            "drawio/drawio-headless.js",
+            "drawio/drawio-graph-ports.js",
+            "drawio/drawio-shape-library.js",
             "drawio/drawio-canvas-adapter.js",
+            "drawio/drawio-render.js",
             "drawio/drawio-stencil-runtime.js",
             "drawio/upstream/LICENSE"
     };
 
     private static final String STENCIL_DATA = "drawio/drawio-stencils.js";
+
+    /** Bundles of the old stub-based tests; the production pipeline never loads them. */
+    private static final String[] TEST_ONLY_RESOURCES = {
+            "drawio/drawio-model.js",
+            "drawio/drawio-shapes.js"
+    };
 
     /** An XML stencil from flowchart.xml in drawio-java-stencils (a diamond). */
     private static final String STENCIL_DIAGRAM = "<mxGraphModel><root><mxCell id=\"0\"/>"
@@ -71,6 +82,10 @@ public final class OfflineConsumerSmoke {
                     "bundled resource must come from the packaged jar, was " + url);
         }
         checkLicenseInJar();
+        for (String resource : TEST_ONLY_RESOURCES) {
+            check(GraalJsRuntime.class.getClassLoader().getResource(resource) == null,
+                    "test-only bundle must not be shipped: " + resource);
+        }
         URL stencilData = GraalJsRuntime.class.getClassLoader().getResource(STENCIL_DATA);
         if (withStencils) {
             check(stencilData != null, "drawio-java-stencils is on the classpath but " + STENCIL_DATA + " is not");

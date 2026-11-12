@@ -98,9 +98,15 @@ tasks.named('test', Test) {
 // follow docs/STENCILS.md, "Optional artifact drawio-java-stencils".
 // ---------------------------------------------------------------------------
 def stencilResources = ['drawio/drawio-stencils.js']
+// Legacy bundles of the stub-based regression tests (#4-#7). The production
+// pipeline (OriginalGraphPipeline) never loads them, so they stay on the test
+// classpath only and are not shipped (about 235 KB). To ship them again,
+// remove them from this list.
+def testOnlyResources = ['drawio/drawio-model.js', 'drawio/drawio-shapes.js']
 
 tasks.named('jar', Jar) {
     exclude stencilResources
+    exclude testOnlyResources
     manifest {
         attributes('Implementation-Title': 'drawio-java',
                 'Implementation-Version': project.version)
@@ -116,6 +122,7 @@ tasks.named('jar', Jar) {
 
 tasks.named('sourcesJar', Jar) {
     exclude stencilResources
+    exclude testOnlyResources
 }
 
 // ---- drawio-java-stencils (begin) -----------------------------------------

@@ -23,8 +23,10 @@ Order matters: `mxBpmnShape2.js` extends `mxgraph.basic.rect`, registered by
 `Shapes.js`; the stencil decoder captures `mxStencilRegistry.loadStencil` when
 it is evaluated, so the runtime must come first.
 
-The older `drawio-shapes.js` (mxAbstractCanvas2D + mxBpmnShape2.js) remains only
-for the stub-based regression tests from #4–#7.
+The older `drawio-shapes.js` (mxAbstractCanvas2D + mxBpmnShape2.js) and
+`drawio-model.js` remain only for the stub-based regression tests from #4–#7.
+They stay on the test classpath and are not shipped in the jar
+(`testOnlyResources` in `build.gradle`).
 
 ## JavaScript shapes (`drawio-shape-library.js`)
 

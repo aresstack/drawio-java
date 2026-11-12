@@ -7,11 +7,34 @@ Tracking: [Issue #14](https://github.com/aresstack/drawio-java/issues/14).
 `./gradlew benchmark` runs `GraalJsBenchmark` (test sources) on JDK 8. Each
 "request" creates a fresh `GraalJsRuntime` and context, loads the pinned
 `drawio-model.js`, `drawio-shapes.js` and `drawio-canvas-adapter.js`
-bundles, builds an original `mxGraphModel` with N cells and paints every
+bundles (the first two are test-only and not shipped), builds an original `mxGraphModel` with N cells and paints every
 cell through the original `mxgraph.bpmn.gateway2` code into a Java2D image.
 That is the per-request work of the graph pipeline **without** the view,
 layout and label steps, which were not on `main` when this was measured.
 Re-run the benchmark once the full pipeline (#9) is integrated.
+
+## Full pipeline through `DrawioRenderer` (2026-11-12)
+
+The numbers below include everything a consumer pays for: parsing, the
+original mxCodec, `Graph`, view validation with label measurement, shape
+painting, recording and PNG plus SVG output. Measured with `./gradlew
+renderFiles -PrenderArgs="outDir file..."` (one `DrawioRenderer`, files in
+sequence, same JVM) on OpenJDK 1.8.0_512, 4 CPUs, interpreter-mode GraalJS
+21.3.20.0.3, corpus fixtures:
+
+| Request | Diagram | Time |
+|---|---|---:|
+| 1st (cold: loads and parses ~2.6 MB of bundled JavaScript) | `bpmn-approval-flow` (13 cells) | 2628 ms |
+| 2nd | `bpmn-approval-flow` | 246 ms |
+| 3rd | `bpmn-shapes-catalog` (~40 shapes) | 522 ms |
+| later | `edges-arrows`, `groups-nested`, `labels-unicode`, `styles-basic-shapes` | 140–333 ms |
+| 8th / 9th (warm) | `bpmn-approval-flow` / `bpmn-shapes-catalog` | 182 / 294 ms |
+
+The integration probe ([INTEGRATION.md](INTEGRATION.md)) measured the same
+order on JDK 21: first render about 2–3.4 s per JVM, later small diagrams
+50–170 ms. Consumers should create one long-lived `DrawioRenderer` and, if
+the first-request latency matters, render a small diagram at startup.
+The section below is the earlier shape-only benchmark.
 
 Options: `-Dbench.mode=shared|unshared` (one mode per JVM gives honest cold
 starts), `-Dbench.cells=N`, `-Dbench.runs=N`, `-Dbench.threads=N`.

@@ -9,7 +9,8 @@ Implementation scope: [Issue #4](https://github.com/aresstack/drawio-java/issues
 - **Immutable source commit:** `c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3`.
 - Manifest: [js-bundle/upstream.json](js-bundle/upstream.json).
 - License: [Apache License 2.0](src/main/resources/drawio/upstream/LICENSE).
-- Local, committed bundle: `src/main/resources/drawio/drawio-shapes.js`.
+- Local, committed bundle: `src/main/resources/drawio/drawio-shapes.js`
+  (test classpath only since the production pipeline replaced it; not in the jar).
 
 Two original upstream files are vendored unchanged except for canonical LF line endings:
 
