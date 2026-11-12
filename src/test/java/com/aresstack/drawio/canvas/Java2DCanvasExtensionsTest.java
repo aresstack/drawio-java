@@ -234,6 +234,46 @@ class Java2DCanvasExtensionsTest {
     }
 
     @Test
+    void drawsDotsForZeroLengthDashesWithRoundCaps() {
+        try (Fixture fixture = new Fixture(100, 40)) {
+            fixture.canvas.setStrokeColor("#0000ff");
+            fixture.canvas.setStrokeWidth(4);
+            fixture.canvas.setLineCap("round");
+            fixture.canvas.setDashed(true);
+            fixture.canvas.setFixDash(true);
+            fixture.canvas.setDashPattern("0 8");
+            fixture.canvas.begin();
+            fixture.canvas.moveTo(10, 20);
+            fixture.canvas.lineTo(90, 20);
+            fixture.canvas.stroke();
+
+            // Dots of diameter 4 every 8 px starting at x=10.
+            assertEquals(Color.BLUE.getRGB(), fixture.image.getRGB(10, 20));
+            assertEquals(0, fixture.image.getRGB(14, 20));
+            assertEquals(Color.BLUE.getRGB(), fixture.image.getRGB(18, 20));
+            assertThrows(IllegalArgumentException.class, () -> fixture.canvas.setDashPattern("4 -1"));
+        }
+    }
+
+    @Test
+    void hidesTextWithFontSizeZeroAndBoundsOversizedFonts() {
+        try (Fixture fixture = new Fixture(100, 40)) {
+            fixture.canvas.setFontColor("#000000");
+            fixture.canvas.setFontSize(0);
+            fixture.canvas.text(50, 20, 0, 0, "hidden", "center", "middle", false, "", null,
+                    false, 0, null);
+            fixture.canvas.setFontSize(-3);
+            fixture.canvas.text(50, 20, 0, 0, "hidden", "center", "middle", false, "html", null,
+                    false, 0, null);
+            assertEquals(0, fixture.inkPixelCount());
+
+            fixture.canvas.setFontSize(5000);
+            fixture.canvas.text(50, 20, 0, 0, "x", "center", "middle", false, "", null,
+                    false, 0, null);
+        }
+    }
+
+    @Test
     void ignoresNonNumericDashTokensAndPaintsSolidLine() {
         try (Fixture fixture = new Fixture(100, 40)) {
             fixture.canvas.setStrokeColor("#0000ff");
@@ -472,6 +512,18 @@ class Java2DCanvasExtensionsTest {
         }
 
         /** Return {minX, minY, maxX, maxY} of pixels with visible ink. */
+        private int inkPixelCount() {
+            int count = 0;
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    if ((image.getRGB(x, y) >>> 24) > 64) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
         private int[] inkBounds() {
             int minX = Integer.MAX_VALUE;
             int minY = Integer.MAX_VALUE;

@@ -303,7 +303,7 @@ class Java2DCanvasTest {
             assertThrows(IllegalArgumentException.class,
                     () -> fixture.canvas.rect(0, 0, Double.NaN, 20));
             assertThrows(IllegalArgumentException.class,
-                    () -> fixture.canvas.setDashPattern("2 0"));
+                    () -> fixture.canvas.setDashPattern("2 -1"));
             assertThrows(IllegalStateException.class, fixture.canvas::restore);
         }
     }
