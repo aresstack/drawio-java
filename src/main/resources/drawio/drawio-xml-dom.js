@@ -51,8 +51,20 @@
         if (parent == null) {
             return null;
         }
-        var index = parent.childNodes.indexOf(node) + offset;
-        return index >= 0 && index < parent.childNodes.length ? parent.childNodes[index] : null;
+        // The codecs walk children with firstChild/nextSibling; a verified
+        // position hint keeps that walk linear for wide elements.
+        var siblings = parent.childNodes;
+        var position = node.siblingIndex;
+        if (typeof position !== 'number' || siblings[position] !== node) {
+            position = siblings.indexOf(node);
+            node.siblingIndex = position;
+        }
+        var index = position + offset;
+        if (index < 0 || index >= siblings.length) {
+            return null;
+        }
+        siblings[index].siblingIndex = index;
+        return siblings[index];
     }
 
     defineSiblingAccessors(DrawioXmlNode.prototype);
@@ -298,6 +310,7 @@
         for (var j = 0; j < children.length; j++) {
             var child = build(children[j], document, depth + 1);
             child.parentNode = element;
+            child.siblingIndex = element.childNodes.length;
             element.childNodes.push(child);
         }
         return element;

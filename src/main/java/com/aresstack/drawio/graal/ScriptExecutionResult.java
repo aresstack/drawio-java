@@ -13,15 +13,17 @@ public final class ScriptExecutionResult {
     private final boolean successful;
     private final String output;
     private final String errorMessage;
+    private final boolean timedOut;
 
-    private ScriptExecutionResult(boolean successful, String output, String errorMessage) {
+    private ScriptExecutionResult(boolean successful, String output, String errorMessage, boolean timedOut) {
         this.successful = successful;
         this.output = output;
         this.errorMessage = errorMessage;
+        this.timedOut = timedOut;
     }
 
     public static ScriptExecutionResult success(String output) {
-        return new ScriptExecutionResult(true, output, null);
+        return new ScriptExecutionResult(true, output, null, false);
     }
 
     public static ScriptExecutionResult failure(String errorMessage) {
@@ -29,7 +31,13 @@ public final class ScriptExecutionResult {
         if (message.trim().isEmpty()) {
             throw new IllegalArgumentException("errorMessage must not be blank");
         }
-        return new ScriptExecutionResult(false, null, message);
+        return new ScriptExecutionResult(false, null, message, false);
+    }
+
+    /** A failure because the execution exceeded its time limit. */
+    public static ScriptExecutionResult timeout(String errorMessage) {
+        ScriptExecutionResult failure = failure(errorMessage);
+        return new ScriptExecutionResult(false, null, failure.errorMessage, true);
     }
 
     public boolean isSuccessful() {
@@ -42,5 +50,10 @@ public final class ScriptExecutionResult {
 
     public String getErrorMessage() {
         return errorMessage;
+    }
+
+    /** Whether the execution was stopped because it exceeded its time limit. */
+    public boolean isTimedOut() {
+        return timedOut;
     }
 }

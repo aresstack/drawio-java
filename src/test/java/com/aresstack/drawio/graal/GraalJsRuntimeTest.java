@@ -98,6 +98,7 @@ class GraalJsRuntimeTest {
 
             assertFalse(result.isSuccessful());
             assertTrue(result.getErrorMessage().contains("timed out"));
+            assertTrue(result.isTimedOut());
             assertThrows(IllegalStateException.class,
                     () -> runtime.execute("next.js", "true", APPROVED_HOST));
         }

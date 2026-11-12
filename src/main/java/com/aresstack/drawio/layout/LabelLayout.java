@@ -100,10 +100,14 @@ public final class LabelLayout {
         double ink = 0;
         for (int i = 0; i < word.size(); i++) {
             TextRun fragment = word.get(i);
-            double width = measure(fragment.getText(), fragment.getStyle(), metrics);
-            ink = advance + (i == word.size() - 1
-                    ? measure(fragment.getText().trim(), fragment.getStyle(), metrics) : width);
-            advance += width;
+            String text = fragment.getText();
+            // Only the word's last fragment can end with its separating space,
+            // which advances the pen but does not decide the break.
+            boolean spaced = i == word.size() - 1 && text.endsWith(" ");
+            double visible = measure(spaced ? text.substring(0, text.length() - 1) : text,
+                    fragment.getStyle(), metrics);
+            ink = advance + visible;
+            advance += spaced ? visible + measure(" ", fragment.getStyle(), metrics) : visible;
         }
         List<TextRun> current = line;
         if (!current.isEmpty() && lineWidth[0] + ink > wrapWidth && out.size() < MAX_LINES) {
@@ -136,11 +140,28 @@ public final class LabelLayout {
         return runs;
     }
 
+    private static final int MEASURE_CHUNK = 4096;
+
     static double measure(String text, RunStyle style, TextMetrics metrics) {
         if (text.isEmpty()) {
             return 0;
         }
-        return metrics.measure(text, style.toFont()).getWidth();
+        if (text.length() <= MEASURE_CHUNK) {
+            return metrics.measure(text, style.toFont()).getWidth();
+        }
+        // Text metrics bound a single measurement; long runs (up to
+        // HtmlLabelParser.MAX_LABEL_CHARACTERS) are measured in chunks.
+        double width = 0;
+        int start = 0;
+        while (start < text.length()) {
+            int end = Math.min(text.length(), start + MEASURE_CHUNK);
+            if (end < text.length() && Character.isHighSurrogate(text.charAt(end - 1))) {
+                end--;
+            }
+            width += metrics.measure(text.substring(start, end), style.toFont()).getWidth();
+            start = end;
+        }
+        return width;
     }
 
     public List<Line> getLines() {

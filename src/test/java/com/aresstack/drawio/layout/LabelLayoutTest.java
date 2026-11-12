@@ -92,4 +92,50 @@ class LabelLayoutTest {
         assertEquals("world", text(layout.getLines().get(1).getRuns()));
         assertTrue(layout.getLines().get(0).getRuns().get(0).getStyle().isBold());
     }
+
+    @Test
+    void trailingBreakAtTheEndOfABlockCreatesNoLine() {
+        assertEquals(1, HtmlLabelParser.parse("Title<br>", true, BASE).size());
+        assertEquals(1, HtmlLabelParser.parse("<div>a<br></div>", true, BASE).size());
+        assertEquals(2, HtmlLabelParser.parse("a<br><br>", true, BASE).size());
+        assertEquals(2, HtmlLabelParser.parse("a<br>b", true, BASE).size());
+    }
+
+    @Test
+    void tooDeepNestingKeepsOuterFormatting() {
+        StringBuilder html = new StringBuilder("<b>");
+        for (int i = 0; i < 100; i++) {
+            html.append("<span>");
+        }
+        html.append("x");
+        for (int i = 0; i < 100; i++) {
+            html.append("</span>");
+        }
+        html.append("y</b>z");
+
+        List<List<TextRun>> lines = HtmlLabelParser.parse(html.toString(), true, BASE);
+
+        assertEquals("xyz", text(lines.get(0)));
+        List<TextRun> runs = lines.get(0);
+        TextRun last = runs.get(runs.size() - 1);
+        assertEquals("z", last.getText());
+        assertFalse(last.getStyle().isBold());
+        assertTrue(runs.get(0).getStyle().isBold());
+        assertTrue(text(runs).indexOf('y') < text(runs).length() - 1);
+        for (TextRun run : runs) {
+            if (run.getText().contains("y")) {
+                assertTrue(run.getStyle().isBold(), "y keeps the outer bold");
+            }
+        }
+    }
+
+    @Test
+    void measuresLabelsLongerThanOneTextMeasurement() {
+        StringBuilder value = new StringBuilder();
+        for (int i = 0; i < 12000; i++) {
+            value.append('m');
+        }
+        LabelLayout layout = LabelLayout.layout(value.toString(), false, BASE, -1, new AwtTextMetrics());
+        assertTrue(layout.getWidth() > 12000, String.valueOf(layout.getWidth()));
+    }
 }

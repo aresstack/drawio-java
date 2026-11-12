@@ -107,7 +107,7 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
             throw diagnostics.abort.getRenderException();
         }
         if (!result.isSuccessful()) {
-            throw failure(result.getErrorMessage());
+            throw failure(result);
         }
 
         GraphReport report = GraphReport.parse(result.getOutput());
@@ -191,9 +191,10 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
         }
     }
 
-    private static RenderException failure(String message) {
+    private static RenderException failure(ScriptExecutionResult result) {
+        String message = result.getErrorMessage();
         String detail = message == null ? "unknown error" : message;
-        if (detail.contains("timed out")) {
+        if (result.isTimedOut()) {
             return new RenderException(RenderErrorCode.TIMEOUT, "Rendering exceeded the time limit");
         }
         if (detail.contains("Unsupported draw.io stencil")) {

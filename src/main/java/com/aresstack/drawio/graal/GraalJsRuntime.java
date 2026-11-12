@@ -111,7 +111,7 @@ public final class GraalJsRuntime implements AutoCloseable {
             return evaluation.get(timeoutMillis, TimeUnit.MILLISECONDS);
         } catch (TimeoutException exception) {
             stopActiveExecution();
-            return ScriptExecutionResult.failure("JavaScript execution timed out");
+            return ScriptExecutionResult.timeout("JavaScript execution timed out");
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             stopActiveExecution();

@@ -5,17 +5,24 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Use an isolated Java2D graphics context to measure text in headless mode.
  *
- * <p>Keep mutable Graphics2D resources confined to the current call.
+ * <p>Mutable Graphics2D resources stay confined to the call that resolves a
+ * font. The resolved {@link FontMetrics} are immutable and cached per font
+ * descriptor, because label layout measures every word of every label.
  */
 public final class AwtTextMetrics implements TextMetrics {
 
     private static final int MAX_TEXT_CHARACTERS = 10000;
+    private static final int MAX_CACHED_FONTS = 512;
     private static final TextBounds EMPTY = new TextBounds(0, 0, 0, 0);
+
+    private final Map<String, FontMetrics> fontMetrics = new ConcurrentHashMap<String, FontMetrics>();
 
     @Override
     public TextBounds measure(String text, FontDescriptor descriptor) {
@@ -29,16 +36,30 @@ public final class AwtTextMetrics implements TextMetrics {
             return EMPTY;
         }
 
+        return measureLines(text, metricsFor(descriptor));
+    }
+
+    private FontMetrics metricsFor(FontDescriptor descriptor) {
+        String key = descriptor.getCssFamily() + '\u0000' + descriptor.isBold() + '\u0000'
+                + descriptor.isItalic() + '\u0000' + Float.floatToIntBits(descriptor.getSizePixels());
+        FontMetrics cached = fontMetrics.get(key);
+        if (cached != null) {
+            return cached;
+        }
         Font font = resolveFont(descriptor);
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
-
+        FontMetrics metrics;
         try {
-            FontMetrics metrics = graphics.getFontMetrics(font);
-            return measureLines(text, metrics);
+            metrics = graphics.getFontMetrics(font);
         } finally {
             graphics.dispose();
         }
+        if (fontMetrics.size() >= MAX_CACHED_FONTS) {
+            fontMetrics.clear();
+        }
+        fontMetrics.put(key, metrics);
+        return metrics;
     }
 
     private TextBounds measureLines(String text, FontMetrics metrics) {

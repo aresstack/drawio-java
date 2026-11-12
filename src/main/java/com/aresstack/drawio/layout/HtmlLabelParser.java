@@ -80,6 +80,7 @@ public final class HtmlLabelParser {
         private final StringBuilder pending = new StringBuilder();
         private boolean lastWasSpace = true;
         private int dropDepth;
+        private int skippedOpen;
 
         HtmlState(RunStyle base) {
             stack.push(new Frame("#root", base, false));
@@ -177,6 +178,18 @@ public final class HtmlLabelParser {
         }
 
         private void open(String name, Map<String, String> attributes, boolean selfClosing) {
+            if (!selfClosing && stack.size() >= MAX_NESTING) {
+                // Too deep: the element is ignored and so is the next closing
+                // tag, which keeps outer frames intact and the stack bounded.
+                if (DROPPED.contains(name)) {
+                    dropDepth++;
+                }
+                skippedOpen++;
+                if (BLOCKS.contains(name) && dropDepth == 0) {
+                    blockBoundary();
+                }
+                return;
+            }
             if (DROPPED.contains(name)) {
                 if (!selfClosing) {
                     dropDepth++;
@@ -198,7 +211,7 @@ public final class HtmlLabelParser {
             if (block) {
                 blockBoundary();
             }
-            if (selfClosing || stack.size() >= MAX_NESTING) {
+            if (selfClosing) {
                 if ("hr".equals(name)) {
                     blockBoundary();
                 }
@@ -209,6 +222,10 @@ public final class HtmlLabelParser {
         }
 
         private void close(String name) {
+            if (skippedOpen > 0) {
+                skippedOpen--;
+                return;
+            }
             Frame frame = null;
             for (Frame candidate : stack) {
                 if (candidate.name.equals(name)) {
@@ -272,7 +289,7 @@ public final class HtmlLabelParser {
             String decoded = decodeEntities(raw);
             for (int i = 0; i < decoded.length(); i++) {
                 char c = decoded.charAt(i);
-                if (c == ' ') {
+                if (c == '\u00a0') {
                     pending.append(' ');
                     lastWasSpace = false;
                 } else if (Character.isWhitespace(c)) {
@@ -300,7 +317,8 @@ public final class HtmlLabelParser {
             lines.add(current);
             current = new ArrayList<TextRun>();
             lastWasSpace = true;
-            trailingBreakIsImplicit = false;
+            // Browsers create no line box for a <br> at the end of a block.
+            trailingBreakIsImplicit = true;
         }
 
         private void blockBoundary() {
@@ -504,7 +522,7 @@ public final class HtmlLabelParser {
         Map<String, String> map = new HashMap<String, String>();
         String[][] pairs = {
             {"amp", "&"}, {"lt", "<"}, {"gt", ">"}, {"quot", "\""}, {"apos", "'"},
-            {"nbsp", " "}, {"ensp", " "}, {"emsp", " "}, {"thinsp", " "},
+            {"nbsp", "\u00a0"}, {"ensp", " "}, {"emsp", " "}, {"thinsp", " "},
             {"copy", "©"}, {"reg", "®"}, {"trade", "™"}, {"euro", "€"},
             {"pound", "£"}, {"yen", "¥"}, {"cent", "¢"}, {"sect", "§"},
             {"para", "¶"}, {"deg", "°"}, {"plusmn", "±"}, {"times", "×"},

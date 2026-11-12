@@ -227,6 +227,23 @@
             var size = DrawioHeadless.measureLabel(this);
             this.offsetWidth = size.width + this.textWidthPadding;
             this.offsetHeight = size.height;
+            // SVG export path of updateBoundingBox: overflow=width labels
+            // take the width of their bounds.
+            if (this.overflow == 'width' && this.bounds != null) {
+                this.offsetWidth = this.bounds.width / this.scale;
+            }
+        }
+    };
+
+    // SVG export path of updateBoundingBox for plain text labels: blank
+    // string values have no bounding box ("Workaround for bounding box of
+    // empty string").
+    var originalUpdateTextBoundingBox = mxText.prototype.updateBoundingBox;
+    mxText.prototype.updateBoundingBox = function () {
+        originalUpdateTextBoundingBox.apply(this, arguments);
+        if (this.isStringSizeMeasured() && this.dialect != mxConstants.DIALECT_STRICTHTML
+                && typeof this.value == 'string' && mxUtils.trim(this.value).length == 0) {
+            this.boundingBox = null;
         }
     };
 
