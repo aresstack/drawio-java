@@ -44,6 +44,13 @@ jobs:
         run: node js-bundle/build.mjs --verify
       - name: Build, test, Java 8 bytecode gate, offline consumer smoke
         run: bash ./gradlew --no-daemon $GRADLE_TOOLCHAIN_ARGS clean build
+      - name: Upload corpus report (rendered images, diffs, scores)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-report
+          path: build/reports/corpus/
+          if-no-files-found: ignore
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v4

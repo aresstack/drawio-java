@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- drawio-java reference/regression corpus (#13). See README.md in this directory.
+     Checksums are SHA-256 over the exact file bytes (fixtures are -text in .gitattributes). -->
+<corpus version="1"
+        license="CC0-1.0"
+        origin="synthetic; authored for drawio-java, contains no business, authentication or personal data"
+        upstreamRepository="https://github.com/jgraph/drawio"
+        upstreamCommit="c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3"
+        referenceViewer="src/main/webapp/js/viewer-static.min.js"
+        referenceViewerSha256Lf="35b8ef54369e938ad2399d3c8ce3945591d4b200a01f6942d0e39743bea1f1a1"
+        referenceViewerSha256Crlf="1ed96a05a7cbe8158896bf2d52043434d648655a0577cd973da5e143eecadcac"
+        referenceGenerator="tools/reference-viewer/render-references.mjs"
+        referenceBrowser="Chromium (Playwright, headless, Linux), deviceScaleFactor 1, network blocked"
+        referenceCreated="2026-11-12">
+  <fixture id="bpmn-approval-flow" file="bpmn-approval-flow.drawio" sha256="e4de63a81f9c8b3fc705b22f517aaa4966eb735de2a3a380057e31fb4d971797" features="bpmn gateway2 event task orthogonal-edges edge-labels umlauts exit-entry-constraints" render="pending" issue="#9">
+    <note>Synthetic stand-in for the Space Harvester gateway2 failure case. No Confluence content.</note>
+    <page index="0" name="Genehmigung" vertices="7" edges="6" minScore="0.90" png="reference/bpmn-approval-flow.png" pngSha256="dc0f5c5d6aa5fa0b8cb86300892ee36cab5e9169af1f7f41e7623d1de40dc2a3" svg="reference/bpmn-approval-flow.svg" svgSha256="4b628728f682545c8c29bdbff8d2118876c2a39789dbfcb82bdb2ed5205f29a8">
+      <shape name="mxgraph.bpmn.event" count="3"/>
+      <shape name="mxgraph.bpmn.gateway2" count="1"/>
+      <label cell="start" text="Start"/>
+      <label cell="check" text="Antrag prüfen"/>
+      <label cell="gw" text="Genehmigt?"/>
+      <label cell="approve" text="Antrag freigeben"/>
+      <label cell="reject" text="Antrag ablehnen"/>
+      <label cell="done" text="Erledigt"/>
+      <label cell="rejected" text="Abgelehnt"/>
+      <label cell="f3" text="ja"/>
+      <label cell="f4" text="nein"/>
+    </page>
+  </fixture>
+  <fixture id="bpmn-approval-flow-compressed" file="bpmn-approval-flow-compressed.drawio" sha256="3d4162d60371a8f80ceadc7f165f252c59ed93c2a2a7c0f8e2c6d8c4815a0ccc" features="compressed same-model" render="pending" issue="#9" sameModelAs="bpmn-approval-flow">
+    <note>Same graph model as bpmn-approval-flow, stored as a compressed draw.io page.</note>
+    <page index="0" name="Genehmigung" vertices="7" edges="6" minScore="0.90" png="reference/bpmn-approval-flow.png" pngSha256="dc0f5c5d6aa5fa0b8cb86300892ee36cab5e9169af1f7f41e7623d1de40dc2a3" svg="reference/bpmn-approval-flow.svg" svgSha256="4b628728f682545c8c29bdbff8d2118876c2a39789dbfcb82bdb2ed5205f29a8">
+      <shape name="mxgraph.bpmn.event" count="3"/>
+      <shape name="mxgraph.bpmn.gateway2" count="1"/>
+      <label cell="start" text="Start"/>
+      <label cell="check" text="Antrag prüfen"/>
+      <label cell="gw" text="Genehmigt?"/>
+      <label cell="approve" text="Antrag freigeben"/>
+      <label cell="reject" text="Antrag ablehnen"/>
+      <label cell="done" text="Erledigt"/>
+      <label cell="rejected" text="Abgelehnt"/>
+      <label cell="f3" text="ja"/>
+      <label cell="f4" text="nein"/>
+    </page>
+  </fixture>
+  <fixture id="bpmn-shapes-catalog" file="bpmn-shapes-catalog.drawio" sha256="3db709fa3c80e97f079e68775158fbda22c279bff4aeb0f5c0457df85dbd542b" features="bpmn gateway2 event task data conversation xml-stencil" render="pending" issue="#9">
+    <note>Task markers user/service/script come from the bpmn.xml stencil pack, which the reference viewer could not load (network blocked); the reference shows them empty.</note>
+    <page index="0" name="BPMN-Formen" vertices="20" edges="0" minScore="0.85" png="reference/bpmn-shapes-catalog.png" pngSha256="d1105d666ac5e4fe6f20a8059c037ed87af9917add35a74630dd1347c7f38c13" svg="reference/bpmn-shapes-catalog.svg" svgSha256="20191964c44e1f74a57a270f8484c566d965296783079b56c9b19030cab93e9a">
+      <shape name="mxgraph.bpmn.conversation" count="1"/>
+      <shape name="mxgraph.bpmn.data" count="1"/>
+      <shape name="mxgraph.bpmn.event" count="8"/>
+      <shape name="mxgraph.bpmn.gateway2" count="4"/>
+      <shape name="mxgraph.bpmn.task" count="6"/>
+      <label cell="gw-exclusive" text="exclusive"/>
+      <label cell="gw-parallel" text="parallel"/>
+      <label cell="gw-complex" text="complex"/>
+      <label cell="gw-event" text="event"/>
+      <label cell="ev-0" text="general"/>
+      <label cell="ev-1" text="message"/>
+      <label cell="ev-2" text="timer"/>
+      <label cell="ev-3" text="signal"/>
+      <label cell="ev-4" text="terminate"/>
+      <label cell="ev-5" text="error"/>
+      <label cell="ev-6" text="escalation"/>
+      <label cell="ev-7" text="conditional"/>
+      <label cell="task-abstract" text="abstract"/>
+      <label cell="task-user" text="user"/>
+      <label cell="task-service" text="service"/>
+      <label cell="task-send" text="send"/>
+      <label cell="task-receive" text="receive"/>
+      <label cell="task-script" text="script"/>
+      <label cell="data" text="Daten"/>
+    </page>
+  </fixture>
+  <fixture id="edges-arrows" file="edges-arrows.drawio" sha256="14a1abf1c29d1c88de1976a35336456eb1dbabb290a93ebfa0464a6c485374c2" features="edges arrows waypoints orthogonal elbow curved dashed dangling self-loop edge-labels" render="match" issue="">
+    <page index="0" name="Kanten" vertices="17" edges="10" minScore="0.85" png="reference/edges-arrows.png" pngSha256="bc5edd14f6c05296d96a6a0f8d1a92e8efa4e83f34e619b775b063fdb712def5" svg="reference/edges-arrows.svg" svgSha256="2d0bbfaa66482ffc6ee4534811c1ac863ee59e945fa212f0975fa1c86e00bf04">
+      <label cell="s0" text="Quelle 0"/>
+      <label cell="t0" text="Ziel 0"/>
+      <label cell="s1" text="Quelle 1"/>
+      <label cell="t1" text="Ziel 1"/>
+      <label cell="s2" text="Quelle 2"/>
+      <label cell="t2" text="Ziel 2"/>
+      <label cell="s3" text="Quelle 3"/>
+      <label cell="t3" text="Ziel 3"/>
+      <label cell="s4" text="Quelle 4"/>
+      <label cell="t4" text="Ziel 4"/>
+      <label cell="s5" text="Quelle 5"/>
+      <label cell="t5" text="Ziel 5"/>
+      <label cell="o1" text="Orthogonal"/>
+      <label cell="o2" text="mit Wegpunkt"/>
+      <label cell="c1" text="Kurve"/>
+      <label cell="loop" text="Schleife"/>
+      <label cell="e0" text="classic"/>
+      <label cell="e1" text="block-oval-dashed"/>
+      <label cell="e2" text="open-thick"/>
+      <label cell="e3" text="diamond-none"/>
+      <label cell="e4" text="none"/>
+      <label cell="e5" text="elbow"/>
+      <label cell="dangling" text="frei"/>
+    </page>
+  </fixture>
+  <fixture id="groups-nested" file="groups-nested.drawio" sha256="6e30788210d1c40730e31cbf9ef31eb555bb4c997c66c239ef2e1b85bd22524c" features="groups swimlane nested-groups relative-geometry offset cross-container-edge" render="match" issue="">
+    <page index="0" name="Gruppen" vertices="9" edges="2" minScore="0.85" png="reference/groups-nested.png" pngSha256="22a5e8dfb61f38e1d7c2cc8de1dab406f20ecc6bee465b9b962ef0b5b67bc696" svg="reference/groups-nested.svg" svgSha256="6c8a6f4cc14683a0647cffb148910697962a767e565dcbce5369a752f3ab93ac">
+      <label cell="ga" text="A"/>
+      <label cell="gb" text="B"/>
+      <label cell="lane" text="Abteilung"/>
+      <label cell="lc" text="C"/>
+      <label cell="gd" text="D"/>
+      <label cell="ge" text="E"/>
+      <label cell="badge" text="1"/>
+      <label cell="ac" text="quer"/>
+    </page>
+  </fixture>
+  <fixture id="images-data-uri" file="images-data-uri.drawio" sha256="f11df00b3ee974a2a8f4dcdac0c84dc57df61a7c6c5899e94085f7b2604c8033" features="image data-uri external-url-blocked" render="pending" issue="#9">
+    <note>The external image URL uses the reserved .invalid TLD and must never be fetched.</note>
+    <page index="0" name="Bilder" vertices="2" edges="0" minScore="0.85" png="reference/images-data-uri.png" pngSha256="d90c81aa6b3f483e9f5e6b055fd14159aaa2aa8895d55c6a544922a58ea35e6e" svg="reference/images-data-uri.svg" svgSha256="9bfb1cca1be7ddb2e22dbc64834acacd14bb8ceb1aaa5b3c3bde83d7418fd323">
+      <shape name="image" count="2"/>
+      <label cell="embedded" text="eingebettet"/>
+      <label cell="external" text="extern"/>
+    </page>
+  </fixture>
+  <fixture id="labels-unicode" file="labels-unicode.drawio" sha256="c5f546c704be15358290dfdaf981d4fa9cd1c7edcfbed3d9f491030d45f45194" features="labels html-labels unicode umlauts cjk wrap vertical-text font-styles xml-escaping" render="pending" issue="#9/#10">
+    <note>Text-heavy: browser and Java2D fonts differ, so the score threshold is lower; assert text through SVG structure.</note>
+    <note>Known gaps on 2026-11-12: the plain-text (html=0) label 'A &lt; B ...' loses everything between '&lt;' and '&gt;'; bold/italic in HTML labels and fontFamily are not applied.</note>
+    <page index="0" name="Beschriftungen" vertices="14" edges="0" minScore="0.75" png="reference/labels-unicode.png" pngSha256="61825a4e80fbe5f57882302db47fa0c5714b08732770ec25f1dc1049a1935767" svg="reference/labels-unicode.svg" svgSha256="5f4b02af2437b922bcd6122d782c93ee63078fc2d562bec624049cc7f0befc8a">
+      <label cell="umlaut" text="Grüße aus Köln – ÄÖÜ äöü ß"/>
+      <label cell="cjk" text="日本語 / 中文 / 한국어"/>
+      <label cell="greek" text="Ελληνικά · Кириллица · Ünïcödé"/>
+      <label cell="xmlchars" text="A &lt; B &amp;&amp; C &gt; D &quot;quoted&quot;"/>
+      <label cell="symbols" text="✓ ✗ → ★ ≤ ≥ €"/>
+      <label cell="vertical" text="Vertikal"/>
+      <label cell="topleft" text="oben links"/>
+      <label cell="bold18" text="Groß &amp; fett"/>
+      <label cell="italic" text="kursiv"/>
+      <label cell="underline" text="unterstrichen"/>
+      <label cell="wrap" text="Ein sehr langer Beschriftungstext, der innerhalb der Form umgebrochen werden muss."/>
+      <label cell="nowrap" text="Ohne Umbruch, ragt hinaus"/>
+    </page>
+  </fixture>
+  <fixture id="multipage-mixed" file="multipage-mixed.drawio" sha256="f9a6b723f9b598389c585ba1bacb5c6ccf3cb447189eebf7bccdf215623dee52" features="multipage compressed uncompressed empty-page unicode-page-name" render="pending" issue="#9">
+    <page index="0" name="Übersicht" vertices="2" edges="1" minScore="0.85" png="reference/multipage-mixed.page0.png" pngSha256="3d39622c87944d97e0b579729e7f8149fb3c4235f4d3f1c19da04857b8ac061c" svg="reference/multipage-mixed.page0.svg" svgSha256="6102863c8c8cbac4c64211c984b7316e7d60ffd39fd819133279f2ac4d03f11a">
+      <label cell="a" text="Eingang"/>
+      <label cell="b" text="Verarbeitung"/>
+    </page>
+    <page index="1" name="Details" vertices="4" edges="4" minScore="0.85" png="reference/multipage-mixed.page1.png" pngSha256="c8779bd9fc7add386bc2853309f73ecfb1407fe8717f02c05635b5ecb34b623a" svg="reference/multipage-mixed.page1.svg" svgSha256="0acd3e3ac54f69a93b385b009dafe897c92ff736c6023337e98845a5faaeb0df">
+      <shape name="mxgraph.bpmn.gateway2" count="2"/>
+      <label cell="t1" text="Teil A"/>
+      <label cell="t2" text="Teil B"/>
+    </page>
+    <page index="2" name="Leer" vertices="0" edges="0" minScore="0.85" png="reference/multipage-mixed.page2.png" pngSha256="b74ff45033b2bc88bbdcadb32d28f528c8a5763fa1e921f1076a068df29d5c74" svg="reference/multipage-mixed.page2.svg" svgSha256="e659280b845e62c451b7cc34020162adb745124685511ac4b4cc9ee9f85ed231">
+    </page>
+  </fixture>
+  <fixture id="styles-basic-shapes" file="styles-basic-shapes.drawio" sha256="36c4d59c3d696bb55ebb444caf07aff6e6f0ac0dac4c90c12622c0a8385337fa" features="core-shapes drawio-shapes gradient shadow opacity rotation flip dashed stroke-width fill-none" render="match" issue="">
+    <page index="0" name="Formen" vertices="20" edges="0" minScore="0.85" png="reference/styles-basic-shapes.png" pngSha256="d02c377cbf6e5ffe4d2917ee26e37ea0ca731b47efa245f5806bf9a272ab24fd" svg="reference/styles-basic-shapes.svg" svgSha256="ffed793e85218e6473fcbc89773adf75b1b73c50b47ec081e843c497c7d1948a">
+      <shape name="actor" count="1"/>
+      <shape name="cloud" count="1"/>
+      <shape name="cylinder" count="1"/>
+      <shape name="doubleEllipse" count="1"/>
+      <shape name="hexagon" count="1"/>
+      <shape name="parallelogram" count="1"/>
+      <shape name="process" count="1"/>
+      <label cell="rect" text="Rechteck"/>
+      <label cell="rounded" text="abgerundet"/>
+      <label cell="ellipse" text="Ellipse"/>
+      <label cell="rhombus" text="Raute"/>
+      <label cell="triangle" text="Dreieck"/>
+      <label cell="hexagon" text="Sechseck"/>
+      <label cell="cloud" text="Wolke"/>
+      <label cell="cylinder" text="Zylinder"/>
+      <label cell="double" text="Doppelt"/>
+      <label cell="process" text="Prozess"/>
+      <label cell="parallelogram" text="Parallelogramm"/>
+      <label cell="gradient" text="Verlauf"/>
+      <label cell="shadow" text="Schatten"/>
+      <label cell="opacity" text="50 %"/>
+      <label cell="rotated" text="gedreht"/>
+      <label cell="dashed" text="gestrichelt"/>
+      <label cell="thick" text="dick"/>
+      <label cell="nofill" text="ohne Füllung"/>
+    </page>
+  </fixture>
+  <negative id="xxe-doctype" file="negative/xxe-doctype.drawio" sha256="723beab8f0d05f3b2622d144b9d1b20dd075ebe5fd28ef02cec2e38d7eb1aab3" stage="parse" expect="INVALID_XML">
+    <note>DOCTYPE/external entity must be rejected before any entity is resolved.</note>
+  </negative>
+  <negative id="malformed-xml" file="negative/malformed-xml.drawio" sha256="78f6ae19d4b0c9a3634fe47305da2df222dd19245b617e470f8f7135fedfd5bc" stage="parse" expect="INVALID_XML"/>
+  <negative id="unsupported-root" file="negative/unsupported-root.drawio" sha256="9e832d6f20f0eeaf6704475181a953d72f76f7adb33515c894f2d84d73305099" stage="parse" expect="UNSUPPORTED_FORMAT"/>
+  <negative id="invalid-compression" file="negative/invalid-compression.drawio" sha256="3a7b6c4ef4416e227a3bf2c9f5fa6dc5272f46583474f3295b4732f3815482d6" stage="parse" expect="INVALID_COMPRESSION"/>
+  <negative id="decompression-bomb" file="negative/decompression-bomb.drawio" sha256="e38ab186f43d960a715f0d2a534b188bb20b8528e54ce543c837b286b5fd55c2" stage="parse" expect="LIMIT_EXCEEDED">
+    <note>23 KiB file inflating to 17 MiB, above the 16 MiB document budget.</note>
+  </negative>
+  <negative id="duplicate-page-names" file="negative/duplicate-page-names.drawio" sha256="60951d01bc187e34c1c122830e79fb35e0cb8c1398d02ba0097005733a0860dd" stage="select:Gleich" expect="AMBIGUOUS_PAGE">
+    <note>Selecting a page by a duplicated name must fail, not pick one.</note>
+  </negative>
+  <negative id="unknown-stencil" file="negative/unknown-stencil.drawio" sha256="249c662032a18d2c59c49117562864a8c7299fcb7c2e3d84bec1683f1a59d8ff" stage="render" expect="UNSUPPORTED_STENCIL" render="match">
+    <note>With the default (strict) unsupported-feature policy the unknown shape must not be silently dropped.</note>
+  </negative>
+  <negative id="dangling-edge-reference" file="negative/dangling-edge-reference.drawio" sha256="b8ee88764ae33fca9bf7cab811f2ea75253a3f02095ef7c1cad2d8dc6423949e" stage="render" expect="WARN" render="match">
+    <note>Edge target refers to a missing cell. The edge cannot be drawn, so the renderer must report a structured warning instead of dropping it silently.</note>
+  </negative>
+  <negative id="active-content-label" file="negative/active-content-label.drawio" sha256="270be43ef85033ba7ebd11d3307678425ad5b8e4ab57cfb89316e27ab57f5c84" stage="render" expect="SAFE" render="match">
+    <note>Script, event-handler and javascript: content in HTML labels must never execute or fetch; rendering may succeed with the text only.</note>
+  </negative>
+</corpus>

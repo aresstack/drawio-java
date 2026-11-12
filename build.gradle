@@ -57,6 +57,8 @@ tasks.named('test', Test) {
     // GraalJS on a stock JDK runs without the Graal JIT; silence the
     // one-time interpreter warning so it does not hide real test output.
     systemProperty 'polyglot.engine.WarnInterpreterOnly', 'false'
+    // Corpus report (#13): rendered images, diffs and scores per fixture.
+    systemProperty 'corpus.reportDir', layout.buildDirectory.dir('reports/corpus').get().asFile.absolutePath
     testLogging {
         events 'failed', 'skipped'
         exceptionFormat 'full'
