@@ -44,9 +44,19 @@ class PipelineAcceptanceTest {
 
     @Test
     void shapesEdgesAndArrowsMatchTheOfficialViewer() throws Exception {
-        String xml = OriginalGraphPipelineTest.resource(GOLDEN + "pipeline-acceptance-shapes.drawio");
+        assertMatchesViewer("pipeline-acceptance-shapes");
+    }
+
+    /** Rotation, swimlane container, hidden layer, curved/elbow/ER edges, markers, dash patterns. */
+    @Test
+    void graphFeaturesMatchTheOfficialViewer() throws Exception {
+        assertMatchesViewer("graph-features-shapes");
+    }
+
+    private void assertMatchesViewer(String name) throws Exception {
+        String xml = OriginalGraphPipelineTest.resource(GOLDEN + name + ".drawio");
         BufferedImage expected;
-        try (InputStream in = getClass().getResourceAsStream(GOLDEN + "pipeline-acceptance-shapes-viewer.png")) {
+        try (InputStream in = getClass().getResourceAsStream(GOLDEN + name + "-viewer.png")) {
             expected = ImageIO.read(in);
         }
         BufferedImage actual;
@@ -65,7 +75,7 @@ class PipelineAcceptanceTest {
                 best = Math.max(best, Math.min(recall(expected, actual, dx, dy), recall(actual, expected, -dx, -dy)));
             }
         }
-        assertTrue(best >= 0.98, "dark-pixel agreement with the viewer: " + best);
+        assertTrue(best >= 0.98, name + ": dark-pixel agreement with the viewer: " + best);
     }
 
     @Test

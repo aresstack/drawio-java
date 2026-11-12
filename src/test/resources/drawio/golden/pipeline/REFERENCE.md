@@ -14,6 +14,15 @@
   pixel comparison measures geometry, strokes, fills and arrows independently
   of fonts.
 
+- `graph-features.drawio` / `graph-features-shapes.drawio`: rotation
+  (`rotation=30`), rhombus, triangle with `direction=south`, cylinder,
+  `swimlane` container with a child, a hidden layer (`visible="0"`) whose
+  red cell must not appear, dashed ellipse with `dashPattern=8 4` and
+  `strokeWidth=3`, hexagon, and edges with `elbowEdgeStyle` + diamond start,
+  `curved=1` with a waypoint + open block end, `entityRelationEdgeStyle` with
+  exit/entry constraints, rounded dashed orthogonal edge out of the swimlane
+  child, oval end + open start.
+
 ## Reference renderer
 
 - Upstream `jgraph/drawio` commit `c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3`,
@@ -31,6 +40,8 @@
   the full fixture (documentation; fonts differ across platforms).
 - `pipeline-acceptance-shapes-viewer.png`: the same for the label-free
   fixture; used by `PipelineAcceptanceTest` for pixel comparison.
+- `graph-features-viewer.png`, `graph-features-shapes-viewer.png`: the same
+  for the feature fixture.
 - `pipeline-acceptance-labels.json`: client rectangles of the innermost label
   `div`s relative to the viewer SVG. The viewer's root group is
   `translate(-19,-9)` (floored graph bounds 19.5/9.5), so diagram
