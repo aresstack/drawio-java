@@ -82,6 +82,16 @@ async function buildGraphPorts(ports) {
     const sourceText = normalizeLineEndings(await readFile(join(projectRoot, ports.source.path), 'utf8'));
     verifySourceHash(ports.source.path, sourceText, ports.source.sha256NormalizedLf);
     const members = ports.members.map((name) => extractGraphMember(sourceText, name));
+    // Whole top-level IIFE blocks, by line range of the pinned (hash-checked)
+    // source: each range must start with '(function()' and end with '})();'.
+    const lines = sourceText.split('\n');
+    for (const range of ports.blocks || []) {
+        const block = lines.slice(range[0] - 1, range[1]);
+        if (block[0] !== '(function()' || block[block.length - 1] !== '})();') {
+            throw new Error('Graph.js block ' + range.join('-') + ' is not a top-level IIFE');
+        }
+        members.push('// Graph.js lines ' + range[0] + '-' + range[1] + '\n' + block.join('\n'));
+    }
     const banner = [
         '/*',
         ' * Members copied verbatim from the original draw.io js/grapheditor/Graph.js',

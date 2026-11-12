@@ -66,3 +66,7 @@
 - `pipeline-acceptance-shapes-viewer-z2.png`, `graph-features-shapes-viewer-z2.png`:
   the same viewer with config `zoom: 2`, compared with `RenderOptions.scale(2)`
   (size tolerance 6 px).
+- `edge-jumps-shapes.drawio`: line jumps (`jumpStyle=arc|gap|sharp`, painted
+  by the Graph.js view overrides in `drawio-graph-ports.js`), a curved edge,
+  ER markers from `shapes/er/mxER.js`, rhombus, `cylinder3`, `doubleEllipse`.
+  Reference `edge-jumps-shapes-viewer.png`.

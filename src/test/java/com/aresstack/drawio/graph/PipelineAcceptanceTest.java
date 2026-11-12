@@ -59,6 +59,12 @@ class PipelineAcceptanceTest {
         assertMatchesViewer("tables-shapes");
     }
 
+    /** Line jumps (arc, gap), curved edge, ER markers (mxER.js), rhombus, cylinder3, doubleEllipse. */
+    @Test
+    void lineJumpsAndErMarkersMatchTheOfficialViewer() throws Exception {
+        assertMatchesViewer("edge-jumps-shapes");
+    }
+
     /** Zoom: the viewer at zoom 2 against RenderOptions.scale(2). */
     @Test
     void zoomedOutputMatchesTheOfficialViewerAtZoomTwo() throws Exception {

@@ -34,7 +34,7 @@ the output layer is an immutable command recording.
 | 2 | `drawio-graph.js` | **pinned upstream**, 61 mxClient core files in mxClient include order (`graphSources` in `js-bundle/upstream.json`) |
 | 3 | `drawio-xml-dom.js` | this project: JSON to XML node model |
 | 4 | `drawio-headless.js` | this project: draw.io compatibility ports, headless overrides, `DrawioHeadless.render` |
-| 4b | `drawio-graph-ports.js` | **pinned upstream**, members of `js/grapheditor/Graph.js` copied verbatim by `js-bundle/build.mjs` (`graphPorts` in `upstream.json`): the table helpers that `Shapes.js` calls (`getTableLines`, `paintTableCellLines`, collapsed-table borders, ...) |
+| 4b | `drawio-graph-ports.js` | **pinned upstream**, copied verbatim from `js/grapheditor/Graph.js` by `js-bundle/build.mjs` (`graphPorts` in `upstream.json`): (a) top-level members that `Shapes.js` and the blocks below call (table helpers, curve and multiple-copies statics, tie helpers, ...); (b) four whole top-level blocks (hash-checked line ranges): collapsed-table painting, label gaps, label placement, and the `mxGraphView`/`mxConnector`/`mxEdgeStyle` overrides (line jumps, edge ties, fixed point spacing, curved lines, `SideToSide`/`TopToBottom`/`ElbowConnector`) |
 | 5 | `drawio-shape-library.js`, `drawio-stencil-runtime.js`, `drawio-stencils.js` | #10, loaded when present |
 | 6 | `drawio-canvas-adapter.js` | `DrawioJavaCanvas` (#6/#10) |
 | 7 | `drawio-render.js` | constant entry script; data arrives through `DrawioHost.loadResource` |
@@ -70,6 +70,10 @@ attribute, placeholders (`placeholders=1`: `%name%` from the cell or its
 ancestors, `%id%`, `%width%`, `%height%`, `%length%`, `%%` escapes and the
 `placeholder` attribute), and `default` color resolution for the light theme.
 `light-dark(a, b)` colors render their light value.
+
+`urlParams` is defined as an empty frozen object (no URL parameters, as in
+the viewer). `mxAnimation`/`mxMorphing` are part of the core bundle because
+the Graph.js view overrides reference them at load time.
 
 ## Why not load draw.io's Graph.js
 

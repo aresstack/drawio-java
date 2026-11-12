@@ -126,6 +126,8 @@ var DrawioHeadlessEnv = (function (global) {
     global.mxLoadResources = false;
     global.mxLoadStylesheets = false;
     global.mxForceIncludes = false;
+    // draw.io URL parameters: none headless (viewer defaults).
+    global.urlParams = Object.freeze(Object.create(null));
     global.mxResourceExtension = '.txt';
     // The pinned core is concatenated, so mxClient must not include its files.
     global.module = {exports: {}};

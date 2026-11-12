@@ -18233,3 +18233,4533 @@ mxShapeBpmn2Conversation2.prototype.paintVertexShape = function(c, x, y, w, h)
 };
 
 mxCellRenderer.registerShape(mxShapeBpmn2Conversation2.prototype.cst.CONVERSATION, mxShapeBpmn2Conversation2);
+;
+/**
+ * Copyright (c) 2006-2016, JGraph Holdings Ltd
+ */
+
+//**********************************************************************************************************************************************************
+//Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2Arrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2Arrow, mxActor);
+
+mxShapeArrows2Arrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min: 0, defVal: 40},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, max:1, defVal: 0.6},
+	{name: 'notch', dispName: 'Notch', type: 'float', min:0, defVal: 0},
+	{name: 'headCrossline', dispName: 'Head Crossline', type: 'bool', defVal: false},
+	{name: 'tailCrossline', dispName: 'Tail Crossline', type: 'bool', defVal: false},
+	{name: 'boundedLbl', dispName: 'Bounded Label', type: 'bool', defVal: false}
+];
+
+mxShapeArrows2Arrow.prototype.cst = {
+		ARROW : 'mxgraph.arrows2.arrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2Arrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var headCrossline = mxUtils.getValue(this.style, 'headCrossline', false);
+	var tailCrossline = mxUtils.getValue(this.style, 'tailCrossline', false);
+
+	c.begin();
+	c.moveTo(0, dy);
+	c.lineTo(w - dx, dy);
+	c.lineTo(w - dx, 0);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx, h);
+	c.lineTo(w - dx, h - dy);
+	c.lineTo(0, h - dy);
+	c.lineTo(notch, h * 0.5);
+	c.close();
+	c.fillAndStroke();
+	
+	c.setShadow(false);
+	
+	if (headCrossline)
+	{
+		c.begin();
+		c.moveTo(w - dx, dy);
+		c.lineTo(w - dx, h - dy);
+		c.stroke();
+	}
+	
+	if (tailCrossline)
+	{
+		c.begin();
+		c.moveTo(notch, dy);
+		c.lineTo(notch, h - dy);
+		c.stroke();
+	}
+};
+
+mxShapeArrows2Arrow.prototype.getLabelBounds = function(rect)
+{
+	if (mxUtils.getValue(this.style, 'boundedLbl', false))
+	{
+		var w = rect.width;
+		var h = rect.height;
+		
+		var dy, dx;
+		var direction = this.direction || mxConstants.DIRECTION_EAST;
+		
+		if (mxUtils.getValue(this.style, 'flipH', false))
+		{
+			if (direction == mxConstants.DIRECTION_WEST)
+				direction = mxConstants.DIRECTION_EAST;
+			else if (direction == mxConstants.DIRECTION_EAST)
+				direction = mxConstants.DIRECTION_WEST;
+		}
+		
+		if (mxUtils.getValue(this.style, 'flipV', false))
+		{
+			if (direction == mxConstants.DIRECTION_NORTH)
+				direction = mxConstants.DIRECTION_SOUTH;
+			else if (direction == mxConstants.DIRECTION_SOUTH)
+				direction = mxConstants.DIRECTION_NORTH;
+		}
+		
+		if (direction == mxConstants.DIRECTION_NORTH
+				|| direction == mxConstants.DIRECTION_SOUTH)
+		{
+			dy = w * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+			dx = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+		}
+		else
+		{
+			dy = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+			dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+		}
+		
+		if (direction == mxConstants.DIRECTION_EAST)
+		{
+			return new mxRectangle(rect.x, rect.y + dy, w - dx, h - 2 * dy);
+		}
+		else if (direction == mxConstants.DIRECTION_WEST)
+		{
+			return new mxRectangle(rect.x + dx, rect.y + dy, w - dx, h - 2 * dy);
+		}
+		else if (direction == mxConstants.DIRECTION_NORTH)
+		{
+			return new mxRectangle(rect.x + dy, rect.y + dx, w - 2 * dy, h - dx);
+		}
+		else
+		{
+			return new mxRectangle(rect.x + dy, rect.y, w - 2 * dy, h - dx);
+		}
+	}
+	
+	return rect;
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2Arrow.prototype.cst.ARROW, mxShapeArrows2Arrow);
+
+Graph.handleFactory[mxShapeArrows2Arrow.prototype.cst.ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + dy * bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(1, (((pt.y - bounds.y) / bounds.height) * 2)))) / 100;
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), pt.x - bounds.x))) / 100;
+			});
+	
+	handles.push(handle2);
+	
+	return handles;
+
+}
+
+mxShapeArrows2Arrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	// Arrow width as a fraction of the height and the fixed arrow head size as offsets, so edges follow a resize
+	var fdy = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	fdy = isNaN(fdy) ? this.dy : fdy;
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, fdy * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1 - fdy * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, fdy * 0.5), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1 - fdy * 0.5), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, fdy * 0.5), false, null, -dx * 0.5, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1 - fdy * 0.5), false, null, -dx * 0.5, 0));
+
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Two Way Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2TwoWayArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2TwoWayArrow, mxActor);
+
+mxShapeArrows2TwoWayArrow.prototype.cst = {
+		TWO_WAY_ARROW : 'mxgraph.arrows2.twoWayArrow'
+};
+
+mxShapeArrows2TwoWayArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal: 35},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, max:1, defVal: 0.6},
+	{name: 'boundedLbl', dispName: 'Bounded Label', type: 'bool', defVal: false}
+];
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2TwoWayArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+
+	c.begin();
+	c.moveTo(dx, dy);
+	c.lineTo(w - dx, dy);
+	c.lineTo(w - dx, 0);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx, h);
+	c.lineTo(w - dx, h - dy);
+	c.lineTo(dx, h - dy);
+	c.lineTo(dx, h);
+	c.lineTo(0, h * 0.5);
+	c.lineTo(dx, 0);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxShapeArrows2TwoWayArrow.prototype.getLabelBounds = function(rect)
+{
+	if (mxUtils.getValue(this.style, 'boundedLbl', false))
+	{
+		var w = rect.width;
+		var h = rect.height;
+		var vertical = this.direction == mxConstants.DIRECTION_NORTH
+						|| this.direction == mxConstants.DIRECTION_SOUTH;
+
+		var dy, dx;
+		
+		if (vertical)
+		{
+			dy = w * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+			dx = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+		}
+		else
+		{
+			dy = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+			dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+		}
+		
+		if (vertical)
+		{
+			return new mxRectangle(rect.x + dy, rect.y + dx, w - 2 * dy, h - 2 * dx);
+		}
+		else
+		{
+			return new mxRectangle(rect.x + dx, rect.y + dy, w - 2 * dx, h - 2 * dy);
+		}
+	}
+	
+	return rect;
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2TwoWayArrow.prototype.cst.TWO_WAY_ARROW, mxShapeArrows2TwoWayArrow);
+
+mxShapeArrows2TwoWayArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2TwoWayArrow.prototype.cst.TWO_WAY_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var dx = Math.max(0, Math.min(bounds.width / 2, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + dy * bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(bounds.width / 2, bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(1, (((pt.y - bounds.y) / bounds.height) * 2)))) / 100;
+			})];
+	
+	return handles;
+
+}
+
+mxShapeArrows2TwoWayArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	// Arrow width as a fraction of the height and the fixed arrow head size as offsets, so edges follow a resize
+	var fdy = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	fdy = isNaN(fdy) ? this.dy : fdy;
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, fdy * 0.5), false, null, dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1 - fdy * 0.5), false, null, dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, fdy * 0.5), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1 - fdy * 0.5), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, fdy * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1 - fdy * 0.5), false));
+
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Stylised Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2StylisedArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+	this.feather = 0.5;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2StylisedArrow, mxActor);
+
+mxShapeArrows2StylisedArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:40},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, max:1, defVal:0.6},
+	{name: 'notch', dispName: 'Notch', type: 'float', min:0, defVal:0},
+	{name: 'feather', dispName: 'Feather', type: 'float', min:0, max:1, defVal:0.4},
+];
+
+mxShapeArrows2StylisedArrow.prototype.cst = {
+		STYLISED_ARROW : 'mxgraph.arrows2.stylisedArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2StylisedArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var feather = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'feather', this.feather))));
+
+	c.begin();
+	c.moveTo(0, feather);
+	c.lineTo(w - dx, dy);
+	c.lineTo(w - dx - 10, 0);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx - 10, h);
+	c.lineTo(w - dx, h - dy);
+	c.lineTo(0, h - feather);
+	c.lineTo(notch, h * 0.5);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2StylisedArrow.prototype.cst.STYLISED_ARROW, mxShapeArrows2StylisedArrow);
+
+mxShapeArrows2StylisedArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2StylisedArrow.prototype.cst.STYLISED_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var dx = Math.max(0, Math.min(bounds.width - 10, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + dy * bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(bounds.width - 10, bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(1, (((pt.y - bounds.y) / bounds.height) * 2)))) / 100;
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), pt.x - bounds.x))) / 100;
+			});
+	
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['feather'], function(bounds)
+			{
+				var feather = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.state.style, 'feather', this.dy))));
+
+				return new mxPoint(bounds.x, bounds.y + feather * bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['feather'] = Math.round(100 * Math.max(0, Math.min(1, (((pt.y - bounds.y) / bounds.height) * 2)))) / 100;
+			});
+	
+	handles.push(handle3);
+	
+	return handles;
+
+}
+
+mxShapeArrows2StylisedArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	// Arrow width and feather as fractions of the height and the fixed arrow head size as offsets, so edges follow a resize
+	var fdy = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	fdy = isNaN(fdy) ? this.dy : fdy;
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var ffeather = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'feather', this.feather))));
+	ffeather = isNaN(ffeather) ? this.feather : ffeather;
+
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, ffeather * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1 - ffeather * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, fdy * 0.5), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx - 10, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1 - fdy * 0.5), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -dx - 10, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, (fdy + ffeather) * 0.25), false, null, -dx * 0.5, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1 - (fdy + ffeather) * 0.25), false, null, -dx * 0.5, 0));
+
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Sharp Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2SharpArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy1 = 0.5;
+	this.dx1 = 0.5;
+	this.dx2 = 0.5;
+	this.notch = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2SharpArrow, mxActor);
+
+mxShapeArrows2SharpArrow.prototype.cst = {
+		SHARP_ARROW : 'mxgraph.arrows2.sharpArrow'
+};
+
+mxShapeArrows2SharpArrow.prototype.customProperties = [
+	{name: 'dx1', dispName: 'Arrowhead Arrow Width', type: 'float', min:0, defVal:18},
+	{name: 'dy1', dispName: 'Arrow Arrow Width', type: 'float', min:0, max:1, defVal:0.67},
+	{name: 'dx2', dispName: 'Arrowhead Angle', type: 'float', min:0, defVal:18},
+	{name: 'notch', dispName: 'Notch', type: 'float', min:0, defVal:0}
+];
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2SharpArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy1 = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var dx1a = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dy1a = h * 0.5 * Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var x2 = 0;
+	
+	if (h != 0)
+	{
+		x2 = dx1a + dx2 * dy1a * 2 / h;
+	}
+	
+	c.begin();
+	c.moveTo(0, dy1);
+	c.lineTo(w - dx1, dy1);
+	c.lineTo(w - x2, 0);
+	c.lineTo(w - dx2, 0);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx2, h);
+	c.lineTo(w - x2, h);
+	c.lineTo(w - dx1, h - dy1);
+	c.lineTo(0, h - dy1);
+	c.lineTo(notch, h * 0.5);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2SharpArrow.prototype.cst.SHARP_ARROW, mxShapeArrows2SharpArrow);
+
+mxShapeArrows2SharpArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2SharpArrow.prototype.cst.SHARP_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx1', 'dy1'], function(bounds)
+			{
+				var dx1 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1))));
+				var dy1 = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1))));
+
+				return new mxPoint(bounds.x + bounds.width - dx1, bounds.y + dy1 * bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx1'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy1'] = Math.round(100 * Math.max(0, Math.min(1, (((pt.y - bounds.y) / bounds.height) * 2)))) / 100;
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)), pt.x - bounds.x))) / 100;
+			});
+	
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['dx2'], function(bounds)
+			{
+				var dx2 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2))));
+
+				return new mxPoint(bounds.x + bounds.width - dx2, bounds.y);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx2'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+			});
+	
+	handles.push(handle3);
+	
+	return handles;
+};
+
+mxShapeArrows2SharpArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	// Arrow width as a fraction of the height and the fixed arrow head sizes as offsets, so edges follow a resize
+	var fdy1 = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	fdy1 = isNaN(fdy1) ? this.dy1 : fdy1;
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var dx1a = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dy1a = h * 0.5 * Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var x2 = 0;
+	
+	if (h != 0)
+	{
+		x2 = dx1a + dx2 * dy1a * 2 / h;
+	}
+	
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, fdy1 * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, fdy1 * 0.5), false, null, -dx1, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -x2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1 - fdy1 * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1 - fdy1 * 0.5), false, null, -dx1, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -x2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -dx2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, fdy1 * 0.5), false, null, -dx1 * 0.5, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1 - fdy1 * 0.5), false, null, -dx1 * 0.5, 0));
+
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Sharp Arrow2
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2SharpArrow2(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy1 = 0.5;
+	this.dx1 = 0.5;
+	this.dx2 = 0.5;
+	this.dy3 = 0.5;
+	this.dx3 = 0.5;
+
+	this.notch = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2SharpArrow2, mxActor);
+
+mxShapeArrows2SharpArrow2.prototype.customProperties = [
+	{name: 'dx1', dispName: 'Arrowhead Arrow Width', type: 'float', min:0, defVal:18},
+	{name: 'dy1', dispName: 'Arrow Width', type: 'float', min:0, max:1, defVal:0.67},
+	{name: 'dx2', dispName: 'Arrowhead Angle', type: 'float', min:0, defVal:18},
+	{name: 'dx3', dispName: 'Arrowhead Edge X', type: 'float', min:0, defVal:27},
+	{name: 'dy3', dispName: 'Arrowhead Edge Y', type: 'float', min:0, max:1, defVal:0.15},
+	{name: 'notch', dispName: 'Notch', type: 'float', min:0, defVal:0}
+];
+
+mxShapeArrows2SharpArrow2.prototype.cst = {
+		SHARP_ARROW2 : 'mxgraph.arrows2.sharpArrow2'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2SharpArrow2.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy1 = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var dy3 = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy3', this.dy3))));
+	var dx3 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx3', this.dx3))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var dx1a = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dy1a = h * 0.5 * Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+
+	c.begin();
+	c.moveTo(0, dy1);
+	c.lineTo(w - dx1, dy1);
+	c.lineTo(w - dx3, dy3);
+	c.lineTo(w - dx2, 0);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx2, h);
+	c.lineTo(w - dx3, h - dy3);
+	c.lineTo(w - dx1, h - dy1);
+	c.lineTo(0, h - dy1);
+	c.lineTo(notch, h * 0.5);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2SharpArrow2.prototype.cst.SHARP_ARROW2, mxShapeArrows2SharpArrow2);
+
+mxShapeArrows2SharpArrow2.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2SharpArrow2.prototype.cst.SHARP_ARROW2] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx1', 'dy1'], function(bounds)
+			{
+				var dx1 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1))));
+				var dy1 = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1))));
+
+				return new mxPoint(bounds.x + bounds.width - dx1, bounds.y + dy1 * bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx1'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy1'] = Math.round(100 * Math.max(0, Math.min(1, (((pt.y - bounds.y) / bounds.height) * 2)))) / 100;
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)), pt.x - bounds.x))) / 100;
+			});
+	
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['dx2'], function(bounds)
+			{
+				var dx2 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2))));
+
+				return new mxPoint(bounds.x + bounds.width - dx2, bounds.y);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx2'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+			});
+	
+	handles.push(handle3);
+
+	var handle4 = Graph.createHandle(state, ['dx3', 'dy3'], function(bounds)
+			{
+				var dx3 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx3', this.dx3))));
+				var dy3 = Math.max(0, Math.min(1 - parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)) / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy3', this.dy3))));
+
+				return new mxPoint(bounds.x + bounds.width - dx3, bounds.y + dy3 * bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx3'] = Math.round(100 * Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2)), Math.min(bounds.width, bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy3'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)), (((pt.y - bounds.y) / bounds.height) * 2)))) / 100;
+			});
+
+	handles.push(handle4);
+
+	return handles;
+};
+
+mxShapeArrows2SharpArrow2.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	// Arrow widths as fractions of the height and the fixed arrow head sizes as offsets, so edges follow a resize
+	var fdy1 = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	fdy1 = isNaN(fdy1) ? this.dy1 : fdy1;
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var fdy3 = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy3', this.dy3))));
+	fdy3 = isNaN(fdy3) ? this.dy3 : fdy3;
+	var dx3 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx3', this.dx3))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, fdy1 * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, fdy1 * 0.5), false, null, -dx1, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, fdy3 * 0.5), false, null, -dx3, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1 - fdy1 * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1 - fdy1 * 0.5), false, null, -dx1, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1 - fdy3 * 0.5), false, null, -dx3, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -dx2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, fdy1 * 0.5), false, null, -dx1 * 0.5, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1 - fdy1 * 0.5), false, null, -dx1 * 0.5, 0));
+
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Callout Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2CalloutArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+	this.arrowHead = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2CalloutArrow, mxActor);
+
+mxShapeArrows2CalloutArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:20},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:10},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal:10},
+	{name: 'notch', dispName: 'Rectangle Width', type: 'float', min:0, defVal:60}
+];
+
+mxShapeArrows2CalloutArrow.prototype.cst = {
+		CALLOUT_ARROW : 'mxgraph.arrows2.calloutArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2CalloutArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	c.begin();
+	c.moveTo(0, 0);
+	c.lineTo(notch, 0);
+	c.lineTo(notch, h * 0.5 - dy);
+	c.lineTo(w - dx, h * 0.5 - dy);
+	c.lineTo(w - dx, h * 0.5 - dy - arrowHead);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx, h * 0.5 + dy + arrowHead);
+	c.lineTo(w - dx, h * 0.5 + dy);
+	c.lineTo(notch, h * 0.5 + dy);
+	c.lineTo(notch, h);
+	c.lineTo(0, h);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2CalloutArrow.prototype.cst.CALLOUT_ARROW, mxShapeArrows2CalloutArrow);
+
+mxShapeArrows2CalloutArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2CalloutArrow.prototype.cst.CALLOUT_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(bounds.height / 2 - arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height / 2 - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), pt.x - bounds.x))) / 100;
+			});
+
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx = 		Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy =        Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height / 2 - dy - arrowHead);
+			}, function(bounds, pt)
+			{
+			this.state.style['arrowHead'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), bounds.y + bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)) - pt.y))) / 100;
+			});
+
+	handles.push(handle3);
+	
+	return handles;
+};
+
+mxShapeArrows2CalloutArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	// Relative points with the fixed arrow and rectangle sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, notch, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, -dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, dy + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, notch, dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, notch * 0.5 , 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, notch * 0.5, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, (notch - dx) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, (notch - dx) * 0.5, dy));
+
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Bend Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2BendArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+	this.arrowHead = 40;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2BendArrow, mxActor);
+
+mxShapeArrows2BendArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal: 38},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal: 15},
+	{name: 'notch', dispName: 'Notch', type: 'float', min:0, defVal: 0},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:55},
+	{name: 'rounded', dispName: 'Rounded', type: 'boolean', defVal: false}
+];
+
+mxShapeArrows2BendArrow.prototype.cst = {
+		BEND_ARROW : 'mxgraph.arrows2.bendArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2BendArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var rounded = mxUtils.getValue(this.style, 'rounded', '0');
+
+	c.begin();
+	c.moveTo(w - dx, 0);
+	c.lineTo(w, arrowHead * 0.5);
+	c.lineTo(w - dx, arrowHead);
+	c.lineTo(w - dx, arrowHead / 2 + dy);
+	
+	if (rounded == '1')
+	{
+		c.lineTo(dy * 2.2, arrowHead / 2 + dy);
+		c.arcTo(dy * 0.2, dy * 0.2, 0, 0, 0, dy * 2, arrowHead / 2 + dy * 1.2);
+	}
+	else
+	{
+		c.lineTo(dy * 2, arrowHead / 2 + dy);
+	}
+	
+	c.lineTo(dy * 2, h);
+	c.lineTo(dy, h - notch);
+	c.lineTo(0, h);
+	
+	if (rounded == '1')
+	{
+		c.lineTo(0, arrowHead / 2 + dy);
+		c.arcTo(dy * 2, dy * 2, 0, 0, 1, dy * 2, arrowHead / 2 - dy);
+	}
+	else
+	{
+		c.lineTo(0, arrowHead / 2 - dy);
+	}
+
+	c.lineTo(w - dx, arrowHead / 2 - dy);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2BendArrow.prototype.cst.BEND_ARROW, mxShapeArrows2BendArrow);
+
+mxShapeArrows2BendArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2BendArrow.prototype.cst.BEND_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+		
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + arrowHead / 2 - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)) * 2.2, bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2, bounds.y + parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				
+				var notch = Math.max(0, Math.min(bounds.height - arrowHead / 2 - dy, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + dy, bounds.y + bounds.height - notch);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.height - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), bounds.y + bounds.height - pt.y))) / 100;
+			});
+	
+	handles.push(handle2);
+
+	var handle3 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(2 * parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), Math.min(bounds.height, pt.y - bounds.y))) / 100;
+			});
+	
+	handles.push(handle3);
+
+	return handles;
+};
+
+mxShapeArrows2BendArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var rounded = mxUtils.getValue(this.style, 'rounded', '0');
+
+	// Relative points with the fixed arrow sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, dy - dx * 0.5, arrowHead / 2 - dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, arrowHead / 2 - dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, 0, arrowHead * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, arrowHead / 2 + dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, dy - dx * 0.5, arrowHead / 2 + dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dy * 2, (arrowHead / 2 + dy) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dy * 2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dy, -notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, 0, (arrowHead / 2 + dy) * 0.5));
+
+	if (rounded == '1')
+	{
+		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dy * 0.586, arrowHead / 2 - dy * 0.414));
+		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, 2 * dy  + dy * 0.0586, arrowHead / 2 + dy + dy * 0.0586));
+	}
+	else
+	{
+		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, 0, arrowHead / 2 - dy));
+		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dy * 2, arrowHead / 2 + dy));
+	}
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Bend Double Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2BendDoubleArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+	this.arrowHead = 40;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2BendDoubleArrow, mxActor);
+
+mxShapeArrows2BendDoubleArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:38},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal:15},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:55},
+	{name: 'rounded', dispName: 'Rounded', type: 'boolean', defVal:false}
+];
+
+mxShapeArrows2BendDoubleArrow.prototype.cst = {
+		BEND_DOUBLE_ARROW : 'mxgraph.arrows2.bendDoubleArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2BendDoubleArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var arrowHead = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var rounded = mxUtils.getValue(this.style, 'rounded', '0');
+
+	c.begin();
+	c.moveTo(w - dx, 0);
+	c.lineTo(w, arrowHead * 0.5);
+	c.lineTo(w - dx, arrowHead);
+	c.lineTo(w - dx, arrowHead / 2 + dy);
+
+	if (rounded == '1')
+	{
+		c.lineTo(arrowHead / 2 + dy * 1.2, arrowHead / 2 + dy);
+		c.arcTo(dy * 0.2, dy * 0.2, 0, 0, 0, arrowHead /2 + dy, arrowHead / 2 + dy * 1.2);
+	}
+	else
+	{
+		c.lineTo(arrowHead / 2 + dy, arrowHead / 2 + dy);
+	}
+	
+	c.lineTo(arrowHead / 2 + dy, h - dx);
+	c.lineTo(arrowHead, h - dx);
+	c.lineTo(arrowHead / 2, h);
+	c.lineTo(0, h - dx);
+	c.lineTo(arrowHead / 2 - dy, h - dx);
+	
+	if (rounded == '1')
+	{
+		c.lineTo(arrowHead / 2 - dy, arrowHead / 2 + dy);
+		c.arcTo(dy * 2, dy * 2, 0, 0, 1, arrowHead / 2 + dy, arrowHead / 2 - dy);
+	}
+	else
+	{
+		c.lineTo(arrowHead / 2 - dy, arrowHead / 2 - dy);
+	}
+
+	c.lineTo(w - dx, arrowHead / 2 - dy);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2BendDoubleArrow.prototype.cst.BEND_DOUBLE_ARROW, mxShapeArrows2BendDoubleArrow);
+
+mxShapeArrows2BendDoubleArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2BendDoubleArrow.prototype.cst.BEND_DOUBLE_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(Math.min(bounds.height, bounds.width) - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx = Math.max(0, Math.min(Math.min(bounds.width, bounds.height) - arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+		
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + arrowHead / 2 - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(Math.min(bounds.width, bounds.height) - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2, bounds.y + parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var arrowHead = Math.max(0, Math.min(Math.min(bounds.height, bounds.width) - dx, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(2 * parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), Math.min(Math.min(bounds.height, bounds.width) - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), pt.y - bounds.y))) / 100;
+			});
+	
+	handles.push(handle2);
+
+	return handles;
+};
+
+mxShapeArrows2BendDoubleArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var arrowHead = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var rounded = mxUtils.getValue(this.style, 'rounded', '0');
+
+	// Relative points with the fixed arrow sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, 0, arrowHead * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, arrowHead / 2 + dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, (arrowHead / 2 + dy - dx) * 0.5, arrowHead / 2 + dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, (arrowHead / 2 + dy - dx) * 0.5, arrowHead / 2 - dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, arrowHead / 2 + dy, (arrowHead / 2 + dy - dx) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, arrowHead / 2 - dy, (arrowHead / 2 + dy - dx) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, arrowHead / 2 + dy, -dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, arrowHead, -dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, arrowHead / 2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, 0, -dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, arrowHead / 2 - dy, -dx));
+
+	if (rounded == '1')
+	{
+		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, arrowHead / 2 - dy * 0.414, arrowHead / 2 - dy * 0.414));
+		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, arrowHead / 2 + dy + dy * 0.0586, arrowHead / 2 + dy + dy * 0.0586));
+	}
+	else
+	{
+		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, arrowHead / 2 - dy, arrowHead / 2 - dy));
+		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, arrowHead / 2 + dy, arrowHead / 2 + dy));
+	}
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Callout Double Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2CalloutDoubleArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+	this.arrowHead = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2CalloutDoubleArrow, mxActor);
+
+mxShapeArrows2CalloutDoubleArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:20},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal:10},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:10},
+	{name: 'notch', dispName: 'Rect Size', type: 'float', min:0, defVal:24}
+];
+
+mxShapeArrows2CalloutDoubleArrow.prototype.cst = {
+		CALLOUT_DOUBLE_ARROW : 'mxgraph.arrows2.calloutDoubleArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2CalloutDoubleArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	c.begin();
+	c.moveTo(w / 2 - notch, 0);
+	c.lineTo(w / 2 + notch, 0);
+	c.lineTo(w / 2 + notch, h * 0.5 - dy);
+	c.lineTo(w - dx, h * 0.5 - dy);
+	c.lineTo(w - dx, h * 0.5 - dy - arrowHead);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx, h * 0.5 + dy + arrowHead);
+	c.lineTo(w - dx, h * 0.5 + dy);
+	c.lineTo(w / 2 + notch, h * 0.5 + dy);
+	c.lineTo(w / 2 + notch, h);
+	c.lineTo(w / 2 - notch, h);
+	c.lineTo(w / 2 - notch, h * 0.5 + dy);
+	c.lineTo(dx, h * 0.5 + dy);
+	c.lineTo(dx, h * 0.5 + dy + arrowHead);
+	c.lineTo(0, h * 0.5);
+	c.lineTo(dx, h * 0.5 - dy - arrowHead);
+	c.lineTo(dx, h * 0.5 - dy);
+	c.lineTo(w / 2 - notch, h * 0.5 - dy);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2CalloutDoubleArrow.prototype.cst.CALLOUT_DOUBLE_ARROW, mxShapeArrows2CalloutDoubleArrow);
+
+mxShapeArrows2CalloutDoubleArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2CalloutDoubleArrow.prototype.cst.CALLOUT_DOUBLE_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(bounds.height / 2 - arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height / 2 - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(bounds.width / 2 - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + bounds.width / 2 + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), pt.x - bounds.x - bounds.width / 2))) / 100;
+			});
+
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx = 		Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy =        Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height / 2 - dy - arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), bounds.y + bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)) - pt.y))) / 100;
+			});
+
+	handles.push(handle3);
+	
+	return handles;
+};
+
+mxShapeArrows2CalloutDoubleArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	// Relative points with the fixed arrow and rectangle sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, -notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, -notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, -dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, dy + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx, -dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx, dy + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.75, 0.5), false, null, (notch - dx) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.75, 0.5), false, null, (notch - dx) * 0.5, dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.25, 0.5), false, null, (dx - notch) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.25, 0.5), false, null, (dx - notch) * 0.5, dy));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Callout Quad Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2CalloutQuadArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+	this.arrowHead = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2CalloutQuadArrow, mxActor);
+
+mxShapeArrows2CalloutQuadArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:20},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal: 10},
+	{name: 'notch', dispName: 'Rect Size', type: 'float', min:0, defVal:24},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:10}
+];
+
+mxShapeArrows2CalloutQuadArrow.prototype.cst = {
+		CALLOUT_QUAD_ARROW : 'mxgraph.arrows2.calloutQuadArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2CalloutQuadArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	c.begin();
+	c.moveTo(w * 0.5 + dy, h * 0.5 - notch);
+	c.lineTo(w * 0.5 + notch, h * 0.5 - notch);
+	c.lineTo(w * 0.5 + notch, h * 0.5 - dy);
+	c.lineTo(w - dx, h * 0.5 - dy);
+	c.lineTo(w - dx, h * 0.5 - dy - arrowHead);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx, h * 0.5 + dy + arrowHead);
+	c.lineTo(w - dx, h * 0.5 + dy);
+	c.lineTo(w * 0.5 + notch, h * 0.5 + dy);
+	c.lineTo(w * 0.5 + notch, h * 0.5 + notch);
+	c.lineTo(w * 0.5 + dy, h * 0.5 + notch);
+	c.lineTo(w * 0.5 + dy, h - dx);
+	c.lineTo(w * 0.5 + dy + arrowHead, h - dx);
+	c.lineTo(w * 0.5, h);
+	c.lineTo(w * 0.5 - dy - arrowHead, h - dx);
+	c.lineTo(w * 0.5 - dy, h - dx);
+	c.lineTo(w * 0.5 - dy, h * 0.5 + notch);
+	c.lineTo(w * 0.5 - notch, h * 0.5 + notch);
+	c.lineTo(w * 0.5 - notch, h * 0.5 + dy);
+	c.lineTo(dx, h * 0.5 + dy);
+	c.lineTo(dx, h * 0.5 + dy + arrowHead);
+	c.lineTo(0, h * 0.5);
+	c.lineTo(dx, h * 0.5 - dy - arrowHead);
+	c.lineTo(dx, h * 0.5 - dy);
+	c.lineTo(w * 0.5 - notch, h * 0.5 - dy);
+	c.lineTo(w * 0.5 - notch, h * 0.5 - notch);
+	c.lineTo(w * 0.5 - dy, h * 0.5 - notch);
+	c.lineTo(w * 0.5 - dy, dx);
+	c.lineTo(w * 0.5 - dy - arrowHead, dx);
+	c.lineTo(w * 0.5, 0);
+	c.lineTo(w * 0.5 + dy + arrowHead, dx);
+	c.lineTo(w * 0.5 + dy, dx);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2CalloutQuadArrow.prototype.cst.CALLOUT_QUAD_ARROW, mxShapeArrows2CalloutQuadArrow);
+
+mxShapeArrows2CalloutQuadArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2CalloutQuadArrow.prototype.cst.CALLOUT_QUAD_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height / 2 - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(Math.min(bounds.width, bounds.height) / 2 - Math.max(parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), Math.min(Math.min(bounds.width, bounds.height), parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + bounds.width / 2 + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), Math.min(Math.min(bounds.width, bounds.height) / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), pt.x - bounds.x - bounds.width / 2))) / 100;
+			});
+
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx = 		Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy =        Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height / 2 - dy - arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+			});
+
+	handles.push(handle3);
+	
+	return handles;
+};
+
+mxShapeArrows2CalloutQuadArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	// Relative points with the fixed arrow and rectangle sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, dy, -notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, notch, -notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, notch, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, dy, notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, notch, notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, notch, dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, -dy, notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, -notch, notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, -notch, dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, -dy, -notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, -notch, -notch));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, -notch, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, -dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, dy + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, -dy - arrowHead, -dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, dy + arrowHead, -dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx, -dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx, dy + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, -dy - arrowHead, dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, dy + arrowHead, dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.75, 0.5), false, null, (notch - dx) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.75, 0.5), false, null, (notch - dx) * 0.5, dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.75), false, null, -dy, (notch - dx) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.75), false, null, dy, (notch - dx) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.25, 0.5), false, null, (dx - notch) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.25, 0.5), false, null, (dx - notch) * 0.5, dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.25), false, null, -dy, (dx - notch) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.25), false, null, dy, (dx - notch) * 0.5));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Callout Double 90 Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2CalloutDouble90Arrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy1 = 0.5;
+	this.dx1 = 0.5;
+	this.dx2 = 0;
+	this.dy2 = 0;
+	this.arrowHead = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2CalloutDouble90Arrow, mxActor);
+
+mxShapeArrows2CalloutDouble90Arrow.prototype.customProperties = [
+	{name: 'dx1', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:20},
+	{name: 'dy1', dispName: 'Arrow Width', type: 'float', min:0, defVal: 10},
+	{name: 'dx2', dispName: 'Callout Width', type: 'float', min:0, defVal:70},
+	{name: 'dy2', dispName: 'Callout Height', type: 'float', min:0, defVal:70},
+	{name: 'arrowHead', dispName: 'ArrowHead Width', type: 'float', min:0, defVal:10}
+];
+
+mxShapeArrows2CalloutDouble90Arrow.prototype.cst = {
+		CALLOUT_DOUBLE_90_ARROW : 'mxgraph.arrows2.calloutDouble90Arrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2CalloutDouble90Arrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy1 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var dy2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	c.begin();
+	c.moveTo(0, 0);
+	c.lineTo(dx2, 0);
+	c.lineTo(dx2, dy2 * 0.5 - dy1);
+	c.lineTo(w - dx1, dy2 * 0.5 - dy1);
+	c.lineTo(w - dx1, dy2 * 0.5 - dy1 - arrowHead);
+	c.lineTo(w, dy2 * 0.5);
+	c.lineTo(w - dx1, dy2 * 0.5 + dy1 + arrowHead);
+	c.lineTo(w - dx1, dy2 * 0.5 + dy1);
+	c.lineTo(dx2, dy2 * 0.5 + dy1);
+	c.lineTo(dx2, dy2);
+	c.lineTo(dx2 / 2 + dy1, dy2);
+	c.lineTo(dx2 / 2 + dy1, h - dx1);
+	c.lineTo(dx2 / 2 + dy1 + arrowHead, h - dx1);
+	c.lineTo(dx2 / 2, h);
+	c.lineTo(dx2 / 2 - dy1 - arrowHead, h - dx1);
+	c.lineTo(dx2 / 2 - dy1, h - dx1);
+	c.lineTo(dx2 / 2 - dy1, dy2);
+	c.lineTo(0, dy2);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2CalloutDouble90Arrow.prototype.cst.CALLOUT_DOUBLE_90_ARROW, mxShapeArrows2CalloutDouble90Arrow);
+
+mxShapeArrows2CalloutDouble90Arrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2CalloutDouble90Arrow.prototype.cst.CALLOUT_DOUBLE_90_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx1', 'dy1'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx1 = Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2)), parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1))));
+				var dy1 = Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2 - arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1))));
+
+				return new mxPoint(bounds.x + bounds.width - dx1, bounds.y + parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2 - dy1);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx1'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2)), bounds.height - parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy1'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2 - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), bounds.y + parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['dx2', 'dy2'], function(bounds)
+			{
+				var dx2 = Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)) + parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)), parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2))));
+				var dy2 = Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)) + parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), Math.min(bounds.height - parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)), parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2))));
+
+				return new mxPoint(bounds.x + dx2, bounds.y + dy2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx2'] = Math.round(100 * Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)) + parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)), pt.x - bounds.x))) / 100;
+				this.state.style['dy2'] = Math.round(100 * Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)) + parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), Math.min(bounds.height - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)), pt.y - bounds.y))) / 100;
+			});
+
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx1 = 		Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1))));
+				var dy1 =        Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1))));
+				var arrowHead = Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx1, bounds.y + parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2 - dy1 - arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)), bounds.y + parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)) - pt.y))) / 100;
+			});
+
+	handles.push(handle3);
+	
+	return handles;
+};
+
+mxShapeArrows2CalloutDouble90Arrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy1 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var dy2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dx2 * 0.5, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dx2, 0));
+	// Relative points with the fixed arrow and callout sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, (dx2 - dx1) * 0.5, dy2 * 0.5 - dy1));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx1, dy2 * 0.5 - dy1 - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, 0, dy2 * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx1, dy2 * 0.5 + dy1 + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, (dx2 - dx1) * 0.5, dy2 * 0.5 + dy1));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dx2, dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx2 * 0.5 + dy1, (dy2 - dx1) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx2 * 0.5 - dy1, (dy2 - dx1) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dx2 / 2 + dy1 + arrowHead, -dx1));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dx2 / 2, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dx2 / 2 - dy1 - arrowHead, -dx1));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, 0, dy2));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Quad Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2QuadArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+	this.arrowHead = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2QuadArrow, mxActor);
+
+mxShapeArrows2QuadArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:20},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal:10},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:10}
+];
+
+mxShapeArrows2QuadArrow.prototype.cst = {
+		QUAD_ARROW : 'mxgraph.arrows2.quadArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2QuadArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	c.begin();
+	c.moveTo(w * 0.5 + dy, h * 0.5 - dy);
+	c.lineTo(w - dx, h * 0.5 - dy);
+	c.lineTo(w - dx, h * 0.5 - dy - arrowHead);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx, h * 0.5 + dy + arrowHead);
+	c.lineTo(w - dx, h * 0.5 + dy);
+	c.lineTo(w * 0.5 + dy, h * 0.5 + dy);
+	c.lineTo(w * 0.5 + dy, h - dx);
+	c.lineTo(w * 0.5 + dy + arrowHead, h - dx);
+	c.lineTo(w * 0.5, h);
+	c.lineTo(w * 0.5 - dy - arrowHead, h - dx);
+	c.lineTo(w * 0.5 - dy, h - dx);
+	c.lineTo(w * 0.5 - dy, h * 0.5 + dy);
+	c.lineTo(dx, h * 0.5 + dy);
+	c.lineTo(dx, h * 0.5 + dy + arrowHead);
+	c.lineTo(0, h * 0.5);
+	c.lineTo(dx, h * 0.5 - dy - arrowHead);
+	c.lineTo(dx, h * 0.5 - dy);
+	c.lineTo(w * 0.5 - dy, h * 0.5 - dy);
+	c.lineTo(w * 0.5 - dy, dx);
+	c.lineTo(w * 0.5 - dy - arrowHead, dx);
+	c.lineTo(w * 0.5, 0);
+	c.lineTo(w * 0.5 + dy + arrowHead, dx);
+	c.lineTo(w * 0.5 + dy, dx);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2QuadArrow.prototype.cst.QUAD_ARROW, mxShapeArrows2QuadArrow);
+
+mxShapeArrows2QuadArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2QuadArrow.prototype.cst.QUAD_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height / 2 - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(Math.min(bounds.width, bounds.height) / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)) - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx = 		Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy =        Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height / 2 - dy - arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+			});
+
+	handles.push(handle2);
+	
+	return handles;
+};
+
+mxShapeArrows2QuadArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	// Relative points with the fixed arrow sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, -dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx, dy + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx, -dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx, dy + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, -dy - arrowHead, dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, dy + arrowHead, dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, -dy - arrowHead, -dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, dy + arrowHead, -dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.25), false, null, -dy, (dx - dy) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.25), false, null, dy, (dx - dy) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.75), false, null, -dy, (dy - dx) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.75), false, null, dy, (dy - dx) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.25, 0.5), false, null, (dx - dy) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.25, 0.5), false, null, (dx - dy) * 0.5, dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.75, 0.5), false, null, (dy - dx) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.75, 0.5), false, null, (dy - dx) * 0.5, dy));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Triad Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2TriadArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.arrowHead = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2TriadArrow, mxActor);
+
+mxShapeArrows2TriadArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:20},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal:10},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:40}
+];
+
+mxShapeArrows2TriadArrow.prototype.cst = {
+		TRIAD_ARROW : 'mxgraph.arrows2.triadArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2TriadArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	c.begin();
+	c.moveTo(w * 0.5 + arrowHead * 0.5 - dy, h - arrowHead + dy);
+	c.lineTo(w - dx, h - arrowHead + dy);
+	c.lineTo(w - dx, h - arrowHead);
+	c.lineTo(w, h - arrowHead * 0.5);
+	c.lineTo(w - dx, h);
+	c.lineTo(w - dx, h - dy);
+	c.lineTo(dx, h - dy);
+	c.lineTo(dx, h);
+	c.lineTo(0, h - arrowHead * 0.5);
+	c.lineTo(dx, h - arrowHead);
+	c.lineTo(dx, h - arrowHead + dy);
+	c.lineTo(w * 0.5 - arrowHead * 0.5 + dy, h - arrowHead + dy);
+	c.lineTo(w * 0.5 - arrowHead * 0.5 + dy, dx);
+	c.lineTo(w * 0.5 - arrowHead * 0.5, dx);
+	c.lineTo(w * 0.5, 0);
+	c.lineTo(w * 0.5 + arrowHead * 0.5, dx);
+	c.lineTo(w * 0.5 + arrowHead * 0.5 - dy, dx);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2TriadArrow.prototype.cst.TRIAD_ARROW, mxShapeArrows2TriadArrow);
+
+mxShapeArrows2TriadArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2TriadArrow.prototype.cst.TRIAD_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(Math.min(bounds.height - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), bounds.width / 2 - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2, bounds.y + bounds.height - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx = 		Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy =        Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + bounds.height - arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(2 * parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), Math.min(bounds.height - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)) * 2, bounds.y + bounds.height - pt.y))) / 100;
+			});
+
+	handles.push(handle2);
+	
+	return handles;
+};
+
+mxShapeArrows2TriadArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	// Relative points with the fixed arrow sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, - arrowHead * 0.5, dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, 0, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0), false, null, arrowHead * 0.5, dx));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -dx, -arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, 0, -arrowHead * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dx, -arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, 0, -arrowHead * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.75, 1), false, null, (arrowHead * 0.5 - dx - dy) * 0.5, dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.75, 1), false, null, (arrowHead * 0.5 - dx - dy) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.25, 1), false, null, (dx - arrowHead * 0.5 + dy) * 0.5, dy - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.25, 1), false, null, (dx - arrowHead * 0.5 + dy) * 0.5, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, dy - arrowHead * 0.5, (dx - arrowHead + dy) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, arrowHead * 0.5 - dy, (dx - arrowHead + dy) * 0.5));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Tailed Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2TailedArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.dx1 = 20;
+	this.dy1 = 10;
+	this.dx2 = 25;
+	this.dy2 = 30;
+	this.notch = 0;
+	this.arrowHead = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2TailedArrow, mxActor);
+
+mxShapeArrows2TailedArrow.prototype.customProperties = [
+	{name: 'dx1', dispName: 'Arrowhead Length', type: 'float', min:0, defVal: 20},
+	{name: 'dy1', dispName: 'Arrow Width', type: 'float', min:0, defVal: 10},
+	{name: 'dx2', dispName: 'Tail Length', type: 'float', min:0, defVal: 25},
+	{name: 'dy2', dispName: 'Tail Width', type: 'float', min:0, defVal:30},
+	{name: 'notch', dispName: 'Notch', type: 'float', min:0, defVal: 0},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:20}
+];
+
+mxShapeArrows2TailedArrow.prototype.cst = {
+		TAILED_ARROW : 'mxgraph.arrows2.tailedArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2TailedArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy1 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dy2 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var x2 = 0;
+	
+	if (dy2 != 0)
+	{
+		x2 = dx2 + dy2 * (dy2 - dy1) / dy2;
+	}
+
+	c.begin();
+	c.moveTo(0, h * 0.5 - dy2);
+	c.lineTo(dx2, h * 0.5 - dy2);
+	c.lineTo(x2, h * 0.5 - dy1);
+	c.lineTo(w - dx1, h * 0.5 - dy1);
+	c.lineTo(w - dx1, h * 0.5 - dy1 - arrowHead);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx1, h * 0.5 + dy1 + arrowHead);
+	c.lineTo(w - dx1, h * 0.5 + dy1);
+	c.lineTo(x2, h * 0.5 + dy1);
+	c.lineTo(dx2, h * 0.5 + dy2);
+	c.lineTo(0, h * 0.5 + dy2);
+	c.lineTo(notch, h * 0.5);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2TailedArrow.prototype.cst.TAILED_ARROW, mxShapeArrows2TailedArrow);
+
+mxShapeArrows2TailedArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2TailedArrow.prototype.cst.TAILED_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx1', 'dy1'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx1 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1))));
+				var dy1 = Math.max(0, Math.min(bounds.height / 2 - arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1))));
+
+				return new mxPoint(bounds.x + bounds.width - dx1, bounds.y + bounds.height / 2 - dy1);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx1'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy1'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)), parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2)), pt.x - bounds.x))) / 100;
+			});
+
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx1 = 		Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1))));
+				var dy1 =        Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1))));
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx1, bounds.y + bounds.height / 2 - dy1 - arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+			});
+
+	handles.push(handle3);
+	
+	var handle4 = Graph.createHandle(state, ['dx2', 'dy2'], function(bounds)
+			{
+				var dx2 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2))));
+				var dy2 = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2))));
+
+				return new mxPoint(bounds.x + dx2, bounds.y + bounds.height / 2 - dy2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx2'] = Math.round(100 * Math.max(parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)) - parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)) + parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)) - 1, pt.x - bounds.x))) / 100;
+				this.state.style['dy2'] = Math.round(100 * Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)), Math.min(bounds.height / 2, bounds.y + bounds.height / 2 - pt.y))) / 100;
+				
+			});
+
+	handles.push(handle4);
+
+	return handles;
+};
+
+mxShapeArrows2TailedArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy1 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dy2 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var x2 = 0;
+	
+	if (dy2 != 0)
+	{
+		x2 = dx2 + dy2 * (dy2 - dy1) / dy2;
+	}
+
+	// Relative points with the fixed arrow and tail sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, 0, -dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx2, -dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, (x2 - dx1) * 0.5, -dy1));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx1, -dy1 - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, 0, dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx2, dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, (x2 - dx1) * 0.5, dy1));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx1, dy1 + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Tailed Arrow with Notch
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2TailedNotchedArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.dx1 = 20;
+	this.dy1 = 10;
+	this.dx2 = 25;
+	this.dy2 = 30;
+	this.notch = 0;
+	this.arrowHead = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2TailedNotchedArrow, mxActor);
+
+mxShapeArrows2TailedNotchedArrow.prototype.customProperties = [
+	{name: 'dx1', dispName: 'Arrowhead Length', type: 'float', mix:0, defVal:20},
+	{name: 'dy1', dispName: 'Arrow Width', type: 'float', min:0, defVal:10},
+	{name: 'dx2', dispName: 'Tail Length', type: 'float', min:0, defVal:25},
+	{name: 'dy2', dispName: 'Tail Width', type: 'float', min:0, defVal:30},
+	{name: 'notch', dispName: 'Notch', type: 'float', min:0, defVal:20},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:20}
+];
+
+mxShapeArrows2TailedNotchedArrow.prototype.cst = {
+		TAILED_NOTCHED_ARROW : 'mxgraph.arrows2.tailedNotchedArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2TailedNotchedArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy1 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dy2 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var x2 = 0;
+	
+	if (dy2 != 0)
+	{
+		x2 = dx2 + notch * (dy2 - dy1) / dy2;
+	}
+
+	c.begin();
+	c.moveTo(0, h * 0.5 - dy2);
+	c.lineTo(dx2, h * 0.5 - dy2);
+	c.lineTo(x2, h * 0.5 - dy1);
+	c.lineTo(w - dx1, h * 0.5 - dy1);
+	c.lineTo(w - dx1, h * 0.5 - dy1 - arrowHead);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx1, h * 0.5 + dy1 + arrowHead);
+	c.lineTo(w - dx1, h * 0.5 + dy1);
+	c.lineTo(x2, h * 0.5 + dy1);
+	c.lineTo(dx2, h * 0.5 + dy2);
+	c.lineTo(0, h * 0.5 + dy2);
+	c.lineTo(notch, h * 0.5);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2TailedNotchedArrow.prototype.cst.TAILED_NOTCHED_ARROW, mxShapeArrows2TailedNotchedArrow);
+
+mxShapeArrows2TailedNotchedArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2TailedNotchedArrow.prototype.cst.TAILED_NOTCHED_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx1', 'dy1'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx1 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1))));
+				var dy1 = Math.max(0, Math.min(bounds.height / 2 - arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1))));
+
+				return new mxPoint(bounds.x + bounds.width - dx1, bounds.y + bounds.height / 2 - dy1);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx1'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))- parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy1'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)), parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)), pt.x - bounds.x))) / 100;
+			});
+
+	handles.push(handle2);
+	
+	var handle3 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx1 = 		Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1))));
+				var dy1 =        Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1))));
+				var arrowHead = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx1, bounds.y + bounds.height / 2 - dy1 - arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(0, Math.min(bounds.height / 2 - parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)), bounds.y + bounds.height / 2 - pt.y))) / 100;
+			});
+
+	handles.push(handle3);
+	
+	var handle4 = Graph.createHandle(state, ['dx2', 'dy2'], function(bounds)
+			{
+				var dx2 = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx2', this.dx2))));
+				var dy2 = Math.max(0, Math.min(bounds.height / 2, parseFloat(mxUtils.getValue(this.state.style, 'dy2', this.dy2))));
+
+				return new mxPoint(bounds.x + dx2, bounds.y + bounds.height / 2 - dy2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx2'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)) - parseFloat(mxUtils.getValue(this.state.style, 'dx1', this.dx1)), pt.x - bounds.x))) / 100;
+				this.state.style['dy2'] = Math.round(100 * Math.max(parseFloat(mxUtils.getValue(this.state.style, 'dy1', this.dy1)), Math.min(bounds.height / 2, bounds.y + bounds.height / 2 - pt.y))) / 100;
+				
+			});
+
+	handles.push(handle4);
+
+	return handles;
+};
+
+mxShapeArrows2TailedNotchedArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy1 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
+	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
+	var dy2 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
+	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var x2 = 0;
+	
+	if (dy2 != 0)
+	{
+		x2 = dx2 + notch * (dy2 - dy1) / dy2;
+	}
+
+	// Relative points with the fixed arrow and tail sizes as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, notch, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, 0, -dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx2, -dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, (x2 - dx1) * 0.5, -dy1));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx1, -dy1 - arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, 0, dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, dx2, dy2));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 0.5), false, null, (x2 - dx1) * 0.5, dy1));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false, null, -dx1, dy1 + arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Striped Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2StripedArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.notch = 0;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2StripedArrow, mxActor);
+
+mxShapeArrows2StripedArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:40},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, max:1, defVal:0.6},
+	{name: 'notch', dispName: 'Stripes Length', type: 'float', min:0, defVal:25}
+];
+
+mxShapeArrows2StripedArrow.prototype.cst = {
+		STRIPED_ARROW : 'mxgraph.arrows2.stripedArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2StripedArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = h * 0.5 * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+
+	c.begin();
+	c.moveTo(notch, dy);
+	c.lineTo(w - dx, dy);
+	c.lineTo(w - dx, 0);
+	c.lineTo(w, h * 0.5);
+	c.lineTo(w - dx, h);
+	c.lineTo(w - dx, h - dy);
+	c.lineTo(notch, h - dy);
+	c.close();
+	c.moveTo(0, h - dy);
+	c.lineTo(notch * 0.16, h - dy);
+	c.lineTo(notch * 0.16, dy);
+	c.lineTo(0, dy);
+	c.close();
+	c.moveTo(notch * 0.32, h - dy);
+	c.lineTo(notch * 0.8, h - dy);
+	c.lineTo(notch * 0.8, dy);
+	c.lineTo(notch * 0.32, dy);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2StripedArrow.prototype.cst.STRIPED_ARROW, mxShapeArrows2StripedArrow);
+
+mxShapeArrows2StripedArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2StripedArrow.prototype.cst.STRIPED_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + dy * bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch)), bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(1, (((pt.y - bounds.y) / bounds.height) * 2)))) / 100;
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['notch'], function(bounds)
+			{
+				var notch = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'notch', this.notch))));
+
+				return new mxPoint(bounds.x + notch, bounds.y + bounds.height / 2);
+			}, function(bounds, pt)
+			{
+				this.state.style['notch'] = Math.round(100 * Math.max(0, Math.min(bounds.width - parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx)), pt.x - bounds.x))) / 100;
+			});
+	
+	handles.push(handle2);
+	
+	return handles;
+};
+
+mxShapeArrows2StripedArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	// Arrow width as a fraction of the height and the fixed arrow head size as offsets, so edges follow a resize
+	var fdy = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	fdy = isNaN(fdy) ? this.dy : fdy;
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var notch = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'notch', this.notch))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, 0, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, fdy * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1 - fdy * 0.5), false));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, fdy * 0.5), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1 - fdy * 0.5), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, fdy * 0.5), false, null, -dx * 0.5, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1 - fdy * 0.5), false, null, -dx * 0.5, 0));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Jump-In Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2JumpInArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.arrowHead = 40;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2JumpInArrow, mxActor);
+
+mxShapeArrows2JumpInArrow.prototype.customProperties = [
+	{name: 'dx', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:38},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal:15},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:55}
+];
+
+mxShapeArrows2JumpInArrow.prototype.cst = {
+		JUMP_IN_ARROW : 'mxgraph.arrows2.jumpInArrow'
+};
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeArrows2JumpInArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	c.begin();
+	c.moveTo(w - dx, 0);
+	c.lineTo(w, arrowHead * 0.5);
+	c.lineTo(w - dx, arrowHead);
+	c.lineTo(w - dx, arrowHead / 2 + dy);
+	c.arcTo(w - dx, h - arrowHead / 2 - dy, 0, 0, 0, 0, h);
+	c.arcTo(w - dx, h - arrowHead / 2 + dy, 0, 0, 1, w - dx, arrowHead / 2 - dy);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2JumpInArrow.prototype.cst.JUMP_IN_ARROW, mxShapeArrows2JumpInArrow);
+
+mxShapeArrows2JumpInArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2JumpInArrow.prototype.cst.JUMP_IN_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dx', 'dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+		
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + arrowHead / 2 - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dx'] = Math.round(100 * Math.max(0, Math.min(bounds.width, bounds.x + bounds.width - pt.x))) / 100;
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2, bounds.y + parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2 - pt.y))) / 100;
+				
+			})];
+			
+	var handle2 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var dx = Math.max(0, Math.min(bounds.width, parseFloat(mxUtils.getValue(this.state.style, 'dx', this.dx))));
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+
+				return new mxPoint(bounds.x + bounds.width - dx, bounds.y + arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(2 * parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), Math.min(bounds.height, pt.y - bounds.y))) / 100;
+			});
+	
+	handles.push(handle2);
+
+	return handles;
+};
+
+mxShapeArrows2JumpInArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var dx = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx', this.dx))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false));
+	// Relative points with the fixed arrow head size as offsets, so edges follow a resize
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, 0, arrowHead * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 0), false, null, -dx, arrowHead));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//U Turn Arrow
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeArrows2UTurnArrow(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.dy = 0.5;
+	this.dx = 0.5;
+	this.dx2 = 25;
+	this.arrowHead = 40;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeArrows2UTurnArrow, mxActor);
+
+mxShapeArrows2UTurnArrow.prototype.customProperties = [
+	{name: 'dx2', dispName: 'Arrowhead Length', type: 'float', min:0, defVal:25},
+	{name: 'dy', dispName: 'Arrow Width', type: 'float', min:0, defVal:11},
+	{name: 'arrowHead', dispName: 'Arrowhead Width', type: 'float', min:0, defVal:43}
+];
+
+mxShapeArrows2UTurnArrow.prototype.cst = {
+		U_TURN_ARROW : 'mxgraph.arrows2.uTurnArrow'
+};
+
+/**
+* Function: getArrowheadLength
+*
+* Returns the arrowhead length (dx2) of the given style for the painter, the
+* connection points and the handle: any length of 0 or more as stored (also
+* one longer than the shape is wide) up to 1e7, so that the scaled points
+* stay finite at any zoom, and the default for infinite and non-numeric
+* lengths.
+*/
+mxShapeArrows2UTurnArrow.prototype.getArrowheadLength = function(style)
+{
+	var dx2 = Math.max(0, parseFloat(mxUtils.getValue(style, 'dx2', this.dx2)));
+
+	return (isFinite(dx2)) ? Math.min(dx2, 1e7) : this.dx2;
+};
+
+/**
+* Function: paintVertexShape
+*
+* Paints the vertex shape.
+*/
+mxShapeArrows2UTurnArrow.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var dx = (h - arrowHead / 2 + dy) / 2;
+	var dx2 = this.getArrowheadLength(this.style);
+
+	c.begin();
+	c.moveTo(dx, 0);
+	c.lineTo(dx + dx2, arrowHead * 0.5);
+	c.lineTo(dx, arrowHead);
+	c.lineTo(dx, arrowHead / 2 + dy);
+	c.arcTo(dx - 2 * dy, dx - 2 * dy, 0, 0, 0, dx, h - 2 * dy);
+	c.lineTo(Math.max(w, dx), h - 2 * dy);
+	c.lineTo(Math.max(w, dx), h);
+	c.lineTo(dx, h);
+	c.arcTo(dx, dx, 0, 0, 1, dx, arrowHead / 2 - dy);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeArrows2UTurnArrow.prototype.cst.U_TURN_ARROW, mxShapeArrows2UTurnArrow);
+
+mxShapeArrows2UTurnArrow.prototype.constraints = null;
+
+Graph.handleFactory[mxShapeArrows2UTurnArrow.prototype.cst.U_TURN_ARROW] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['dy'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var dx = (bounds.height - arrowHead / 2 + dy) / 2;
+
+				return new mxPoint(bounds.x + dx, bounds.y + arrowHead / 2 - dy);
+			}, function(bounds, pt)
+			{
+				this.state.style['dy'] = Math.round(100 * Math.max(0, Math.min(parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2, bounds.y + parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead)) / 2 - pt.y))) / 100;
+				
+			})];
+
+	var handle2 = Graph.createHandle(state, ['dx2'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var dx = (bounds.height - arrowHead / 2 + dy) / 2;
+				
+				// On the tip that the painter draws
+				var dx2 = (this.state.shape != null) ? this.state.shape.getArrowheadLength(this.state.style) : 0;
+
+				return new mxPoint(bounds.x + dx + dx2, bounds.y + arrowHead / 2);
+			}, function(bounds, pt)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var dx = (bounds.height - arrowHead / 2 + dy) / 2;
+				this.state.style['dx2'] = Math.round(100 * Math.max(0, Math.min(Math.max(bounds.width, dx), pt.x - bounds.x - dx))) / 100;
+			});
+	
+	handles.push(handle2);
+
+	var handle3 = Graph.createHandle(state, ['arrowHead'], function(bounds)
+			{
+				var arrowHead = Math.max(0, Math.min(bounds.height, parseFloat(mxUtils.getValue(this.state.style, 'arrowHead', this.arrowHead))));
+				var dy = Math.max(0, Math.min(arrowHead, parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy))));
+				var dx = (bounds.height - arrowHead / 2 + dy) / 2;
+
+				return new mxPoint(bounds.x + dx, bounds.y + arrowHead);
+			}, function(bounds, pt)
+			{
+				this.state.style['arrowHead'] = Math.round(100 * Math.max(2 * parseFloat(mxUtils.getValue(this.state.style, 'dy', this.dy)), Math.min(bounds.height / 2, pt.y - bounds.y))) / 100;
+			});
+	
+	handles.push(handle3);
+
+	return handles;
+};
+
+mxShapeArrows2UTurnArrow.prototype.getConstraints = function(style, w, h)
+{
+	var constr = [];
+	var dy = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy', this.dy))));
+	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
+	var dx = (h - arrowHead / 2 + dy) / 2;
+	// The arrowhead length as in the painter, which does not depend on the
+	// width, so the end is a fixed offset from the left side
+	var dx2 = this.getArrowheadLength(this.style);
+	// The bend is drawn from the height: the points at the bend keep their
+	// offset from the left side and the end is anchored to the right side,
+	// so edges follow a resize that keeps the height (eg. a longer arrow)
+	var dr = Math.max(w, dx) - w;
+
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dx + dx2, arrowHead * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, dx, arrowHead));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, dx * 0.5, -2 * dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, dr, -2 * dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, dr, -dy));
+	constr.push(new mxConnectionConstraint(new mxPoint(1, 1), false, null, dr, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0.5, 1), false, null, dx * 0.5, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, dx, 0));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, 0, (arrowHead * 0.5 - dy) * 0.5));
+	constr.push(new mxConnectionConstraint(new mxPoint(0, 0.5), false, null, arrowHead - 2 * dy, (arrowHead * 0.5 - dy) * 0.5));
+	
+	return (constr);
+};
+
+//**********************************************************************************************************************************************************
+//Wedge Arrow
+//**********************************************************************************************************************************************************
+function mxShapeArrowsWedgeArrow()
+{
+	mxArrow.call(this);
+};
+
+mxUtils.extend(mxShapeArrowsWedgeArrow, mxArrow);
+
+mxShapeArrowsWedgeArrow.prototype.useSvgBoundingBox = true;
+
+mxShapeArrowsWedgeArrow.prototype.customProperties = [
+	{name: 'startWidth', dispName: 'Wedge Width', type: 'float', min:0, defVal:25}
+];
+
+mxShapeArrowsWedgeArrow.prototype.paintEdgeShape = function(c, pts)
+{
+	var sw = Math.max(0, parseFloat(mxUtils.getValue(this.style, 'startWidth', 20)));
+
+	// Base vector (between end points)
+	var p0 = pts[0];
+	var pe = pts[pts.length - 1];
+
+	var dx = pe.x - p0.x;
+	var dy = pe.y - p0.y;
+	var dist = Math.sqrt(dx * dx + dy * dy);	
+	var nx = dx * sw / dist;
+	var ny = dy * sw / dist;
+
+	c.begin();
+	c.moveTo(p0.x + ny, p0.y - nx);
+	c.lineTo(p0.x - ny, p0.y + nx);
+	c.lineTo(pe.x, pe.y);
+	c.close();
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape('mxgraph.arrows2.wedgeArrow', mxShapeArrowsWedgeArrow);
+
+//**********************************************************************************************************************************************************
+//Wedge Arrow Dashed
+//**********************************************************************************************************************************************************
+function mxShapeArrowsWedgeArrowDashed()
+{
+	mxArrowConnector.call(this);
+};
+
+mxUtils.extend(mxShapeArrowsWedgeArrowDashed, mxArrow);
+
+mxShapeArrowsWedgeArrowDashed.prototype.useSvgBoundingBox = true;
+
+mxShapeArrowsWedgeArrowDashed.prototype.customProperties = [
+	{name: 'startWidth', dispName: 'Wedge Width', type: 'float', min:0, defVal:25}
+];
+
+mxShapeArrowsWedgeArrowDashed.prototype.paintEdgeShape = function(c, pts)
+{
+	var startWidth = Math.max(0, parseFloat(mxUtils.getValue(this.style, 'startWidth', 20)));
+	var steps = 8;
+	// Base vector (between end points)
+	var p0 = pts[0];
+	var pe = pts[pts.length - 1];
+
+	var dx = pe.x - p0.x;
+	var dy = pe.y - p0.y;
+	var dist = Math.sqrt(dx * dx + dy * dy);	
+	var nx = dx * startWidth / dist;
+	var ny = dy * startWidth / dist;
+	var cnx = nx; // current nx
+	var cny = ny; // current ny
+	var pcx = p0.x; // current x on edge
+	var pcy = p0.y; // current y on edge
+
+	c.begin();
+	
+ 	for (var i = 0; i <= steps; i++)
+	{
+		cnx = nx * (steps - i) / steps;
+		cny = ny * (steps - i) / steps;
+
+		if (i == steps)
+		{
+			cnx = nx * (steps - i * 0.98) / steps;
+			cny = ny * (steps - i * 0.98) / steps;
+		}
+		
+		var px1 = pcx + cny;
+		var py1 = pcy - cnx;
+		var px2 = pcx - cny;
+		var py2 = pcy + cnx;
+			
+		c.moveTo(px1, py1);
+		c.lineTo(px2, py2);
+		
+		pcx = pcx + dx / steps;
+		pcy = pcy + dy / steps;
+	} 
+	
+	c.stroke();
+};
+
+mxCellRenderer.registerShape('mxgraph.arrows2.wedgeArrowDashed', mxShapeArrowsWedgeArrowDashed);
+
+//**********************************************************************************************************************************************************
+//Wedge Arrow Dashed v2
+//**********************************************************************************************************************************************************
+function mxShapeArrowsWedgeArrowDashed2()
+{
+	mxArrowConnector.call(this);
+};
+
+mxUtils.extend(mxShapeArrowsWedgeArrowDashed2, mxArrow);
+
+mxShapeArrowsWedgeArrowDashed2.prototype.useSvgBoundingBox = true;
+
+mxShapeArrowsWedgeArrowDashed2.prototype.customProperties = [
+	{name: 'startWidth', dispName: 'Wedge Width', type: 'float', min:0, defVal:25},
+	{name: 'stepSize', dispName: 'Step Size', type: 'float', min:0, defVal:25}
+];
+
+/**
+ * Variable: maxSteps
+ *
+ * Maximum number of steps. Default is 10000.
+ */
+mxShapeArrowsWedgeArrowDashed2.prototype.maxSteps = 10000;
+
+mxShapeArrowsWedgeArrowDashed2.prototype.paintEdgeShape = function(c, pts)
+{
+	var startWidth = Math.max(0, parseFloat(mxUtils.getValue(this.style, 'startWidth', 20)));
+	var stepSize = Math.max(0, parseFloat(mxUtils.getValue(this.style, 'stepSize', 10)));
+
+	// Base vector (between end points)
+	var p0 = pts[0];
+	var pe = pts[pts.length - 1];
+
+	var dx = pe.x - p0.x;
+	var dy = pe.y - p0.y;
+	var dist = Math.sqrt(dx * dx + dy * dy);	
+	var nx = dx * startWidth / dist;
+	var ny = dy * startWidth / dist;
+	var cnx = nx; // current nx
+	var cny = ny; // current ny
+	var pcx = p0.x; // current x on edge
+	var pcy = p0.y; // current y on edge
+	var steps = (stepSize > 0) ? Math.min(Math.floor(dist / stepSize), this.maxSteps) : 0;
+
+	c.begin();
+	
+ 	for (var i = 0; i <= steps; i++)
+	{
+		cnx = nx * (steps - i) / steps;
+		cny = ny * (steps - i) / steps;
+
+		if (i == steps)
+		{
+			cnx = nx * (steps - i * 0.98) / steps;
+			cny = ny * (steps - i * 0.98) / steps;
+		}
+		
+		var px1 = pcx + cny;
+		var py1 = pcy - cnx;
+		var px2 = pcx - cny;
+		var py2 = pcy + cnx;
+			
+		c.moveTo(px1, py1);
+		c.lineTo(px2, py2);
+		
+		pcx = pcx + dx / steps;
+		pcy = pcy + dy / steps;
+	} 
+	
+	c.stroke();
+};
+
+mxCellRenderer.registerShape('mxgraph.arrows2.wedgeArrowDashed2', mxShapeArrowsWedgeArrowDashed2);
+;
+/**
+ * Copyright (c) 2006-2010, JGraph Holdings Ltd
+ */
+
+//TODO markers.html probably isn't needed, because it was used for testing during development before the new canvas was introduced
+
+//**********************************************************************************************************************************************************
+//Entity
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeEREntity(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeEREntity, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeEREntity.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var mainText = mxUtils.getValue(this.style, 'buttonText', 'Entity');
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	c.translate(x, y);
+	var rSize = 10;
+	w = Math.max(w, 2 * rSize);
+	h = Math.max(h, 2 * rSize);
+	this.background(c, x, y, w, h, rSize, fontColor);
+	c.setShadow(false);
+	this.mainText(c, x, y, w, h, mainText, fontSize, fontColor);
+};
+
+mxShapeEREntity.prototype.background = function(c, x, y, w, h, rSize, fontColor)
+{
+	var buttonStyle = mxUtils.getValue(this.style, 'buttonStyle', 'round').toString();
+
+	if (buttonStyle === 'round')
+	{
+		c.begin();
+		c.moveTo(0, rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, rSize, 0);
+		c.lineTo(w - rSize, 0);
+		c.arcTo(rSize, rSize, 0, 0, 1, w, rSize);
+		c.lineTo(w, h - rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, w - rSize, h);
+		c.lineTo(rSize, h);
+		c.arcTo(rSize, rSize, 0, 0, 1, 0, h - rSize);
+		c.close();	
+		c.fillAndStroke();
+	}
+	else if (buttonStyle === 'rect')
+	{
+		c.begin();
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+		c.close();	
+		c.fillAndStroke();
+	}
+	else if (buttonStyle === 'dblFrame')
+	{
+		var fillColor = mxUtils.getValue(this.style, mxConstants.STYLE_FILLCOLOR, '#ffffff');
+		c.setFillColor(fillColor);
+		c.begin();
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+		c.close();	
+		c.fillAndStroke();
+		rSize = Math.min(w, h);
+		c.begin();
+		c.moveTo(rSize * 0.1, rSize * 0.1);
+		c.lineTo(w - rSize * 0.1, rSize * 0.1);
+		c.lineTo(w - rSize * 0.1, h - rSize * 0.1);
+		c.lineTo(rSize * 0.1, h - rSize * 0.1);
+		c.close();	
+		c.stroke();
+	}
+
+};
+
+mxShapeEREntity.prototype.mainText = function(c, x, y, w, h, text, fontSize, fontColor)
+{
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, h * 0.5, 0, 0, text, mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+};
+
+mxCellRenderer.registerShape('mxgraph.er.entity', mxShapeEREntity);
+
+mxShapeEREntity.prototype.constraints = [
+                                           new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+                                           new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                           new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+                                           new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+                                           new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                           new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+                                           new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+                                           new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                           new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+                                           new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+                                           new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                           new mxConnectionConstraint(new mxPoint(0.75, 1), true)
+                                           ];
+
+//**********************************************************************************************************************************************************
+//Entity Extended
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeEREntityExt(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeEREntityExt, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeEREntityExt.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var mainText = mxUtils.getValue(this.style, 'buttonText', 'Entity');
+	var attributes = mxUtils.getValue(this.style, 'subText', '+ attribute 1,+ attribute 2,+ attribute 3').toString().split(',');
+	var strokeColor = mxUtils.getValue(this.style, mxConstants.STYLE_STROKECOLOR, '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	var mainColor = mxUtils.getValue(this.style, mxConstants.STYLE_FILLCOLOR, '#008cff');
+	var attrColor = mxUtils.getValue(this.style, 'fillColor2', '#ffffff');
+	var maxTextWidth = 0;
+	c.translate(x, y);
+	var rSize = 10;
+	var barY = fontSize * 1.25;
+
+	for (var i = 0; i < attributes.length; i++)
+	{
+		var currWidth = mxUtils.getSizeForString(attributes[i], fontSize, mxConstants.DEFAULT_FONTFAMILY).width;
+
+		if (currWidth > maxTextWidth)
+		{
+			maxTextWidth = currWidth;
+		}
+	}
+
+	w = Math.max(w, 2 * rSize, maxTextWidth + rSize);
+	h = Math.max(h, 2 * rSize, (attributes.length + 1) * barY);
+	this.background(c, x, y, w, h, rSize);
+	c.setShadow(false);
+	this.shapes(c, x, y, w, h, fontSize, mainColor, attrColor, rSize, barY);
+	this.mainText(c, x, y, w, h, mainText, fontSize, attrColor);
+	this.attrText(c, x, y, w, h, attributes, fontSize, strokeColor, barY, rSize);
+};
+
+mxShapeEREntityExt.prototype.background = function(c, x, y, w, h, rSize)
+{
+	var buttonStyle = mxUtils.getValue(this.style, 'buttonStyle', 'round').toString();
+	c.begin();
+
+	if (buttonStyle === 'round')
+	{
+		c.moveTo(0, rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, rSize, 0);
+		c.lineTo(w - rSize, 0);
+		c.arcTo(rSize, rSize, 0, 0, 1, w, rSize);
+		c.lineTo(w, h - rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, w - rSize, h);
+		c.lineTo(rSize, h);
+		c.arcTo(rSize, rSize, 0, 0, 1, 0, h - rSize);
+	}
+	else if (buttonStyle === 'rect')
+	{
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+	}
+
+	c.close();	
+	c.fillAndStroke();
+};
+
+mxShapeEREntityExt.prototype.mainText = function(c, x, y, w, h, text, fontSize, fontColor)
+{
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, fontSize * 0.5, 0, 0, text, mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+};
+
+mxShapeEREntityExt.prototype.shapes = function(c, x, y, w, h, fontSize, mainColor, attrColor, rSize, barY)
+{
+	var buttonStyle = mxUtils.getValue(this.style, 'buttonStyle', 'round').toString();
+
+	if (buttonStyle === 'round')
+	{
+		c.begin();
+		c.moveTo(0, rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, rSize, 0);
+		c.lineTo(w - rSize, 0);
+		c.arcTo(rSize, rSize, 0, 0, 1, w, rSize);
+		c.lineTo(w, barY);
+		c.lineTo(0, barY);
+		c.close();
+		c.fill();
+
+		c.setFillColor(attrColor);
+		c.begin();
+		c.moveTo(w, barY);
+		c.lineTo(w, h - rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, w - rSize, h);
+		c.lineTo(rSize, h);
+		c.arcTo(rSize, rSize, 0, 0, 1, 0, h - rSize);
+		c.lineTo(0, barY);
+		c.close();
+		c.fill();
+	}
+	else if (buttonStyle === 'rect')
+	{
+		c.begin();
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, barY);
+		c.lineTo(0, barY);
+		c.close();
+		c.fill();
+
+		c.setFillColor(attrColor);
+		c.begin();
+		c.moveTo(0, barY);
+		c.lineTo(w, barY);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+		c.close();
+		c.fill();
+	}
+
+	c.begin();
+
+	if (buttonStyle === 'round')
+	{
+		c.moveTo(0, rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, rSize, 0);
+		c.lineTo(w - rSize, 0);
+		c.arcTo(rSize, rSize, 0, 0, 1, w, rSize);
+		c.lineTo(w, h - rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, w - rSize, h);
+		c.lineTo(rSize, h);
+		c.arcTo(rSize, rSize, 0, 0, 1, 0, h - rSize);
+	}
+	else if (buttonStyle === 'rect')
+	{
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+	}
+
+	c.close();	
+	c.stroke();
+};
+
+mxShapeEREntityExt.prototype.attrText = function(c, x, y, w, h, attributes, fontSize, fontColor, barY, rSize)
+{
+	for (var i = 0; i < attributes.length; i++)
+	{
+		c.begin();
+		c.setFontSize(fontSize);
+		c.setFontColor(fontColor);
+		c.text(rSize * 0.5, (i + 1.5) * barY, 0, 0, attributes[i], mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	}
+};
+
+mxCellRenderer.registerShape('mxgraph.er.entityExt', mxShapeEREntityExt);
+
+mxShapeEREntityExt.prototype.constraints = [
+                                         new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+                                         new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                         new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+                                         new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+                                         new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                         new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+                                         new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+                                         new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                         new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+                                         new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+                                         new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                         new mxConnectionConstraint(new mxPoint(0.75, 1), true)
+                                         ];
+
+//**********************************************************************************************************************************************************
+//Attribute
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeERAttribute(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeERAttribute, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeERAttribute.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var mainText = mxUtils.getValue(this.style, 'buttonText', 'Entity');
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	c.translate(x, y);
+	var rSize = 10;
+	w = Math.max(w, 2 * rSize);
+	h = Math.max(h, 2 * rSize);
+	this.background(c, x, y, w, h, rSize, fontColor);
+	c.setShadow(false);
+	this.mainText(c, x, y, w, h, mainText, fontSize, fontColor);
+};
+
+mxShapeERAttribute.prototype.background = function(c, x, y, w, h, rSize, fontColor)
+{
+	var buttonStyle = mxUtils.getValue(this.style, 'buttonStyle', 'simple').toString();
+
+	if (buttonStyle === 'simple')
+	{
+		c.begin();
+		c.ellipse(0, 0, w, h);
+		c.fillAndStroke();
+	}
+	else if (buttonStyle === 'dblFrame')
+	{
+		var fillColor = mxUtils.getValue(this.style, mxConstants.STYLE_FILLCOLOR, '#666666');
+		c.setFillColor(fillColor);
+		c.begin();
+		c.ellipse(0, 0, w, h);
+		c.fillAndStroke();
+		rSize = Math.min(w, h);
+		c.begin();
+		c.ellipse(rSize * 0.1, rSize * 0.1, w - rSize * 0.2, h - rSize * 0.2);
+		c.stroke();
+	}
+};
+
+mxShapeERAttribute.prototype.mainText = function(c, x, y, w, h, text, fontSize, fontColor)
+{
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, h * 0.5, 0, 0, text, mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+};
+
+mxCellRenderer.registerShape('mxgraph.er.attribute', mxShapeERAttribute);
+
+mxShapeERAttribute.prototype.constraints = [
+                                                 new mxConnectionConstraint(new mxPoint(0.144, 0.144), false),
+                                                 new mxConnectionConstraint(new mxPoint(0.856, 0.144), false),
+                                                 new mxConnectionConstraint(new mxPoint(0.856, 0.856), false),
+                                                 new mxConnectionConstraint(new mxPoint(0.144, 0.856), false),
+                                                 new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                                 new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                                 new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                                 new mxConnectionConstraint(new mxPoint(0.5, 1), true)
+                                                 ];
+
+//**********************************************************************************************************************************************************
+//Has
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeERHas(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeERHas, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeERHas.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var mainText = mxUtils.getValue(this.style, 'buttonText', 'Entity');
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	c.translate(x, y);
+	var rSize = 10;
+	w = Math.max(w, 2 * rSize);
+	h = Math.max(h, 2 * rSize);
+	this.background(c, x, y, w, h, rSize, fontColor);
+	c.setShadow(false);
+	this.mainText(c, x, y, w, h, mainText, fontSize, fontColor);
+};
+
+mxShapeERHas.prototype.background = function(c, x, y, w, h, rSize, fontColor)
+{
+	var buttonStyle = mxUtils.getValue(this.style, 'buttonStyle', 'rhombus').toString();
+
+	if (buttonStyle === 'rhombus')
+	{
+		c.begin();
+		c.moveTo(0, h * 0.5);
+		c.lineTo(w * 0.5, 0);
+		c.lineTo(w, h * 0.5);
+		c.lineTo(w * 0.5, h);
+		c.close();	
+		c.fillAndStroke();
+	}
+	else if (buttonStyle === 'dblFrame')
+	{
+		var fillColor = mxUtils.getValue(this.style, mxConstants.STYLE_FILLCOLOR, '#666666');
+		c.setFillColor(fillColor);
+		c.begin();
+		c.moveTo(0, h * 0.5);
+		c.lineTo(w * 0.5, 0);
+		c.lineTo(w, h * 0.5);
+		c.lineTo(w * 0.5, h);
+		c.close();	
+		c.fillAndStroke();
+		c.begin();
+		c.moveTo(w * 0.1, h * 0.5);
+		c.lineTo(w * 0.5, h * 0.1);
+		c.lineTo(w * 0.9, h * 0.5);
+		c.lineTo(w * 0.5, h * 0.9);
+		c.close();	
+		c.stroke();
+	}
+};
+
+mxShapeERHas.prototype.mainText = function(c, x, y, w, h, text, fontSize, fontColor)
+{
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, h * 0.5, 0, 0, text, mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+};
+
+mxCellRenderer.registerShape('mxgraph.er.has', mxShapeERHas);
+
+mxShapeERHas.prototype.constraints = [
+                                      new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                      new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                      new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                      new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                      new mxConnectionConstraint(new mxPoint(0.25, 0.25), false),
+                                      new mxConnectionConstraint(new mxPoint(0.25, 0.75), false),
+                                      new mxConnectionConstraint(new mxPoint(0.75, 0.25), false),
+                                      new mxConnectionConstraint(new mxPoint(0.75, 0.75), false)
+                                      ];
+
+//**********************************************************************************************************************************************************
+//Cloud
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeERCloud(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeERCloud, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeERCloud.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var mainText = mxUtils.getValue(this.style, 'buttonText', 'Entity');
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	c.translate(x, y);
+	var rSize = 10;
+	w = Math.max(w, 2 * rSize);
+	h = Math.max(h, 2 * rSize);
+	this.background(c, x, y, w, h, rSize, fontColor);
+	c.setShadow(false);
+	this.mainText(c, x, y, w, h, mainText, fontSize, fontColor);
+};
+
+mxShapeERCloud.prototype.background = function(c, x, y, w, h, rSize, fontColor)
+{
+	c.begin();
+	c.moveTo(0.25 * w, 0.25 * h);
+	c.curveTo(0.05 * w, 0.25 * h, 0, 0.5 * h, 0.16 * w, 0.55 * h);
+	c.curveTo(0, 0.66 * h, 0.18 * w, 0.9 * h, 0.31 * w, 0.8 * h);
+	c.curveTo(0.4 * w, h, 0.7 * w, h, 0.8 * w, 0.8 * h);
+	c.curveTo(w, 0.8 * h, w, 0.6 * h, 0.875 * w, 0.5 * h); 
+	c.curveTo(w, 0.3 * h, 0.8 * w, 0.1 * h, 0.625 * w, 0.2 * h);
+	c.curveTo(0.5 * w, 0.05 * h, 0.3 * w, 0.05 * h, 0.25 * w, 0.25 * h);
+	c.fillAndStroke();
+};
+
+mxShapeERCloud.prototype.mainText = function(c, x, y, w, h, text, fontSize, fontColor)
+{
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, h * 0.5, 0, 0, text, mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+};
+
+mxCellRenderer.registerShape('mxgraph.er.cloud', mxShapeERCloud);
+
+mxShapeERCloud.prototype.constraints = [
+                                        new mxConnectionConstraint(new mxPoint(0.08, 0.5), false),
+                                        new mxConnectionConstraint(new mxPoint(0.9, 0.5), false),
+                                        new mxConnectionConstraint(new mxPoint(0.5, 0.1), false),
+                                        new mxConnectionConstraint(new mxPoint(0.5, 0.92), false),
+                                        new mxConnectionConstraint(new mxPoint(0.24, 0.24), false),
+                                        new mxConnectionConstraint(new mxPoint(0.22, 0.8), false),
+                                        new mxConnectionConstraint(new mxPoint(0.81, 0.2), false),
+                                        new mxConnectionConstraint(new mxPoint(0.78, 0.78), false)
+                                      ];
+
+//**********************************************************************************************************************************************************
+//Hierarchy (LEGACY)
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeERHierarchy(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeERHierarchy, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeERHierarchy.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var mainText = mxUtils.getValue(this.style, 'buttonText', 'main').toString().split(',');
+	var subText = mxUtils.getValue(this.style, 'subText', 'sub').toString().split(',');
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	c.translate(x, y);
+	var rSize = 10;
+	w = Math.max(w, 2 * rSize);
+	h = Math.max(h, 2 * rSize);
+	this.background(c, x, y, w, h, rSize, fontColor);
+	c.setShadow(false);
+	this.shapeText(c, x, y, w, h, mainText, subText, fontSize, fontColor);
+};
+
+mxShapeERHierarchy.prototype.background = function(c, x, y, w, h, rSize, fontColor)
+{
+	var buttonStyle = mxUtils.getValue(this.style, 'buttonStyle', 'round').toString();
+
+	if (buttonStyle === 'round')
+	{
+		c.begin();
+		c.moveTo(0, rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, rSize, 0);
+		c.lineTo(w - rSize, 0);
+		c.arcTo(rSize, rSize, 0, 0, 1, w, rSize);
+		c.lineTo(w, h - rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, w - rSize, h);
+		c.lineTo(rSize, h);
+		c.arcTo(rSize, rSize, 0, 0, 1, 0, h - rSize);
+		c.close();	
+		c.fillAndStroke();
+	}
+	else if (buttonStyle === 'rect')
+	{
+		c.begin();
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+		c.close();	
+		c.fillAndStroke();
+	}
+	else if (buttonStyle === 'dblFrame')
+	{
+		var fillColor = mxUtils.getValue(this.style, mxConstants.STYLE_FILLCOLOR, '#666666');
+		c.setFillColor(fillColor);
+		c.begin();
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+		c.close();	
+		c.fillAndStroke();
+		rSize = Math.min(w, h);
+		c.begin();
+		c.moveTo(rSize * 0.1, rSize * 0.1);
+		c.lineTo(w - rSize * 0.1, rSize * 0.1);
+		c.lineTo(w - rSize * 0.1, h - rSize * 0.1);
+		c.lineTo(rSize * 0.1, h - rSize * 0.1);
+		c.close();	
+		c.stroke();
+	}
+
+	var trX = 0;
+	var trY = 0;
+
+	if (buttonStyle === 'round')
+	{
+		trX = w * 0.5;
+		trY = rSize;
+		c.translate(trX, trY);
+		w = w * 0.5 - rSize;
+		h = h - 2 * rSize;
+		c.begin();
+		c.moveTo(0, rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, rSize, 0);
+		c.lineTo(w - rSize, 0);
+		c.arcTo(rSize, rSize, 0, 0, 1, w, rSize);
+		c.lineTo(w, h - rSize);
+		c.arcTo(rSize, rSize, 0, 0, 1, w - rSize, h);
+		c.lineTo(rSize, h);
+		c.arcTo(rSize, rSize, 0, 0, 1, 0, h - rSize);
+		c.close();	
+		c.fillAndStroke();
+	}
+	else if (buttonStyle === 'rect')
+	{
+		trX = w * 0.5;
+		trY = rSize;
+		c.translate(trX, trY);
+		w = w * 0.5 - rSize;
+		h = h - 2 * rSize;
+		c.begin();
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+		c.close();	
+		c.fillAndStroke();
+	}
+	else if (buttonStyle === 'dblFrame')
+	{
+		trX = w * 0.5;
+		trY = rSize * 0.15;
+		c.translate(trX, trY);
+		w = w * 0.5 - rSize * 0.15;
+		h = h - rSize * 0.3;
+		var fillColor = mxUtils.getValue(this.style, mxConstants.STYLE_FILLCOLOR, '#666666');
+		c.setFillColor(fillColor);
+		c.begin();
+		c.moveTo(0, 0);
+		c.lineTo(w, 0);
+		c.lineTo(w, h);
+		c.lineTo(0, h);
+		c.close();	
+		c.fillAndStroke();
+		rSize = Math.min(w, h);
+		c.begin();
+		c.moveTo(rSize * 0.1, rSize * 0.1);
+		c.lineTo(w - rSize * 0.1, rSize * 0.1);
+		c.lineTo(w - rSize * 0.1, h - rSize * 0.1);
+		c.lineTo(rSize * 0.1, h - rSize * 0.1);
+		c.close();	
+		c.stroke();
+	}
+
+	c.translate(- trX, - trY);
+
+};
+
+mxShapeERHierarchy.prototype.shapeText = function(c, x, y, w, h, text, subText, fontSize, fontColor, rSize)
+{
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.25, (h - fontSize) * 0.5, 0, 0, text[0], mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.25, (h + fontSize) * 0.5, 0, 0, text[1], mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.7, (h - fontSize) * 0.5, 0, 0, subText[0], mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.7, (h + fontSize) * 0.5, 0, 0, subText[1], mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+};
+
+mxCellRenderer.registerShape('mxgraph.er.hierarchy', mxShapeERHierarchy);
+
+mxShapeERHierarchy.prototype.constraints = [
+                                         new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+                                         new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                         new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+                                         new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+                                         new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                         new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+                                         new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+                                         new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                         new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+                                         new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+                                         new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                         new mxConnectionConstraint(new mxPoint(0.75, 1), true)
+                                         ];
+
+//**********************************************************************************************************************************************************
+//Note
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeERNote(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeERNote, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeERNote.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var mainText = mxUtils.getValue(this.style, 'buttonText', 'Entity');
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	var backColor = mxUtils.getValue(this.style, 'fillColor2', '#ffffff');
+	c.translate(x, y);
+	var flipSize = 20;
+	w = Math.max(w, flipSize * 2);
+	h = Math.max(h, flipSize * 2);
+	this.background(c, x, y, w, h, flipSize);
+	c.setShadow(false);
+	this.flipShape(c, x, y, w, h, flipSize, backColor);
+	this.mainText(c, x, y, w, h, mainText, fontSize, fontColor);
+};
+
+mxShapeERNote.prototype.background = function(c, x, y, w, h, flipSize)
+{
+	c.begin();
+	c.moveTo(0, 0);
+	c.lineTo(w - flipSize, 0);
+	c.lineTo(w, flipSize);
+	c.lineTo(w, h);
+	c.lineTo(0, h);
+	c.close();	
+	c.fillAndStroke();
+};
+
+mxShapeERNote.prototype.flipShape = function(c, x, y, w, h, flipSize, backColor)
+{
+	c.setLineJoin('round');
+	c.setFillColor(backColor);
+	c.begin();
+	c.moveTo(w - flipSize, 0);
+	c.lineTo(w, flipSize);
+	c.lineTo(w - flipSize, flipSize);
+	c.close();	
+	c.fillAndStroke();
+};
+
+mxShapeERNote.prototype.mainText = function(c, x, y, w, h, text, fontSize, fontColor)
+{
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, h * 0.5, 0, 0, text, mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+};
+
+mxCellRenderer.registerShape('mxgraph.er.note', mxShapeERNote);
+
+mxShapeERNote.prototype.constraints = [
+                                           new mxConnectionConstraint(new mxPoint(0, 0), true),
+                                           new mxConnectionConstraint(new mxPoint(0, 1), true),
+                                           new mxConnectionConstraint(new mxPoint(1, 1), true),
+                                           new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+                                           new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                           new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+                                           new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+                                           new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                           new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+                                           new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+                                           new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                           new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+                                           new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+                                           new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                           new mxConnectionConstraint(new mxPoint(0.75, 1), true)
+                                           ];
+
+//**********************************************************************************************************************************************************
+//Chen's Notation Legend (LEGACY)
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeERChen(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeERChen, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeERChen.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	c.translate(x, y);
+	var flipSize = 20;
+	w = Math.max(w, flipSize * 2);
+	h = Math.max(h, flipSize * 2);
+	this.background(c, x, y, w, h);
+	c.setShadow(false);
+	this.foreground(c, x, y, w, h, fontSize, fontColor);
+};
+
+mxShapeERChen.prototype.background = function(c, x, y, w, h)
+{
+	c.begin();
+	c.moveTo(0, 0);
+	c.lineTo(w, 0);
+	c.lineTo(w, h);
+	c.lineTo(0, h);
+	c.close();	
+	c.fillAndStroke();
+};
+
+mxShapeERChen.prototype.foreground = function(c, x, y, w, h, fontSize, fontColor)
+{
+	c.begin();
+	c.moveTo(0, h * 0.25);
+	c.lineTo(w, h * 0.25);
+	c.moveTo(0, h * 0.5);
+	c.lineTo(w, h * 0.5);
+	c.moveTo(0, h * 0.75);
+	c.lineTo(w, h * 0.75);
+
+	c.moveTo(w * 0.25, h * 0.5);
+	c.lineTo(w * 0.25, h);
+
+	c.moveTo(w * 0.5, h * 0.25);
+	c.lineTo(w * 0.5, h);
+
+	c.moveTo(w * 0.75, h * 0.5);
+	c.lineTo(w * 0.75, h);
+	c.stroke();
+
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, h * 0.125, 0, 0, 'ERD Peter Chen\'s Notation', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+
+	c.setFontSize(fontSize * 0.85);
+	c.text(w * 0.25, h * 0.375, 0, 0, 'Cardinality', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.75, h * 0.375, 0, 0, 'Optionality', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+
+	c.setFontSize(fontSize * 0.7);
+	c.text(w * 0.125, h * 0.625, 0, 0, '1', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.375, h * 0.625, 0, 0, 'One', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.625, h * 0.625, 0, 0, '0', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.875, h * 0.625, 0, 0, 'Optional', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+
+	c.text(w * 0.125, h * 0.875, 0, 0, 'N', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.375, h * 0.875, 0, 0, 'Many', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.625, h * 0.875, 0, 0, '1', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.875, h * 0.875, 0, 0, 'Mandatory', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+};
+
+mxCellRenderer.registerShape('mxgraph.er.chens', mxShapeERChen);
+
+mxShapeERChen.prototype.constraints = [
+                                       new mxConnectionConstraint(new mxPoint(0, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(0, 1), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 1), true),
+                                       new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+                                       new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                       new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+                                       new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+                                       new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                       new mxConnectionConstraint(new mxPoint(0.75, 1), true)
+                                       ];
+
+//**********************************************************************************************************************************************************
+//Bachman's Notation Legend (LEGACY)
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeERBachman(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeERBachman, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeERBachman.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	c.translate(x, y);
+	this.background(c, x, y, w, h);
+	c.setShadow(false);
+	this.foreground(c, x, y, w, h, fontSize, fontColor);
+};
+
+mxShapeERBachman.prototype.background = function(c, x, y, w, h)
+{
+	c.begin();
+	c.moveTo(0, 0);
+	c.lineTo(w, 0);
+	c.lineTo(w, h);
+	c.lineTo(0, h);
+	c.close();	
+	c.fillAndStroke();
+};
+
+mxShapeERBachman.prototype.foreground = function(c, x, y, w, h, fontSize, fontColor)
+{
+	c.begin();
+	c.moveTo(0, h * 0.125);
+	c.lineTo(w, h * 0.125);
+	c.moveTo(0, h * 0.25);
+	c.lineTo(w, h * 0.25);
+	c.moveTo(0, h * 0.375);
+	c.lineTo(w, h * 0.375);
+	c.moveTo(0, h * 0.5);
+	c.lineTo(w, h * 0.5);
+	c.moveTo(0, h * 0.625);
+	c.lineTo(w, h * 0.625);
+	c.moveTo(0, h * 0.75);
+	c.lineTo(w, h * 0.75);
+	c.moveTo(0, h * 0.875);
+	c.lineTo(w, h * 0.875);
+
+	c.moveTo(w * 0.5, h * 0.125);
+	c.lineTo(w * 0.5, h);
+	c.stroke();
+
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, h * 0.0625, 0, 0, 'ERD Bachman\'s Notation', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+
+	c.setFontSize(fontSize * 0.85);
+	c.text(w * 0.52, h * 0.1875, 0, 0, 'Relationship', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.3125, 0, 0, 'Cardinality (One)', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.4375, 0, 0, 'Cardinality (Many)', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.5625, 0, 0, 'Mandatory, One', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.6875, 0, 0, 'Mandatory, Many', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.8125, 0, 0, 'Optional, One', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.9375, 0, 0, 'Optional, Many', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+
+	var textWidth = mxUtils.getSizeForString('has/forms', fontSize, mxConstants.DEFAULT_FONTFAMILY).width;
+	c.begin();
+	c.moveTo(w * 0.04, h * 0.1875);
+	c.lineTo(w * 0.25  - textWidth * 0.5, h * 0.1875);
+	c.moveTo(w * 0.25  + textWidth * 0.5, h * 0.1875);
+	c.lineTo(w * 0.46, h * 0.1875);
+
+	c.text(w * 0.25, h * 0.1875, 0, 0, 'has/forms', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, true, 0, 0);
+
+	c.moveTo(w * 0.04, h * 0.3125);
+	c.lineTo(w * 0.46, h * 0.3125);
+
+	c.moveTo(w * 0.04, h * 0.4375);
+	c.lineTo(w * 0.46, h * 0.4375);
+	c.moveTo(w * 0.46, h * 0.4050);
+	c.lineTo(w * 0.4, h * 0.4375);
+	c.lineTo(w * 0.46, h * 0.47);
+
+	c.moveTo(w * 0.04, h * 0.5625);
+	c.lineTo(w * 0.46, h * 0.5625);
+	c.moveTo(w * 0.38, h * 0.53);
+	c.lineTo(w * 0.38, h * 0.595);
+
+	c.moveTo(w * 0.04, h * 0.6875);
+	c.lineTo(w * 0.46, h * 0.6875);
+	c.moveTo(w * 0.46, h * 0.655);
+	c.lineTo(w * 0.4, h * 0.6875);
+	c.lineTo(w * 0.46, h * 0.72);
+	c.moveTo(w * 0.38, h * 0.655);
+	c.lineTo(w * 0.38, h * 0.72);
+
+	c.moveTo(w * 0.04, h * 0.8125);
+	c.lineTo(w * 0.46, h * 0.8125);
+
+	c.moveTo(w * 0.04, h * 0.9375);
+	c.lineTo(w * 0.46, h * 0.9375);
+	c.moveTo(w * 0.46, h * 0.9050);
+	c.lineTo(w * 0.4, h * 0.9375);
+	c.lineTo(w * 0.46, h * 0.97);
+
+	c.stroke();
+
+	var ellSize = h / 15;
+	c.begin();
+	c.ellipse(w * 0.46 - ellSize, h * 0.8125 - ellSize * 0.5, ellSize, ellSize);
+	c.fillAndStroke();
+
+	c.begin();
+	c.ellipse(w * 0.4 - ellSize, h * 0.9375 - ellSize * 0.5, ellSize, ellSize);
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape('mxgraph.er.bachmans', mxShapeERBachman);
+
+mxShapeERBachman.prototype.constraints = [
+                                       new mxConnectionConstraint(new mxPoint(0, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(0, 1), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 1), true),
+                                       new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+                                       new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+                                       new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                       new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                       new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+                                       new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+                                       new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                       new mxConnectionConstraint(new mxPoint(0.75, 1), true)
+                                       ];
+
+//**********************************************************************************************************************************************************
+//Information Engineering Notation Legend (LEGACY)
+//**********************************************************************************************************************************************************
+/**
+ * Extends mxShape.
+ */
+function mxShapeERInfEng(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+ * Extends mxShape.
+ */
+mxUtils.extend(mxShapeERInfEng, mxShape);
+
+/**
+ * Function: paintVertexShape
+ * 
+ * Paints the vertex shape.
+ */
+mxShapeERInfEng.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	var fontColor = mxUtils.getValue(this.style, 'textColor', '#666666');
+	var fontSize = mxUtils.getValue(this.style, mxConstants.STYLE_FONTSIZE, '17');
+	c.translate(x, y);
+	w = Math.max(w, h / 1.5);
+	h = Math.max(h, fontSize * 5);
+	this.background(c, x, y, w, h);
+	c.setShadow(false);
+	this.foreground(c, x, y, w, h, fontSize, fontColor);
+};
+
+mxShapeERInfEng.prototype.background = function(c, x, y, w, h)
+{
+	c.begin();
+	c.moveTo(0, 0);
+	c.lineTo(w, 0);
+	c.lineTo(w, h);
+	c.lineTo(0, h);
+	c.close();	
+	c.fillAndStroke();
+};
+
+mxShapeERInfEng.prototype.foreground = function(c, x, y, w, h, fontSize, fontColor)
+{
+	c.begin();
+	c.moveTo(0, h * 0.2);
+	c.lineTo(w, h * 0.2);
+	c.moveTo(0, h * 0.4);
+	c.lineTo(w, h * 0.4);
+	c.moveTo(0, h * 0.6);
+	c.lineTo(w, h * 0.6);
+	c.moveTo(0, h * 0.8);
+	c.lineTo(w, h * 0.8);
+
+	c.moveTo(w * 0.5, h * 0.2);
+	c.lineTo(w * 0.5, h);
+	c.stroke();
+
+	c.begin();
+	c.setFontSize(fontSize);
+	c.setFontColor(fontColor);
+	c.text(w * 0.5, h * 0.1, 0, 0, 'ERD Information Engineering Notation', mxConstants.ALIGN_CENTER, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+
+	c.setFontSize(fontSize * 0.85);
+	c.text(w * 0.52, h * 0.3, 0, 0, 'Zero or one', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.5, 0, 0, 'One only', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.7, 0, 0, 'Zero or more', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+	c.text(w * 0.52, h * 0.9, 0, 0, 'One or more', mxConstants.ALIGN_LEFT, mxConstants.ALIGN_MIDDLE, 0, null, 0, 0, 0);
+
+	var ellSize = h / 12;
+
+	c.begin();
+	c.moveTo(w * 0.04, h * 0.3);
+	c.lineTo(w * 0.46, h * 0.3);
+	c.moveTo(w * 0.46 - ellSize, h * 0.25);
+	c.lineTo(w * 0.46 - ellSize, h * 0.35);
+
+	c.moveTo(w * 0.04, h * 0.5);
+	c.lineTo(w * 0.46, h * 0.5);
+	c.moveTo(w * 0.46 - ellSize * 2, h * 0.45);
+	c.lineTo(w * 0.46 - ellSize * 2, h * 0.55);
+	c.moveTo(w * 0.46 - ellSize * 2.5, h * 0.45);
+	c.lineTo(w * 0.46 - ellSize * 2.5, h * 0.55);
+
+	c.moveTo(w * 0.04, h * 0.7);
+	c.lineTo(w * 0.46, h * 0.7);
+	c.moveTo(w * 0.46, h * 0.65);
+	c.lineTo(w * 0.46 - ellSize * 2, h * 0.7);
+	c.lineTo(w * 0.46, h * 0.75);
+	c.stroke();
+
+	c.moveTo(w * 0.04, h * 0.9);
+	c.lineTo(w * 0.46, h * 0.9);
+	c.moveTo(w * 0.46, h * 0.85);
+	c.lineTo(w * 0.46 - ellSize * 2, h * 0.9);
+	c.lineTo(w * 0.46, h * 0.95);
+	c.moveTo(w * 0.46 - ellSize * 2.5, h * 0.85);
+	c.lineTo(w * 0.46 - ellSize * 2.5, h * 0.95);
+	c.stroke();
+
+	c.begin();
+	c.ellipse(w * 0.46 - ellSize * 3, h * 0.3 - ellSize * 0.5, ellSize, ellSize);
+	c.fillAndStroke();
+
+	c.begin();
+	c.ellipse(w * 0.46 - ellSize * 3, h * 0.7 - ellSize * 0.5, ellSize, ellSize);
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape('mxgraph.er.ie', mxShapeERInfEng);
+
+mxShapeERInfEng.prototype.constraints = [
+                                          new mxConnectionConstraint(new mxPoint(0, 0), true),
+                                          new mxConnectionConstraint(new mxPoint(1, 0), true),
+                                          new mxConnectionConstraint(new mxPoint(0, 1), true),
+                                          new mxConnectionConstraint(new mxPoint(1, 1), true),
+                                          new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+                                          new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                          new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+                                          new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+                                          new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                          new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+                                          new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+                                          new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                          new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+                                          new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+                                          new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                          new mxConnectionConstraint(new mxPoint(0.75, 1), true)
+                                          ];
+
+// ER markers
+mxMarker.addMarker('ERone', function(c, shape, type, pe, unitX, unitY, size, source, sw, filled)
+{
+	var nx = unitX * (size + sw + 1);
+	var ny = unitY * (size + sw + 1);
+
+	return function()
+	{
+		c.begin();
+		c.moveTo(pe.x - nx / 2 - ny / 2, pe.y - ny / 2 + nx / 2);
+		c.lineTo(pe.x - nx / 2 + ny / 2, pe.y - ny / 2 - nx / 2);
+		c.stroke();
+	};
+});
+
+mxMarker.addMarker('ERmandOne', function(c, shape, type, pe, unitX, unitY, size, source, sw, filled)
+{
+	var nx = unitX * (size + sw + 1);
+	var ny = unitY * (size + sw + 1);
+
+	return function()
+	{
+		c.begin();
+		c.moveTo(pe.x - nx / 2 - ny / 2, pe.y - ny / 2 + nx / 2);
+		c.lineTo(pe.x - nx / 2 + ny / 2, pe.y - ny / 2 - nx / 2);
+		c.moveTo(pe.x - nx - ny / 2, pe.y - ny + nx / 2);
+		c.lineTo(pe.x - nx + ny / 2, pe.y - ny - nx / 2);
+		c.stroke();
+	};
+});
+
+mxMarker.addMarker('ERmany', function(c, shape, type, pe, unitX, unitY, size, source, sw, filled)
+{
+	var nx = unitX * (size + sw + 1);
+	var ny = unitY * (size + sw + 1);
+
+	return function()
+	{
+		c.begin();
+		c.moveTo(pe.x + ny / 2, pe.y - nx / 2);
+		c.lineTo(pe.x - nx, pe.y - ny);
+		c.lineTo(pe.x - ny / 2, pe.y + nx / 2);
+		c.stroke();
+	};
+});
+
+mxMarker.addMarker('ERoneToMany', function(c, shape, type, pe, unitX, unitY, size, source, sw, filled)
+{
+	var nx = unitX * (size + sw + 1);
+	var ny = unitY * (size + sw + 1);
+
+	return function()
+	{
+		c.begin();
+		c.moveTo(pe.x - nx - ny / 2, pe.y - ny + nx / 2);
+		c.lineTo(pe.x - nx + ny / 2, pe.y - ny - nx / 2);
+		c.moveTo(pe.x + ny / 2, pe.y - nx / 2);
+		c.lineTo(pe.x - nx, pe.y - ny);
+		c.lineTo(pe.x - ny / 2, pe.y + nx / 2);
+		c.stroke();
+	};
+});
+
+mxMarker.addMarker('ERzeroToMany', function(c, shape, type, pe, unitX, unitY, size, source, sw, filled)
+{
+	var nx = unitX * (size + sw + 1);
+	var ny = unitY * (size + sw + 1);
+	var a = size / 2;
+	var px = pe.x;
+	var py = pe.y;
+	
+	if (!filled)
+	{
+		pe.x -= 2 * nx - unitX * sw / 2;
+		pe.y -= 2 * ny - unitY * sw / 2;
+	}
+
+	return function()
+	{
+		c.begin();
+		c.ellipse(px - 1.5 * nx - a, py - 1.5 * ny - a, 2 * a, 2 * a);
+
+		if (filled)
+		{
+			// TODO not sure if this is ok, because by default, markers use strokeColor for filling 
+			var oldColor = mxUtils.getValue(shape.style, mxConstants.STYLE_STROKECOLOR, '#666666');
+			
+			c.setFillColor('#ffffff');
+			c.fillAndStroke();
+			c.setFillColor(oldColor);
+		}
+		else
+		{
+			c.stroke();
+		}
+
+		c.begin();
+		c.moveTo(px + ny / 2, py - nx / 2);
+		c.lineTo(px - nx, py - ny);
+		c.lineTo(px - ny / 2, py + nx / 2);
+
+		if (!filled)
+		{
+			c.moveTo(px - nx, py - ny);
+			c.lineTo(px, py);
+		}
+
+		c.stroke();
+	};
+});
+
+mxMarker.addMarker('ERzeroToOne', function(c, shape, type, pe, unitX, unitY, size, source, sw, filled)
+{
+	var nx = unitX * (size + sw + 1);
+	var ny = unitY * (size + sw + 1);
+	var a = size / 2;
+	var px = pe.x;
+	var py = pe.y;
+	
+	if (!filled)
+	{
+		pe.x -= 2 * nx - unitX * sw / 2;
+		pe.y -= 2 * ny - unitY * sw / 2;
+	}
+
+	return function()
+	{
+		c.begin();
+		c.ellipse(px - 1.5 * nx - a, py - 1.5 * ny - a, 2 * a, 2 * a);
+
+		if (filled)
+		{
+			// TODO not sure if this is ok, because by default, markers use strokeColor for filling 
+			var oldColor = mxUtils.getValue(shape.style, mxConstants.STYLE_STROKECOLOR, '#666666');
+			
+			c.setFillColor('#ffffff');
+			c.fillAndStroke();
+			c.setFillColor(oldColor);
+		}
+		else
+		{
+			c.stroke();
+		}
+
+		c.begin();
+		c.moveTo(px - nx / 2 - ny / 2, py - ny / 2 + nx / 2);
+		c.lineTo(px - nx / 2 + ny / 2, py - ny / 2 - nx / 2);
+
+		if (!filled)
+		{
+			c.moveTo(px - nx  - unitX * sw / 2, py - ny - unitY * sw / 2);
+			c.lineTo(px, py);
+		}
+
+		c.stroke();
+	};
+});
+
+//**********************************************************************************************************************************************************
+//Rounded rectangle (adjustable rounding)
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeERRRect(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeERRRect, mxShape);
+
+mxShapeERRRect.prototype.cst = {
+		RRECT : 'mxgraph.er.rrect',
+		R_SIZE : 'rSize'
+};
+
+mxShapeERRRect.prototype.customProperties = [
+	{name: 'rSize', dispName: 'Rounding Size', type: 'float'},
+];
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeERRRect.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var rSize = parseInt(mxUtils.getValue(this.style, mxShapeERRRect.prototype.cst.R_SIZE, '10'));
+	c.roundrect(0, 0, w, h, rSize);
+	c.fillAndStroke();
+};
+
+mxCellRenderer.registerShape(mxShapeERRRect.prototype.cst.RRECT, mxShapeERRRect);
+
+mxShapeERRRect.prototype.constraints = [
+                                            new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+                                            new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+                                            new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+                                            new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+                                            new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+                                            new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+                                            new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+                                            new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+                                            new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+                                            new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+                                            new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+                                            new mxConnectionConstraint(new mxPoint(0.75, 1), true)
+                                            ];
+
+//**********************************************************************************************************************************************************
+//Anchor (a dummy shape without visuals used for anchoring)
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeERAnchor(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeERAnchor, mxShape);
+
+mxShapeERAnchor.prototype.cst = {
+		ANCHOR : 'mxgraph.er.anchor'
+};
+
+
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeERAnchor.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+};
+
+mxCellRenderer.registerShape(mxShapeERAnchor.prototype.cst.ANCHOR, mxShapeERAnchor);
+;
+/**
+ * Copyright (c) 2006-2018, JGraph Holdings Ltd
+ */
+//**********************************************************************************************************************************************************
+// Document 2
+//**********************************************************************************************************************************************************
+/**
+* Extends mxShape.
+*/
+function mxShapeFlowchartDocument2(bounds, fill, stroke, strokewidth)
+{
+	mxShape.call(this);
+	this.bounds = bounds;
+	this.fill = fill;
+	this.stroke = stroke;
+	this.strokewidth = (strokewidth != null) ? strokewidth : 1;
+	this.size = 0.5;
+};
+
+/**
+* Extends mxShape.
+*/
+mxUtils.extend(mxShapeFlowchartDocument2, mxActor);
+
+mxShapeFlowchartDocument2.prototype.cst = {DOCUMENT2 : 'mxgraph.flowchart.document2'};
+
+mxShapeFlowchartDocument2.prototype.customProperties = [
+	{name: 'size', dispName: 'Wave Size', type: 'float', min:0, max:1, defVal:0.25},
+];
+
+/**
+* Function: paintVertexShape
+* 
+* Paints the vertex shape.
+*/
+mxShapeFlowchartDocument2.prototype.paintVertexShape = function(c, x, y, w, h)
+{
+	c.translate(x, y);
+
+	var dy = h * Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.style, 'size', this.size))));
+	var fy = 1.4;
+	var r = 5;
+	
+	c.begin();
+	c.moveTo(w - r, 0);
+	c.arcTo(r, r, 0, 0, 1, w, r);
+	c.lineTo(w, h - dy / 2);
+	c.quadTo(w * 3 / 4, h - dy * fy, w / 2, h - dy / 2);
+	c.quadTo(w / 4, h - dy * (1 - fy), 0, h - dy / 2);
+	c.lineTo(0, dy / 2);
+	c.lineTo(0, r);
+	c.arcTo(r, r, 0, 0, 1, r, 0);
+	c.close();
+	c.fillAndStroke();
+
+};
+
+mxCellRenderer.registerShape(mxShapeFlowchartDocument2.prototype.cst.DOCUMENT2, mxShapeFlowchartDocument2);
+
+mxShapeFlowchartDocument2.prototype.constraints =
+	[new mxConnectionConstraint(new mxPoint(0.25, 0), false),
+    new mxConnectionConstraint(new mxPoint(0.5, 0), false),
+    new mxConnectionConstraint(new mxPoint(0.75, 0), false),
+	new mxConnectionConstraint(new mxPoint(0, 0.25), false),
+	new mxConnectionConstraint(new mxPoint(0, 0.5), false),
+	new mxConnectionConstraint(new mxPoint(0, 0.75), false),
+	new mxConnectionConstraint(new mxPoint(1, 0.25), false),
+	new mxConnectionConstraint(new mxPoint(1, 0.5), false),
+	new mxConnectionConstraint(new mxPoint(1, 0.75), false)];
+
+Graph.handleFactory[mxShapeFlowchartDocument2.prototype.cst.DOCUMENT2] = function(state)
+{
+	var handles = [Graph.createHandle(state, ['size'], function(bounds)
+	{
+		var size = Math.max(0, Math.min(1, parseFloat(mxUtils.getValue(this.state.style, 'size', this.size))));
+
+		return new mxPoint(bounds.x + 3 * bounds.width / 4, bounds.y + (1 - size) * bounds.height);
+
+	}, function(bounds, pt)
+	{
+		this.state.style['size'] = Math.max(0, Math.min(1, (bounds.y + bounds.height - pt.y) / bounds.height));
+	})];
+			
+	return handles;
+};

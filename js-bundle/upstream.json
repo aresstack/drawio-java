@@ -145,6 +145,16 @@
             "sha256NormalizedLf": "758400d94135bed3892e0944bdab47eafbe5e7312ea26f3671c46d4dc7a1b28f"
         },
         {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxAnimation.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxAnimation.js",
+            "sha256NormalizedLf": "a307cf0227aaf077e07339a6e2e3dc331c06aa0fb43d2018c6ac10cb6fc2213d"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxMorphing.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxMorphing.js",
+            "sha256NormalizedLf": "88cc7a790b1ddc14c077d2a104883bb803eb325c13670d98c2187e4664694d24"
+        },
+        {
             "path": "src/main/resources/drawio/upstream/mxgraph/util/mxImage.js",
             "upstreamPath": "src/main/webapp/mxgraph/src/util/mxImage.js",
             "sha256NormalizedLf": "f7d50548d62a87be03370a8f5bf5038a19b4412061ad68b68b702e6822db565a"
@@ -408,6 +418,21 @@
             "path": "src/main/resources/drawio/upstream/mxBpmnShape2.js",
             "upstreamPath": "src/main/webapp/shapes/bpmn/mxBpmnShape2.js",
             "sha256NormalizedLf": "a95f550de67cb50e775f7693ee5937458933ffd8a438d2748eb40c4ade48b3c7"
+        },
+        {
+            "path": "js-bundle/upstream/shapes/mxArrows.js",
+            "upstreamPath": "src/main/webapp/shapes/mxArrows.js",
+            "sha256NormalizedLf": "826d0bf538c6ecb829324f34563fe7194a849d965dfc3cd5e8839e93732f9dc5"
+        },
+        {
+            "path": "js-bundle/upstream/shapes/mxER.js",
+            "upstreamPath": "src/main/webapp/shapes/er/mxER.js",
+            "sha256NormalizedLf": "5a4515565a5399813a725244dc848bbaab77e6c58f09c1b66a605010912e0c5b"
+        },
+        {
+            "path": "js-bundle/upstream/shapes/mxFlowchart.js",
+            "upstreamPath": "src/main/webapp/shapes/mxFlowchart.js",
+            "sha256NormalizedLf": "d427b1de3d5ea968d06c7bbbc20decb429d69269ed09574819eb90d4ade3d3b5"
         }
     ],
     "shapeLibraryBundle": "src/main/resources/drawio/drawio-shape-library.js",
@@ -450,7 +475,83 @@
             "getCollapsedTableBands",
             "getCollapsedTableRegions",
             "getCollapsedTableBorders",
-            "createCollapsedTableBorder"
+            "createCollapsedTableBorder",
+            "Graph.lineJumpsEnabled",
+            "Graph.getMultipleCopies",
+            "Graph.getEdgeCurvePoints",
+            "Graph.curvePointSteps",
+            "Graph.defaultJumpSize",
+            "Graph.getCurveSegments",
+            "Graph.decompress",
+            "isEdgeLabelCell",
+            "isContainer",
+            "convertValueToTooltip",
+            "addFlowAnimationToNode",
+            "addFlowAnimationStyle",
+            "getAdaptiveColors",
+            "cacheLockedStates",
+            "cachePlaceholderCells",
+            "isTransparentBounds",
+            "getTransparentBounds",
+            "getLayerForCell",
+            "getTieIndex",
+            "isTie",
+            "getTieMembers",
+            "isTieStyle",
+            "addChangedTieStyle",
+            "Graph.maxMultipleCount",
+            "Graph.defaultMultipleCount",
+            "Graph.defaultMultipleDx",
+            "Graph.defaultMultipleDy",
+            "Graph.edgeSupportsCurved",
+            "Graph.getCurvePoints",
+            "Graph.stringToArrayBuffer",
+            "Graph.zapGremlins",
+            "Graph.translateDiagram",
+            "Graph.diagramLanguage",
+            "Graph.sanitizeHtml",
+            "getFlowAnimationType",
+            "addFlowRingsToNode",
+            "createFlowAnimationCss",
+            "Graph.defaultAdaptiveColors",
+            "resetLockedStatesCache",
+            "cacheChildLayoutStyles",
+            "getTransparentChildBounds",
+            "getTransparentBoundsPadding",
+            "getTieIdsForStyle",
+            "Graph.domPurify",
+            "Graph.getPathDataBounds",
+            "Graph.getContinuousPathData",
+            "Graph.maxFlowRingSize",
+            "Graph.defaultFlowRingSize",
+            "Graph.defaultFlowDotSize",
+            "Graph.maxFlowRingCount",
+            "Graph.defaultFlowRingDuration",
+            "Graph.flowRingPeriod",
+            "Graph.flowRingOffset",
+            "parsePadding",
+            "getTieIds",
+            "getPlaceholderCell",
+            "addChangedTies",
+            "getPlaceholderParent"
+        ],
+        "blocks": [
+            [
+                27671,
+                27885
+            ],
+            [
+                27897,
+                28621
+            ],
+            [
+                28656,
+                30109
+            ],
+            [
+                30111,
+                33594
+            ]
         ]
     }
 }
