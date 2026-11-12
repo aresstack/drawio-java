@@ -141,4 +141,33 @@ class OriginalGraphPipelineTest {
         // html=1 labels keep their markup.
         assertTrue(all.contains("<b>D</b>"), all);
     }
+
+    @Test
+    void replacesPlaceholdersLikeDrawio() throws Exception {
+        String xml = "<mxGraphModel><root><mxCell id=\"0\"/>"
+                + "<object id=\"1\" owner=\"Team A\"><mxCell parent=\"0\"/></object>"
+                + "<object id=\"v\" label=\"%name% by %owner% (%width%x%height%, %id%) %missing% 100%%\""
+                + " name=\"Order\" placeholders=\"1\">"
+                + "<mxCell style=\"html=1;\" vertex=\"1\" parent=\"1\">"
+                + "<mxGeometry x=\"10\" y=\"10\" width=\"120\" height=\"40\" as=\"geometry\"/></mxCell></object>"
+                + "<object id=\"p\" placeholder=\"owner\" placeholders=\"1\" label=\"ignored\">"
+                + "<mxCell style=\"\" vertex=\"1\" parent=\"1\">"
+                + "<mxGeometry x=\"10\" y=\"60\" width=\"120\" height=\"40\" as=\"geometry\"/></mxCell></object>"
+                + "<object id=\"d\" label=\"on %date{yyyy}%\" placeholders=\"1\">"
+                + "<mxCell style=\"\" vertex=\"1\" parent=\"1\">"
+                + "<mxGeometry x=\"10\" y=\"110\" width=\"120\" height=\"40\" as=\"geometry\"/></mxCell></object>"
+                + "</root></mxGraphModel>";
+        RenderSession session = new RenderSession(RenderOptions.defaults());
+        String all = String.join("\n", record(new OriginalGraphPipeline(Collections.<String>emptyList(), 1)
+                .prepare(new DiagramPage(0, "p", "Page", xml), session)));
+
+        assertTrue(all.contains("Order by Team A (120x40, v) %missing% 100%"), all);
+        // placeholder="owner": the label is the inherited attribute value.
+        assertTrue(all.contains("Team A"), all);
+        assertTrue(!all.contains("ignored"), all);
+        // Unported forms stay verbatim with a warning instead of failing.
+        assertTrue(all.contains("on %date{yyyy}%"), all);
+        assertEquals(1, session.warnings().size(), String.valueOf(session.warnings()));
+        assertEquals("placeholder:unresolved", session.warnings().get(0).getCapabilityId());
+    }
 }

@@ -95,17 +95,107 @@
         return style != null ? (style.html == '1' || style[mxConstants.STYLE_WHITE_SPACE] == 'wrap') : false;
     };
 
-    // Graph.js Graph.prototype.convertValueToString without placeholders,
-    // translations and data sources, which are reported as unsupported.
+    // Graph.js Graph.prototype.isReplacePlaceholders.
+    Graph.prototype.isReplacePlaceholders = function (cell) {
+        return cell.value != null && typeof cell.value == 'object'
+            && cell.value.getAttribute('placeholders') == '1';
+    };
+
+    // Graph.js Graph.prototype.convertValueToString, without translations
+    // (Graph.translateDiagram is off in the viewer and in exports).
     Graph.prototype.convertValueToString = function (cell) {
         var value = this.model.getValue(cell);
         if (value != null && typeof value === 'object') {
-            if (value.getAttribute != null && value.getAttribute('placeholders') == '1') {
-                report('label:placeholders', 'cell ' + cell.id + ' uses %placeholders%; label shown verbatim');
+            var result = null;
+            if (this.isReplacePlaceholders(cell) && cell.getAttribute('placeholder') != null) {
+                var name = cell.getAttribute('placeholder');
+                var current = cell;
+                while (result == null && current != null) {
+                    if (current.value != null && typeof current.value == 'object') {
+                        result = current.hasAttribute(name)
+                            ? (current.getAttribute(name) != null ? current.getAttribute(name) : '') : null;
+                    }
+                    current = this.model.getParent(current);
+                }
+            } else {
+                result = value.getAttribute('label') || '';
             }
-            return (value.getAttribute != null ? value.getAttribute('label') : null) || '';
+            return result || '';
         }
         return mxGraph.prototype.convertValueToString.apply(this, arguments);
+    };
+
+    // Graph.js Graph.prototype.getLabel: labels of cells with placeholders=1.
+    Graph.prototype.getLabel = function (cell) {
+        var result = mxGraph.prototype.getLabel.apply(this, arguments);
+        if (cell != null && this.isReplacePlaceholders(cell) && result != null
+                && cell.getAttribute('placeholder') == null) {
+            result = this.replacePlaceholders(cell, result);
+        }
+        return result;
+    };
+
+    var UNPORTED_PLACEHOLDER = /^(date|time|timestamp|date\{.*|(width|height|length)_.*|pagenumber.*|pagecount.*)$/;
+
+    Graph.prototype.placeholderPattern = new RegExp('%(date\\{[^{}\\n\\r\\u2028\\u2029]*\\}|[^%\\{\\}"\'=;]+)%', 'g');
+
+    // Graph.js Graph.prototype.replacePlaceholders for id, width, height,
+    // length and attributes of the cell or its ancestors. Unit suffixes
+    // (width_mm, ...), date{format}, page numbers and data-source escaping
+    // are not ported: those placeholders stay verbatim and are reported.
+    Graph.prototype.replacePlaceholders = function (cell, str) {
+        var result = [];
+        if (str != null) {
+            var pattern = this.placeholderPattern;
+            pattern.lastIndex = 0;
+            var match = null;
+            var last = 0;
+            while ((match = pattern.exec(str)) != null) {
+                var val = match[0];
+                if (val.length > 2 && val != '%label%' && val != '%tooltip%') {
+                    var tmp = null;
+                    if (match.index > last && str.charAt(match.index - 1) == '%') {
+                        tmp = val.substring(1);
+                    } else {
+                        var name = val.substring(1, val.length - 1);
+                        if (name == 'id') {
+                            tmp = cell.id;
+                        } else if (name == 'width' && this.model.isVertex(cell)) {
+                            var geo = this.getCellGeometry(cell);
+                            tmp = geo != null ? geo.width : null;
+                        } else if (name == 'height' && this.model.isVertex(cell)) {
+                            var geoH = this.getCellGeometry(cell);
+                            tmp = geoH != null ? geoH.height : null;
+                        } else if (name == 'length') {
+                            var edge = cell;
+                            while (edge != null && !this.model.isEdge(edge)) {
+                                edge = this.model.getParent(edge);
+                            }
+                            var state = this.view.getState(edge);
+                            tmp = state != null ? Math.round(state.length / this.view.scale) : null;
+                        } else if (name.indexOf('{') < 0) {
+                            var current = cell;
+                            while (current != null && !(current.value != null && typeof current.value == 'object'
+                                    && current.hasAttribute(name))) {
+                                current = this.model.getParent(current);
+                            }
+                            if (current != null) {
+                                tmp = current.getAttribute(name) != null ? current.getAttribute(name) : '';
+                            }
+                        }
+                        // A missing attribute stays verbatim, as upstream; only
+                        // forms that upstream would resolve are reported.
+                        if (tmp == null && UNPORTED_PLACEHOLDER.test(name)) {
+                            report('placeholder:unresolved', 'cell ' + cell.id + ': %' + name + '% is not resolved headless; shown verbatim');
+                        }
+                    }
+                    result.push(str.substring(last, match.index) + (tmp != null ? tmp : val));
+                    last = match.index + val.length;
+                }
+            }
+            result.push(str.substring(last));
+        }
+        return result.join('');
     };
 
     // Graph.js Graph.prototype.replaceDefaultColors / replaceDefaultColor,

@@ -154,7 +154,10 @@ final class BoundsGraphics2D extends AbstractGraphics2D {
             Rectangle2D deviceClip = getTransform().createTransformedShape(clip).getBounds2D();
             device = device.createIntersection(deviceClip);
         }
-        if (device.isEmpty() && (device.getWidth() < 0 || device.getHeight() < 0)) {
+        // Zero-area geometry paints nothing. Stroking a path made only of
+        // moveTo segments (for example an empty table line in Shapes.js)
+        // yields an empty shape whose bounds sit at the origin.
+        if (device.isEmpty()) {
             return;
         }
         if (!isFinite(device)) {

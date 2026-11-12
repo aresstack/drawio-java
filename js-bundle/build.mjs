@@ -55,6 +55,45 @@ async function writeOrVerify(bundle, outputPath) {
     }
 }
 
+/*
+ * Copy selected top-level members of the original js/grapheditor/Graph.js
+ * verbatim: every 'Graph.prototype.<name> = function ... };' or
+ * 'Graph.<name> = ...;' statement that starts at column 0. The members are
+ * the helpers that the original shape library (Shapes.js) calls on the
+ * graph, for example the table line painting. Nothing is rewritten.
+ */
+function extractGraphMember(sourceText, name) {
+    const qualified = name.startsWith('Graph.') ? name : 'Graph.prototype.' + name;
+    const start = sourceText.indexOf('\n' + qualified + ' = ');
+    if (start < 0 || sourceText.indexOf('\n' + qualified + ' = ', start + 1) >= 0) {
+        throw new Error('Graph.js member not found exactly once at column 0: ' + qualified);
+    }
+    const end = sourceText.indexOf('\n};', start);
+    const statementEnd = sourceText.indexOf(';\n', start);
+    const isFunction = /^ = function/.test(sourceText.slice(start + 1 + qualified.length));
+    const stop = isFunction ? end + 3 : statementEnd + 1;
+    if (stop <= start) {
+        throw new Error('Graph.js member has no end: ' + qualified);
+    }
+    return sourceText.slice(start + 1, stop);
+}
+
+async function buildGraphPorts(ports) {
+    const sourceText = normalizeLineEndings(await readFile(join(projectRoot, ports.source.path), 'utf8'));
+    verifySourceHash(ports.source.path, sourceText, ports.source.sha256NormalizedLf);
+    const members = ports.members.map((name) => extractGraphMember(sourceText, name));
+    const banner = [
+        '/*',
+        ' * Members copied verbatim from the original draw.io js/grapheditor/Graph.js',
+        ' * (' + ports.source.upstreamPath + ').',
+        ' * Upstream commit: ' + manifest.upstreamCommit,
+        ' * Apache-2.0; see upstream/LICENSE and THIRD-PARTY-NOTICES.md.',
+        ' * Loaded after drawio-headless.js, which defines the headless Graph.',
+        ' */'
+    ].join('\n');
+    await writeOrVerify(banner + '\n' + members.join('\n\n') + '\n', ports.bundle);
+}
+
 // Matches one stencil set entry of the original js/stencils.min.js, which
 // stores each set as a single line: f['<set>.xml'] = '<base64>';
 const STENCIL_ENTRY = /^f\['([A-Za-z0-9_\-\/]+\.xml)'\] = '[A-Za-z0-9+\/=]*';$/;
@@ -134,6 +173,9 @@ for (const resource of manifest.resources || []) {
     const text = normalizeLineEndings(await readFile(join(projectRoot, resource.path), 'utf8'));
     verifySourceHash(resource.path, text, resource.sha256NormalizedLf);
     process.stdout.write('Verified pinned resource: ' + resource.path + '\n');
+}
+if (manifest.graphPorts) {
+    await buildGraphPorts(manifest.graphPorts);
 }
 if (manifest.shapeLibrarySources && manifest.shapeLibraryBundle) {
     await buildBundle(manifest.shapeLibrarySources, manifest.shapeLibraryBundle);

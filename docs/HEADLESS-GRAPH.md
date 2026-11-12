@@ -34,6 +34,7 @@ the output layer is an immutable command recording.
 | 2 | `drawio-graph.js` | **pinned upstream**, 61 mxClient core files in mxClient include order (`graphSources` in `js-bundle/upstream.json`) |
 | 3 | `drawio-xml-dom.js` | this project: JSON to XML node model |
 | 4 | `drawio-headless.js` | this project: draw.io compatibility ports, headless overrides, `DrawioHeadless.render` |
+| 4b | `drawio-graph-ports.js` | **pinned upstream**, members of `js/grapheditor/Graph.js` copied verbatim by `js-bundle/build.mjs` (`graphPorts` in `upstream.json`): the table helpers that `Shapes.js` calls (`getTableLines`, `paintTableCellLines`, collapsed-table borders, ...) |
 | 5 | `drawio-shape-library.js`, `drawio-stencil-runtime.js`, `drawio-stencils.js` | #10, loaded when present |
 | 6 | `drawio-canvas-adapter.js` | `DrawioJavaCanvas` (#6/#10) |
 | 7 | `drawio-render.js` | constant entry script; data arrives through `DrawioHost.loadResource` |
@@ -65,7 +66,9 @@ Compatibility ports from the pinned `js/grapheditor/Graph.js` (each marked
 in the source): shadow constants, `mxCodec.allowlist` (reduced to diagram
 types), `mxText.baseSpacingTop/Bottom`, `ignoreRelativeEdgeParent`,
 `isHtmlLabel` (`html=1` or `whiteSpace=wrap`), entity escaping of wrapped `html=0` labels (`getLabelValue`), object values with a `label`
-attribute, and `default` color resolution for the light theme.
+attribute, placeholders (`placeholders=1`: `%name%` from the cell or its
+ancestors, `%id%`, `%width%`, `%height%`, `%length%`, `%%` escapes and the
+`placeholder` attribute), and `default` color resolution for the light theme.
 `light-dark(a, b)` colors render their light value.
 
 ## Why not load draw.io's Graph.js
@@ -105,8 +108,13 @@ others (for example `edge:dangling-source`) to warnings. `maxCells` from
 
 ## Known gaps
 
-- Placeholders (`placeholders=1`), translations, data styles/rules and
-  collapsed tables of draw.io's Graph.js are not ported.
+- Placeholder forms that depend on the editor (`%date{...}%`, `%date%`,
+  `%time%`, `%pagenumber%`, `%pagecount%`, unit suffixes like `%width_mm%`)
+  stay verbatim with a `placeholder:unresolved` warning. Translations
+  (`label_<lang>`), data styles/rules and data-source escaping of Graph.js
+  are not ported.
+- Sequence-diagram lifeline helpers and perimeter outlines of Graph.js are
+  optional in `Shapes.js` (guarded by `!= null`) and not ported.
 - Label size comes from Java fonts. Helvetica/Arial map to metric-compatible
   Liberation Sans/Arimo when installed; otherwise widths differ from browsers.
 - HTML labels support the subset documented in `HtmlLabelParser`.

@@ -424,5 +424,33 @@
             "bpmn.xml",
             "flowchart.xml"
         ]
+    },
+    "graphPorts": {
+        "source": {
+            "path": "js-bundle/upstream/grapheditor/Graph.js",
+            "upstreamPath": "src/main/webapp/js/grapheditor/Graph.js",
+            "sha256NormalizedLf": "8181e93a2951ac0aecddb61cbdc6a1fe12db1356ea59ad19ea14e70a2de1a825"
+        },
+        "bundle": "src/main/resources/drawio/drawio-graph-ports.js",
+        "members": [
+            "isTable",
+            "isTableRow",
+            "isTableCell",
+            "getChildLayoutStyle",
+            "visitTableCells",
+            "getTableLines",
+            "getTableRowFirstCellBounds",
+            "paintTableCellLines",
+            "isCollapsedTable",
+            "getCollapsedTableForCell",
+            "getCollapsedTableShapeInfo",
+            "isCollapsedTableChildShape",
+            "getCollapsedTableBorderKey",
+            "getCollapsedTableFillMode",
+            "getCollapsedTableBands",
+            "getCollapsedTableRegions",
+            "getCollapsedTableBorders",
+            "createCollapsedTableBorder"
+        ]
     }
 }

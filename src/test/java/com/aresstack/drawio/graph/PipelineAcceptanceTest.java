@@ -53,21 +53,39 @@ class PipelineAcceptanceTest {
         assertMatchesViewer("graph-features-shapes");
     }
 
+    /** draw.io tables (Graph.js table helpers), stack layout container, collapsed swimlane. */
+    @Test
+    void tablesAndContainersMatchTheOfficialViewer() throws Exception {
+        assertMatchesViewer("tables-shapes");
+    }
+
+    /** Zoom: the viewer at zoom 2 against RenderOptions.scale(2). */
+    @Test
+    void zoomedOutputMatchesTheOfficialViewerAtZoomTwo() throws Exception {
+        assertMatchesViewer("pipeline-acceptance-shapes", 2);
+        assertMatchesViewer("graph-features-shapes", 2);
+    }
+
     private void assertMatchesViewer(String name) throws Exception {
+        assertMatchesViewer(name, 1);
+    }
+
+    private void assertMatchesViewer(String name, int zoom) throws Exception {
         String xml = OriginalGraphPipelineTest.resource(GOLDEN + name + ".drawio");
         BufferedImage expected;
-        try (InputStream in = getClass().getResourceAsStream(GOLDEN + name + "-viewer.png")) {
+        String reference = GOLDEN + name + "-viewer" + (zoom == 1 ? "" : "-z" + zoom) + ".png";
+        try (InputStream in = getClass().getResourceAsStream(reference)) {
             expected = ImageIO.read(in);
         }
         BufferedImage actual;
         try (DrawioRenderer renderer = renderer()) {
             RenderResult<BufferedImage> result = renderer.renderImage(xml,
-                    RenderOptions.builder().background("#ffffff").build());
+                    RenderOptions.builder().background("#ffffff").scale(zoom).build());
             actual = result.getOutput();
             assertTrue(result.isComplete(), String.valueOf(result.getWarnings()));
         }
-        assertEquals(expected.getWidth(), actual.getWidth(), 3.0);
-        assertEquals(expected.getHeight(), actual.getHeight(), 3.0);
+        assertEquals(expected.getWidth(), actual.getWidth(), 3.0 * zoom);
+        assertEquals(expected.getHeight(), actual.getHeight(), 3.0 * zoom);
 
         double best = 0;
         for (int dx = -2; dx <= 2; dx++) {
@@ -75,7 +93,7 @@ class PipelineAcceptanceTest {
                 best = Math.max(best, Math.min(recall(expected, actual, dx, dy), recall(actual, expected, -dx, -dy)));
             }
         }
-        assertTrue(best >= 0.98, name + ": dark-pixel agreement with the viewer: " + best);
+        assertTrue(best >= 0.98, name + " at zoom " + zoom + ": dark-pixel agreement with the viewer: " + best);
     }
 
     @Test

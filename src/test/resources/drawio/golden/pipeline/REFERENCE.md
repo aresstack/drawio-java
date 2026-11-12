@@ -54,3 +54,15 @@
   least 98% of dark pixels. This absorbs half-pixel antialiasing differences.
 - Labels: anchor of each `text` call (center for `align=center`, top for
   `verticalAlign=top`, middle for `middle`) within 1.5 px of the viewer box.
+
+## Added later
+
+- `tables.drawio` / `tables-shapes.drawio`: a 2x2 draw.io table
+  (`shape=table`, `tableRow`, `partialRectangle` cells; painted through the
+  verbatim Graph.js table helpers in `drawio-graph-ports.js`), a collapsed
+  swimlane with a hidden child, and a UML class (`stackLayout` swimlane).
+  `tables-shapes-viewer.png` is the pixel reference, `tables-viewer.png`
+  documentation only.
+- `pipeline-acceptance-shapes-viewer-z2.png`, `graph-features-shapes-viewer-z2.png`:
+  the same viewer with config `zoom: 2`, compared with `RenderOptions.scale(2)`
+  (size tolerance 6 px).

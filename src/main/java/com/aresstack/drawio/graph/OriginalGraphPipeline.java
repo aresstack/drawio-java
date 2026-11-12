@@ -44,7 +44,8 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
 
     /** Core bundles, always loaded first, in this order. */
     static final List<String> CORE_BUNDLES = Collections.unmodifiableList(java.util.Arrays.asList(
-            "drawio-headless-env.js", "drawio-graph.js", "drawio-xml-dom.js", "drawio-headless.js"));
+            "drawio-headless-env.js", "drawio-graph.js", "drawio-xml-dom.js", "drawio-headless.js",
+            "drawio-graph-ports.js"));
 
     /** Shape and stencil bundles loaded when present, in this order. */
     static final List<String> OPTIONAL_SHAPE_BUNDLES = Collections.unmodifiableList(java.util.Arrays.asList(
