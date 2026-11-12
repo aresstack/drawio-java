@@ -162,6 +162,25 @@ commit). The code is copied with these marked deviations:
 Names that are not `mxgraph.*` (for example `rectangle`) and names registered
 in `mxCellRenderer.defaultShapes` are passed through exactly as upstream does.
 
+## Inline stencils `shape=stencil(<data>)`
+
+draw.io stores custom shapes as `shape=stencil(<data>)`, where `<data>` is
+`Graph.compress(xml)`: base64 of raw DEFLATE of `encodeURIComponent(xml)`.
+`drawio-stencil-runtime.js` ports the `mxCellRenderer.prototype.createShape`
+override from `js/grapheditor/Graph.js`:
+
+| Upstream step | Headless replacement |
+| --- | --- |
+| `Graph.decompress(data)` | `DrawioStencils.decompress`: `DrawioBinaryCodec.decodeBase64` → `inflateRaw` (same per-call and cumulative budgets) → `decodeUtf8` → `decodeURIComponent` → original `mxUtils.zapGremlins` |
+| `mxUtils.parseXml(xml)` | `DrawioHost.parseXml` (the strict `StrictXml`/`XmlTreeJson` parser: no DTDs, no entities, depth and size limits) → `DrawioXml.fromJson` (#9 XML DOM) |
+| `new mxShape(new mxStencil(doc.documentElement))` | unchanged, original classes; the root must be `<shape>` |
+| `console.log('Error in shape: ' + e)` and default shape | `stencil:inline` diagnostic with the cell id (the session's `UnsupportedFeaturePolicy` decides); the cell is not painted |
+
+Decoded stencils are cached per data string (at most 256 entries), so a
+repeated custom shape is decoded once per render.
+`InlineStencilPipelineTest` covers painting, undecodable data and a
+`<!DOCTYPE>` inside the decoded XML.
+
 ## Tests
 
 `DrawioOfflineStencilsTest` evaluates everything in the restricted
