@@ -132,6 +132,10 @@ public final class DrawioBinaryCodec {
             if (inflater.getRemaining() > 1) {
                 throw new IllegalArgumentException("Unexpected data after raw DEFLATE stream");
             }
+            if (inflater.getRemaining() == 0) {
+                // The dummy byte was consumed as payload: the real input was truncated.
+                throw new IllegalArgumentException("Truncated or invalid raw DEFLATE data");
+            }
             reserveTotal(length);
             return toLatin1String(output, length);
         } catch (DataFormatException exception) {

@@ -49,6 +49,26 @@ class DrawioBinaryCodecTest {
     }
 
     @Test
+    void rejectsStoredBlockMissingItsLastByte() {
+        DrawioBinaryCodec codec = new DrawioBinaryCodec();
+        Deflater deflater = new Deflater(Deflater.NO_COMPRESSION, true);
+        byte[] stored;
+        try {
+            deflater.setInput("hello".getBytes(StandardCharsets.ISO_8859_1));
+            deflater.finish();
+            byte[] buffer = new byte[64];
+            int count = deflater.deflate(buffer);
+            stored = Arrays.copyOf(buffer, count);
+        } finally {
+            deflater.end();
+        }
+
+        assertEquals("hello", codec.inflateRaw(latin1(stored)));
+        assertThrows(IllegalArgumentException.class,
+                () -> codec.inflateRaw(latin1(Arrays.copyOf(stored, stored.length - 1))));
+    }
+
+    @Test
     void enforcesPerCallAndCumulativeOutputBudgets() {
         String bomb = latin1(deflateRaw(new byte[1024 * 1024]));
         DrawioBinaryCodec small = new DrawioBinaryCodec(4096, 1 << 20);
