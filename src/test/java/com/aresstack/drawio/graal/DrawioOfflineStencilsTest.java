@@ -105,6 +105,7 @@ class DrawioOfflineStencilsTest {
     @Test
     void failsExplicitlyForStencilSetsThatAreNotBundled() {
         String source = stencilRuntime()
+                + "DrawioStencils.strict = true;"
                 + "mxStencilRegistry.getStencil('mxgraph.aws4.lambda_function');";
 
         ScriptExecutionResult result = evaluate(source, resourceOnlyHost());
@@ -118,7 +119,7 @@ class DrawioOfflineStencilsTest {
     @Test
     void recordsMissingSetsAndUnknownNamesInLenientMode() {
         String source = stencilRuntime()
-                + "DrawioStencils.strict = false;"
+                + "if (DrawioStencils.strict !== false) { throw new Error('lenient by default'); }"
                 + "var aws = mxStencilRegistry.getStencil('mxgraph.aws4.lambda_function');"
                 + "var unknown = mxStencilRegistry.getStencil('mxgraph.bpmn.no_such_shape');"
                 + "var proto = mxStencilRegistry.getStencil('mxgraph.__proto__.constructor');"

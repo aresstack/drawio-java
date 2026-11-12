@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OriginalGraphPipelineTest {
 
-    static final List<String> TEST_SHAPES = Collections.singletonList("test-shape-library.js");
+    static final List<String> TEST_SHAPES = OriginalGraphPipeline.OPTIONAL_SHAPE_BUNDLES;
 
     static String resource(String path) throws Exception {
         try (InputStream in = OriginalGraphPipelineTest.class.getResourceAsStream(path)) {

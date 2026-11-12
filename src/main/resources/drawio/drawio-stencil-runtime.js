@@ -118,9 +118,11 @@
     var DrawioStencils = {
         /**
          * When true, getStencil throws for an unknown mxgraph.* stencil.
-         * When false, the name is only recorded in missing.
+         * When false (the default), the name is recorded in missing and, if
+         * the headless graph pipeline is loaded, reported to it as a
+         * stencil:<name> diagnostic. The shape is then not painted.
          */
-        strict: true,
+        strict: false,
 
         /** Unresolved stencils and sets: {name, basename, file, reason}. */
         missing: [],
@@ -138,6 +140,10 @@
                 DrawioStencils.missing.push({
                     name: name, basename: basename, file: file, reason: reason
                 });
+                if (typeof DrawioHeadless !== 'undefined' && DrawioHeadless != null
+                        && typeof DrawioHeadless.report === 'function') {
+                    DrawioHeadless.report('stencil:' + name, reason + ' (' + file + ')');
+                }
             }
         },
 
@@ -224,8 +230,9 @@
 
                 result = mxStencilRegistry.stencils[name];
 
-                // Headless: report instead of returning nothing silently, which
-                // would make mxCellRenderer fall back to a rectangle.
+                // Headless: never return nothing silently. mxCellRenderer then
+                // falls back to its default shape, so the name is always
+                // reported (and thrown in strict mode).
                 if (result == null) {
                     DrawioStencils.report(name, basename, file, 'unknown-stencil');
 
