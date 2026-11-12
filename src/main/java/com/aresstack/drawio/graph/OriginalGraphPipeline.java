@@ -12,6 +12,7 @@ import com.aresstack.drawio.api.DiagramFormatException;
 import com.aresstack.drawio.api.DiagramPage;
 import com.aresstack.drawio.api.RenderErrorCode;
 import com.aresstack.drawio.api.RenderException;
+import com.aresstack.drawio.canvas.CanvasDiagnostics;
 import com.aresstack.drawio.graal.DrawioCanvasBridge;
 import com.aresstack.drawio.graal.DrawioHost;
 import com.aresstack.drawio.graal.GraalJsRuntime;
@@ -22,6 +23,8 @@ import com.aresstack.drawio.parse.XmlTreeJson;
 import com.aresstack.drawio.render.CanvasRecorder;
 import com.aresstack.drawio.render.DiagramPipeline;
 import com.aresstack.drawio.render.DrawioScene;
+import com.aresstack.drawio.render.PolicyImageSources;
+import com.aresstack.drawio.render.SessionCanvasDiagnostics;
 import com.aresstack.drawio.render.RenderSession;
 
 /**
@@ -85,8 +88,11 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
         String modelJson = toJson(page);
         String request = "{\"scale\":" + scale + ",\"maxCells\":" + session.limits().getMaxCells() + "}";
         CanvasRecorder recorder = new CanvasRecorder();
+        RecordingDiagnostics diagnostics = new RecordingDiagnostics(new SessionCanvasDiagnostics(session));
         DrawioHost host = new DrawioHost(resources(request, modelJson),
-                new DrawioCanvasBridge(recorder.canvas()), session.textMetrics());
+                new DrawioCanvasBridge(recorder.canvas(), new PolicyImageSources(session.resourcePolicy()),
+                        diagnostics),
+                session.textMetrics());
 
         ScriptExecutionResult result;
         GraalJsRuntime runtime = new GraalJsRuntime(session.remaining());
@@ -97,6 +103,9 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
             runtime.close();
         }
         session.checkCancelled();
+        if (diagnostics.abort != null) {
+            throw diagnostics.abort.getRenderException();
+        }
         if (!result.isSuccessful()) {
             throw failure(result.getErrorMessage());
         }
@@ -191,6 +200,40 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
             return new RenderException(RenderErrorCode.UNSUPPORTED_STENCIL, detail);
         }
         return new RenderException(RenderErrorCode.RENDER_FAILED, "Graph rendering failed: " + detail);
+    }
+
+    /** Keep the first fail-fast abort; GraalJS turns host exceptions into guest errors. */
+    private static final class RecordingDiagnostics implements CanvasDiagnostics {
+        private final CanvasDiagnostics delegate;
+        private volatile SessionCanvasDiagnostics.Abort abort;
+
+        RecordingDiagnostics(CanvasDiagnostics delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void unsupported(String capabilityId, String message) {
+            try {
+                delegate.unsupported(capabilityId, message);
+            } catch (SessionCanvasDiagnostics.Abort exception) {
+                if (abort == null) {
+                    abort = exception;
+                }
+                throw exception;
+            }
+        }
+
+        @Override
+        public void missingResource(String capabilityId, String message) {
+            try {
+                delegate.missingResource(capabilityId, message);
+            } catch (SessionCanvasDiagnostics.Abort exception) {
+                if (abort == null) {
+                    abort = exception;
+                }
+                throw exception;
+            }
+        }
     }
 
     static List<String> availableBundles(List<String> names) {

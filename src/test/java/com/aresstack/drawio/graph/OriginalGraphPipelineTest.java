@@ -54,7 +54,7 @@ class OriginalGraphPipelineTest {
 
     @Test
     void rendersConnectedDiagramWithGroupThroughOriginalView() throws Exception {
-        String xml = resource("/drawio/graph/pipeline-acceptance.drawio");
+        String xml = resource("/drawio/golden/pipeline/pipeline-acceptance.drawio");
         RenderSession session = new RenderSession(RenderOptions.defaults());
 
         DrawioScene scene = new OriginalGraphPipeline(TEST_SHAPES, 1)
