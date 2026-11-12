@@ -51,3 +51,15 @@ The bundled source selection currently excludes the stencil/icon/template
 assets; see [UPSTREAM.md](UPSTREAM.md) for provenance, legal cautions and
 unsupported resources. Reassess the license implications before adding
 further upstream packages or publishing an Atlassian-related integration (#15).
+
+## Apache Batik SVG generator (runtime dependency)
+
+`org.apache.xmlgraphics:batik-svggen:1.17` and its transitive dependencies
+(`batik-awt-util`, `batik-util`, `batik-constants`, `batik-i18n`,
+`batik-shared-resources`, `xmlgraphics-commons` 2.9, `commons-io` 2.11.0,
+`commons-logging` 1.0.4) are used for SVG output (#11). All are licensed under
+the Apache License 2.0; they are resolved from Maven Central and not
+redistributed in this repository. Batik 1.17 includes the fixes for
+CVE-2022-44729 and CVE-2022-44730. `BoundsGraphics2D` extends Batik's
+`AbstractGraphics2D`; no Batik source code is copied.
+

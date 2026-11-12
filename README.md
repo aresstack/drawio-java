@@ -207,6 +207,17 @@ used by `mermaid-java`. It is **not yet complete CSS/HTML label
 layout**; missing typography and SVG layout remain part of #9/#10.
 See [docs/TEXT-METRICS.md](docs/TEXT-METRICS.md).
 
+## PNG, BufferedImage and SVG output (Issue #11)
+
+`SceneRenderer` in `com.aresstack.drawio.render` writes a `DrawioScene` as
+`BufferedImage`, PNG (with DPI metadata) or a standalone SVG document. The
+original JavaScript runs once into a `CanvasRecorder`; the recorded commands
+are replayed through the same `Java2DCanvas` into a raster `Graphics2D` and
+into Batik's `SVGGraphics2D`, so there is no second SVG drawing path.
+Output bounds include measured stroke, arrow and shadow extents by default.
+Scale, fit width, padding, transparent or solid background and size limits
+are configurable. See [docs/OUTPUT.md](docs/OUTPUT.md).
+
 ## Roadmap
 
 1. [#2 Bootstrap and reuse inventory](https://github.com/aresstack/drawio-java/issues/2)
