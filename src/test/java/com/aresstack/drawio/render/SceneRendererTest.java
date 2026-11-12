@@ -298,6 +298,34 @@ class SceneRendererTest {
     }
 
     @Test
+    void embeddedImagesBecomeLocalPngDataUrisInSvg() throws Exception {
+        BufferedImage red = new BufferedImage(8, 8, BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g = red.createGraphics();
+        g.setColor(Color.RED);
+        g.fillRect(0, 0, 8, 8);
+        g.dispose();
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        ImageIO.write(red, "png", bytes);
+        String dataUri = "data:image/png;base64,"
+                + java.util.Base64.getEncoder().encodeToString(bytes.toByteArray());
+        DrawioScene scene = canvas -> canvas.image(0, 0, 16, 16, dataUri, false, false, false);
+
+        String svg = renderer.renderSvg(scene, OutputOptions.defaults());
+        Document document = TestImages.parseSecure(svg);
+        NodeList images = document.getElementsByTagNameNS(SvgOutput.SVG_NAMESPACE, "image");
+        BufferedImage vector = TestImages.rasterize(svg);
+        BufferedImage raster = renderer.renderImage(scene, OutputOptions.defaults());
+
+        assertEquals(1, images.getLength());
+        String href = ((Element) images.item(0)).getAttributeNS(SvgOutput.XLINK_NAMESPACE, "href");
+        assertTrue(href.startsWith("data:image/png;base64,"), href);
+        assertNoExternalReferences(document);
+        assertEquals(16, raster.getWidth());
+        assertEquals(new Color(255, 0, 0), new Color(raster.getRGB(8, 8)));
+        assertEquals(new Color(255, 0, 0), new Color(vector.getRGB(8, 8)));
+    }
+
+    @Test
     void transparencySurvivesBothFormats() throws Exception {
         DrawioScene scene = canvas -> {
             canvas.setFillColor("#0000ff");

@@ -1,6 +1,9 @@
 package com.aresstack.drawio.render;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Locale;
 
@@ -17,6 +20,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.batik.svggen.ImageHandlerBase64Encoder;
 import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.apache.batik.svggen.SVGGraphics2DIOException;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -43,7 +47,7 @@ final class SvgOutput {
         SVGGeneratorContext context = SVGGeneratorContext.createDefault(document);
         context.setComment(null);
         context.setEmbeddedFontsOn(false);
-        context.setImageHandler(new ImageHandlerBase64Encoder());
+        context.setImageHandler(new PngDataUriImageHandler());
         context.setPrecision(4);
 
         SVGGraphics2D graphics = new SVGGraphics2D(context, options.isSvgTextAsShapes());
@@ -117,6 +121,42 @@ final class SvgOutput {
             factory.setAttribute(name, "");
         } catch (IllegalArgumentException ignored) {
             // Not every JAXP implementation supports these attributes.
+        }
+    }
+
+    /**
+     * Embed raster images as {@code data:image/png;base64} URIs using the JDK
+     * PNG writer.
+     *
+     * <p>Batik's own encoder looks up an "image/png" writer that only the
+     * separate batik-codec jar registers, and fails with a
+     * NullPointerException without it. Only the encoding step is replaced;
+     * Batik still builds the {@code <image>} element and the base64 stream.
+     */
+    static final class PngDataUriImageHandler extends ImageHandlerBase64Encoder {
+        @Override
+        public void encodeImage(RenderedImage image, OutputStream output)
+                throws SVGGraphics2DIOException {
+            try {
+                SceneRenderer.writePng(toBufferedImage(image), OutputOptions.CSS_DPI, output);
+            } catch (IOException exception) {
+                throw new SVGGraphics2DIOException(exception);
+            }
+        }
+
+        private static BufferedImage toBufferedImage(RenderedImage image) {
+            if (image instanceof BufferedImage) {
+                return (BufferedImage) image;
+            }
+            BufferedImage copy = new BufferedImage(image.getWidth(), image.getHeight(),
+                    BufferedImage.TYPE_INT_ARGB);
+            java.awt.Graphics2D graphics = copy.createGraphics();
+            try {
+                graphics.drawRenderedImage(image, null);
+            } finally {
+                graphics.dispose();
+            }
+            return copy;
         }
     }
 
