@@ -1,4 +1,8 @@
-/* TEST ONLY: pinned upstream (c72c9a98) grapheditor Shapes.js + shapes/mxBasic.js + shapes/bpmn/mxBpmnShape2.js, Apache-2.0. Replaced by drawio-shape-library.js from #10. */
+/*
+ * Bundle original draw.io scripts from pinned upstream sources.
+ * Upstream commit: c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3
+ * Apache-2.0; see upstream/LICENSE and THIRD-PARTY-NOTICES.md.
+ */
 /**
  * Copyright (c) 2006-2015, JGraph Holdings Ltd
  */
@@ -15625,7 +15629,6 @@ mxShapeBasicPatternFillRect.prototype.getConstraints = function(style, w, h)
 
 	return (constr);
 }
-
 ;
 /**
  * Copyright (c) 2006-2010, JGraph Holdings Ltd

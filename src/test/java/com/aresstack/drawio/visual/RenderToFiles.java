@@ -3,7 +3,6 @@ package com.aresstack.drawio.visual;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Collections;
 
 import com.aresstack.drawio.DrawioRenderer;
 import com.aresstack.drawio.api.RenderOptions;
@@ -25,8 +24,7 @@ public final class RenderToFiles {
         File out = new File(args[0]);
         out.mkdirs();
         DrawioRenderer renderer = DrawioRenderer.builder()
-                .pipeline(new OriginalGraphPipeline(
-                        Collections.singletonList("test-shape-library.js"), 1))
+                .pipeline(new OriginalGraphPipeline())
                 .build();
         RenderOptions options = RenderOptions.builder()
                 .unsupportedFeaturePolicy(UnsupportedFeaturePolicy.WARN).build();
