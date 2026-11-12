@@ -66,6 +66,17 @@ browser UI/viewer has been added to the runtime.
 See [docs/HEADLESS-MXGRAPH.md](docs/HEADLESS-MXGRAPH.md) for the
 verified scope and known, still-missing DOM/View/Renderer dependencies.
 
+## Pinned mxClient core for the headless graph pipeline (#9)
+
+`drawio-graph.js` bundles 61 original mxClient core files (`graphSources` in
+`js-bundle/upstream.json`, in mxClient include order, each with its
+LF-normalized SHA-256). The twelve model files and `mxAbstractCanvas2D.js`
+reuse the already pinned copies; the others live under
+`src/main/resources/drawio/upstream/mxgraph/`. The draw.io default
+stylesheet `styles/default.xml` is pinned under `resources`.
+`node js-bundle/build.mjs --verify` checks all bundles and resources.
+See [docs/HEADLESS-GRAPH.md](docs/HEADLESS-GRAPH.md).
+
 ## Original JavaScript API entry points
 
 - `mxAbstractCanvas2D.prototype.translate` stores `state.dx`/`state.dy`.

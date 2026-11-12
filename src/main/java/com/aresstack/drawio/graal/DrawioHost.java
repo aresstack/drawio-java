@@ -5,6 +5,8 @@ import java.util.Objects;
 import org.graalvm.polyglot.HostAccess;
 
 import com.aresstack.drawio.layout.FontDescriptor;
+import com.aresstack.drawio.layout.LabelLayout;
+import com.aresstack.drawio.layout.RunStyle;
 import com.aresstack.drawio.layout.TextBounds;
 import com.aresstack.drawio.layout.TextMetrics;
 
@@ -45,6 +47,24 @@ public final class DrawioHost {
                 text, new FontDescriptor(cssFamily, fontSize, bold, italic));
         return bounds.getWidth() + "," + bounds.getAscent() + ","
                 + bounds.getDescent() + "," + bounds.getHeight();
+    }
+
+    /**
+     * Measure a draw.io label with the shared {@link LabelLayout}.
+     *
+     * @param wrapWidth wrap width in pixels, or a value {@code <= 0} for none
+     * @return {@code "width,height"} in unscaled pixels
+     */
+    @HostAccess.Export
+    public String measureLabel(String value, boolean html, String cssFamily, double fontSize,
+                               boolean bold, boolean italic, double wrapWidth) {
+        if (textMetrics == null) {
+            throw new IllegalStateException("Text measurement is unavailable");
+        }
+        RunStyle base = new RunStyle(cssFamily == null ? "sans-serif" : cssFamily,
+                fontSize, bold, italic);
+        LabelLayout layout = LabelLayout.layout(value, html, base, wrapWidth, textMetrics);
+        return layout.getWidth() + "," + layout.getHeight();
     }
 
     @HostAccess.Export

@@ -160,3 +160,11 @@ def consumerSmokeTest = tasks.register('consumerSmokeTest', JavaExec) {
 tasks.named('check') {
     dependsOn verifyJava8Bytecode, consumerSmokeTest
 }
+
+// Developer tool: ./gradlew renderFiles -PrenderArgs="outDir file.drawio ..."
+tasks.register('renderFiles', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.aresstack.drawio.visual.RenderToFiles'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(8) }
+    args = (project.findProperty('renderArgs') ?: 'build/visual').toString().split(' ').toList()
+}

@@ -56,18 +56,38 @@ public final class AwtTextMetrics implements TextMetrics {
                 | (descriptor.isItalic() ? Font.ITALIC : Font.PLAIN);
 
         for (String family : descriptor.getCssFamily().split(",")) {
-            String candidate = normalizeFamily(family);
-            if (!candidate.isEmpty()) {
-                Font requested = new Font(candidate, style, 1)
-                        .deriveFont(descriptor.getSizePixels());
-                if (!"Dialog".equalsIgnoreCase(requested.getFamily(Locale.ROOT))
-                        || "Dialog".equalsIgnoreCase(candidate)) {
-                    return requested;
+            for (String candidate : candidates(normalizeFamily(family))) {
+                if (!candidate.isEmpty()) {
+                    Font requested = new Font(candidate, style, 1)
+                            .deriveFont(descriptor.getSizePixels());
+                    if (!"Dialog".equalsIgnoreCase(requested.getFamily(Locale.ROOT))
+                            || "Dialog".equalsIgnoreCase(candidate)) {
+                        return requested;
+                    }
                 }
             }
         }
         return new Font(Font.SANS_SERIF, style, 1)
                 .deriveFont(descriptor.getSizePixels());
+    }
+
+    /**
+     * Metric-compatible substitutes for the core web fonts that draw.io uses,
+     * tried in order after the requested family (Liberation and Croscore
+     * fonts share the advance widths of Arial/Helvetica, Times and Courier).
+     */
+    private static String[] candidates(String family) {
+        String key = family.toLowerCase(Locale.ROOT);
+        if ("helvetica".equals(key) || "arial".equals(key) || "helvetica neue".equals(key)) {
+            return new String[] {family, "Arial", "Helvetica", "Liberation Sans", "Arimo"};
+        }
+        if ("times new roman".equals(key) || "times".equals(key)) {
+            return new String[] {family, "Times New Roman", "Liberation Serif", "Tinos"};
+        }
+        if ("courier new".equals(key) || "courier".equals(key)) {
+            return new String[] {family, "Courier New", "Liberation Mono", "Cousine"};
+        }
+        return new String[] {family};
     }
 
     private String normalizeFamily(String family) {

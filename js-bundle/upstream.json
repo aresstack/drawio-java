@@ -1,81 +1,396 @@
 {
-    "upstreamRepository":  "https://github.com/jgraph/drawio",
-    "upstreamBranch":  "dev",
-    "upstreamCommit":  "c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3",
-    "sources":  [
-                    {
-                        "path":  "src/main/resources/drawio/upstream/mxAbstractCanvas2D.js",
-                        "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxAbstractCanvas2D.js",
-                        "sha256NormalizedLf":  "e263367c0ac7a9a56cc6424c8827c6305a6e522736c37de9b7a3cfb0e730692f"
-                    },
-                    {
-                        "path":  "src/main/resources/drawio/upstream/mxBpmnShape2.js",
-                        "upstreamPath":  "src/main/webapp/shapes/bpmn/mxBpmnShape2.js",
-                        "sha256NormalizedLf":  "a95f550de67cb50e775f7693ee5937458933ffd8a438d2748eb40c4ade48b3c7"
-                    }
-                ],
-    "bundle":  "src/main/resources/drawio/drawio-shapes.js",
-    "modelSources":  [
-                         {
-                             "sha256NormalizedLf":  "68724f1d5442f81980aa90681de33d6fb2c9600f39ae957c8e9a01c8e103a56e",
-                             "path":  "src/main/resources/drawio/upstream/model/mxPoint.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxPoint.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "abe50cbe6485d31048bb8a06bd8992d1bb8bacfa1ae562b608af453501ed6f4a",
-                             "path":  "src/main/resources/drawio/upstream/model/mxRectangle.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxRectangle.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "a0b99a4a7e1d5abf3317b365720441ff6eb20e4e296ad5b1acbfb8480e927598",
-                             "path":  "src/main/resources/drawio/upstream/model/mxGeometry.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxGeometry.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "ffcdff4f93173be45213eaf8d22d43ab8eebc3db5ade3a1d5710ffa98d4aadba",
-                             "path":  "src/main/resources/drawio/upstream/model/mxEventObject.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxEventObject.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "ba91199ec54059e270ebf815a965d101d360b750dd225ede58f3b9bf4f434ddd",
-                             "path":  "src/main/resources/drawio/upstream/model/mxEventSource.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxEventSource.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "758400d94135bed3892e0944bdab47eafbe5e7312ea26f3671c46d4dc7a1b28f",
-                             "path":  "src/main/resources/drawio/upstream/model/mxEvent.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxEvent.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "fd22a7a8f3e9c11fcaa44d08c9ab2b0584da4d922d18f37fcba3a68f8ada6d87",
-                             "path":  "src/main/resources/drawio/upstream/model/mxUndoableEdit.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxUndoableEdit.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "7e2c38a7639ecb2f5e27ad50460ff0e228efeb9eba5d74cb728249fe0f6af1bd",
-                             "path":  "src/main/resources/drawio/upstream/model/mxObjectIdentity.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxObjectIdentity.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "b3bcf5864f1b1c694f6b3eb143508ae29a70b06f44fdfe4365fbf54f226588b1",
-                             "path":  "src/main/resources/drawio/upstream/model/mxDictionary.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/util/mxDictionary.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "ec86bd53653bff01e903c29be42d90e5938f7f563627ce09a026b7a570959818",
-                             "path":  "src/main/resources/drawio/upstream/model/mxCellPath.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxCellPath.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "c54d8963ade47fdea1b97ef969b156a085fb47ac0dca25b007e562bb2028402a",
-                             "path":  "src/main/resources/drawio/upstream/model/mxCell.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxCell.js"
-                         },
-                         {
-                             "sha256NormalizedLf":  "e5069535c34eb10e1b3cfb122c8d820b6c7d0bffcfcd67466554af786a0d6330",
-                             "path":  "src/main/resources/drawio/upstream/model/mxGraphModel.js",
-                             "upstreamPath":  "src/main/webapp/mxgraph/src/model/mxGraphModel.js"
-                         }
-                     ],
-    "modelBundle":  "src/main/resources/drawio/drawio-model.js"
+    "upstreamRepository": "https://github.com/jgraph/drawio",
+    "upstreamBranch": "dev",
+    "upstreamCommit": "c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3",
+    "sources": [
+        {
+            "path": "src/main/resources/drawio/upstream/mxAbstractCanvas2D.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxAbstractCanvas2D.js",
+            "sha256NormalizedLf": "e263367c0ac7a9a56cc6424c8827c6305a6e522736c37de9b7a3cfb0e730692f"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxBpmnShape2.js",
+            "upstreamPath": "src/main/webapp/shapes/bpmn/mxBpmnShape2.js",
+            "sha256NormalizedLf": "a95f550de67cb50e775f7693ee5937458933ffd8a438d2748eb40c4ade48b3c7"
+        }
+    ],
+    "bundle": "src/main/resources/drawio/drawio-shapes.js",
+    "modelSources": [
+        {
+            "sha256NormalizedLf": "68724f1d5442f81980aa90681de33d6fb2c9600f39ae957c8e9a01c8e103a56e",
+            "path": "src/main/resources/drawio/upstream/model/mxPoint.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxPoint.js"
+        },
+        {
+            "sha256NormalizedLf": "abe50cbe6485d31048bb8a06bd8992d1bb8bacfa1ae562b608af453501ed6f4a",
+            "path": "src/main/resources/drawio/upstream/model/mxRectangle.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxRectangle.js"
+        },
+        {
+            "sha256NormalizedLf": "a0b99a4a7e1d5abf3317b365720441ff6eb20e4e296ad5b1acbfb8480e927598",
+            "path": "src/main/resources/drawio/upstream/model/mxGeometry.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/model/mxGeometry.js"
+        },
+        {
+            "sha256NormalizedLf": "ffcdff4f93173be45213eaf8d22d43ab8eebc3db5ade3a1d5710ffa98d4aadba",
+            "path": "src/main/resources/drawio/upstream/model/mxEventObject.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxEventObject.js"
+        },
+        {
+            "sha256NormalizedLf": "ba91199ec54059e270ebf815a965d101d360b750dd225ede58f3b9bf4f434ddd",
+            "path": "src/main/resources/drawio/upstream/model/mxEventSource.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxEventSource.js"
+        },
+        {
+            "sha256NormalizedLf": "758400d94135bed3892e0944bdab47eafbe5e7312ea26f3671c46d4dc7a1b28f",
+            "path": "src/main/resources/drawio/upstream/model/mxEvent.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxEvent.js"
+        },
+        {
+            "sha256NormalizedLf": "fd22a7a8f3e9c11fcaa44d08c9ab2b0584da4d922d18f37fcba3a68f8ada6d87",
+            "path": "src/main/resources/drawio/upstream/model/mxUndoableEdit.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxUndoableEdit.js"
+        },
+        {
+            "sha256NormalizedLf": "7e2c38a7639ecb2f5e27ad50460ff0e228efeb9eba5d74cb728249fe0f6af1bd",
+            "path": "src/main/resources/drawio/upstream/model/mxObjectIdentity.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxObjectIdentity.js"
+        },
+        {
+            "sha256NormalizedLf": "b3bcf5864f1b1c694f6b3eb143508ae29a70b06f44fdfe4365fbf54f226588b1",
+            "path": "src/main/resources/drawio/upstream/model/mxDictionary.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxDictionary.js"
+        },
+        {
+            "sha256NormalizedLf": "ec86bd53653bff01e903c29be42d90e5938f7f563627ce09a026b7a570959818",
+            "path": "src/main/resources/drawio/upstream/model/mxCellPath.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/model/mxCellPath.js"
+        },
+        {
+            "sha256NormalizedLf": "c54d8963ade47fdea1b97ef969b156a085fb47ac0dca25b007e562bb2028402a",
+            "path": "src/main/resources/drawio/upstream/model/mxCell.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/model/mxCell.js"
+        },
+        {
+            "sha256NormalizedLf": "e5069535c34eb10e1b3cfb122c8d820b6c7d0bffcfcd67466554af786a0d6330",
+            "path": "src/main/resources/drawio/upstream/model/mxGraphModel.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/model/mxGraphModel.js"
+        }
+    ],
+    "modelBundle": "src/main/resources/drawio/drawio-model.js",
+    "graphSources": [
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/mxClient.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/mxClient.js",
+            "sha256NormalizedLf": "e1f2aea2c8fd5ba4076eb3361f931e9cddb2f47fa134932f2f718ffd938661ea"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxLog.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxLog.js",
+            "sha256NormalizedLf": "36bcc7cf66338da4886f5d0525390d901f7f80e52c5ce3f9f884323beaa4b996"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxObjectIdentity.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxObjectIdentity.js",
+            "sha256NormalizedLf": "7e2c38a7639ecb2f5e27ad50460ff0e228efeb9eba5d74cb728249fe0f6af1bd"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxDictionary.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxDictionary.js",
+            "sha256NormalizedLf": "b3bcf5864f1b1c694f6b3eb143508ae29a70b06f44fdfe4365fbf54f226588b1"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxResources.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxResources.js",
+            "sha256NormalizedLf": "5f696315f13faeeea4fab69454708540089e484dbc3e5db4ff614ddb1046be36"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxPoint.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxPoint.js",
+            "sha256NormalizedLf": "68724f1d5442f81980aa90681de33d6fb2c9600f39ae957c8e9a01c8e103a56e"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxRectangle.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxRectangle.js",
+            "sha256NormalizedLf": "abe50cbe6485d31048bb8a06bd8992d1bb8bacfa1ae562b608af453501ed6f4a"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxUtils.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxUtils.js",
+            "sha256NormalizedLf": "d1228d194a2cdaebd223464573b09c321ffcb6b7a73bebb8323f656b39217069"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxConstants.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxConstants.js",
+            "sha256NormalizedLf": "d41f4e54ac5e5e26e35be79f01c464df8fe591ea1d88ae0d3bec427e5b2828c5"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxEventObject.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxEventObject.js",
+            "sha256NormalizedLf": "ffcdff4f93173be45213eaf8d22d43ab8eebc3db5ade3a1d5710ffa98d4aadba"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxMouseEvent.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxMouseEvent.js",
+            "sha256NormalizedLf": "4e9ae4159eba4b434f9ba2437c30c52d1b320106995b588ac1e797e8353a6ba1"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxEventSource.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxEventSource.js",
+            "sha256NormalizedLf": "ba91199ec54059e270ebf815a965d101d360b750dd225ede58f3b9bf4f434ddd"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxEvent.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxEvent.js",
+            "sha256NormalizedLf": "758400d94135bed3892e0944bdab47eafbe5e7312ea26f3671c46d4dc7a1b28f"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxImage.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxImage.js",
+            "sha256NormalizedLf": "f7d50548d62a87be03370a8f5bf5038a19b4412061ad68b68b702e6822db565a"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxUndoableEdit.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxUndoableEdit.js",
+            "sha256NormalizedLf": "fd22a7a8f3e9c11fcaa44d08c9ab2b0584da4d922d18f37fcba3a68f8ada6d87"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxUrlConverter.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxUrlConverter.js",
+            "sha256NormalizedLf": "475460a17a00bf40e7294ca7d023bfeb743176d2a67df1cd3d9052a231b3eca4"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxImageExport.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxImageExport.js",
+            "sha256NormalizedLf": "5daf6e39c4986f9cedf05254a26629d8f3ee5bba2b1e8206ff95e0d2ed0bacdd"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxAbstractCanvas2D.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxAbstractCanvas2D.js",
+            "sha256NormalizedLf": "e263367c0ac7a9a56cc6424c8827c6305a6e522736c37de9b7a3cfb0e730692f"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/util/mxSvgCanvas2D.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/util/mxSvgCanvas2D.js",
+            "sha256NormalizedLf": "295e5eca44d1575260235f821731958cea9461d0b00199cb59bf75dab05fee79"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxShape.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxShape.js",
+            "sha256NormalizedLf": "4054770c8263d40e3146ba8a0470156e7a0b73721a5a1cf06578e8874c84066f"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxStencil.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxStencil.js",
+            "sha256NormalizedLf": "7679f39614815566f8e8aa25a1ac1ee25c68a94a9a30dde038194813185a5053"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxStencilRegistry.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxStencilRegistry.js",
+            "sha256NormalizedLf": "6ee61ad0ae758ec95b0800621f6548e6b72036d4dce708c0eb572bbcb7782842"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxMarker.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxMarker.js",
+            "sha256NormalizedLf": "09757e7e14a1992cadb392610e705628f3adaab38fee32717c470402dbd3b235"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxActor.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxActor.js",
+            "sha256NormalizedLf": "eef5cfedad096bcad491202de3f41847e1da7df41e278e7ed7c961d5a46825dc"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxCloud.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxCloud.js",
+            "sha256NormalizedLf": "cd2f26f835b5bc56f78b9c361f2a14c6258d8bb7fd3137de69efc526d0ac0e3c"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxRectangleShape.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxRectangleShape.js",
+            "sha256NormalizedLf": "8a229c61e3dccb59f62d61a93b78197e5fa9375b439cd5aeab95e4a5d6381ce2"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxEllipse.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxEllipse.js",
+            "sha256NormalizedLf": "0393e3371a46a4ae8ee39116241db00426cd8de40f31a57a6b241c84369e348e"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxDoubleEllipse.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxDoubleEllipse.js",
+            "sha256NormalizedLf": "e4aa2084434ba51f6be1caa939cec2ff30cb75f151981eba6456da450fdc263a"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxRhombus.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxRhombus.js",
+            "sha256NormalizedLf": "e6ea0e73f692812e9d60afc28da31ad54ce45174cae54c4003d3c2e11fa6cea6"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxPolyline.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxPolyline.js",
+            "sha256NormalizedLf": "322ebbd0461f571f7fb8def483fd882ac1561ea94f6c94ce651a48f90d04e1ef"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxArrow.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxArrow.js",
+            "sha256NormalizedLf": "350e5ee3bcd5b5367ee84284d991d3295f5faf1e3577a1a73ee3beeb91c98bf0"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxArrowConnector.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxArrowConnector.js",
+            "sha256NormalizedLf": "4aedf98c28683bed85ebc4bc13131da610f2b2279d632074f5ebf66d70dda816"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxText.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxText.js",
+            "sha256NormalizedLf": "2831a2184d88a9718c97e2d787c15f704ac424e6dba7c36b901695b4442b0295"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxTriangle.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxTriangle.js",
+            "sha256NormalizedLf": "69d1b744c7956240fc860b89358a9412ec82322d298875b3af14275becf7998e"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxHexagon.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxHexagon.js",
+            "sha256NormalizedLf": "5de14965b03d202907b3320ceedc00895adec09c808f76b541cb90af3dbc7449"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxLine.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxLine.js",
+            "sha256NormalizedLf": "75c1f2a7542db1c55d5ed804d3426a0b445255af9c9fcf6c9c34e79c91a0a28e"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxImageShape.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxImageShape.js",
+            "sha256NormalizedLf": "af986318204111f20dcdc3f2e90c894a975700139f3362bebb601d4644dfd0b4"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxLabel.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxLabel.js",
+            "sha256NormalizedLf": "34c747f0689df9dd0629bf2f874b155c3ddcdbfc7fb3e667d323c4da8dfa3576"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxCylinder.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxCylinder.js",
+            "sha256NormalizedLf": "dab778d2f80d1bd144cd55756df37bd7b8fa96fe4a4b2da364d672cc17c3d0da"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxConnector.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxConnector.js",
+            "sha256NormalizedLf": "72b040cc30725691ae902ca3c50b1b991af9ccabdaf6332538d6a5c8c468a51a"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/shape/mxSwimlane.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/shape/mxSwimlane.js",
+            "sha256NormalizedLf": "0e3c7c5943730dbcb17a3807c875761017edd2f07ab39862269233e0c54d873b"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxGraphModel.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/model/mxGraphModel.js",
+            "sha256NormalizedLf": "e5069535c34eb10e1b3cfb122c8d820b6c7d0bffcfcd67466554af786a0d6330"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxCell.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/model/mxCell.js",
+            "sha256NormalizedLf": "c54d8963ade47fdea1b97ef969b156a085fb47ac0dca25b007e562bb2028402a"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxGeometry.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/model/mxGeometry.js",
+            "sha256NormalizedLf": "a0b99a4a7e1d5abf3317b365720441ff6eb20e4e296ad5b1acbfb8480e927598"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/model/mxCellPath.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/model/mxCellPath.js",
+            "sha256NormalizedLf": "ec86bd53653bff01e903c29be42d90e5938f7f563627ce09a026b7a570959818"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxPerimeter.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxPerimeter.js",
+            "sha256NormalizedLf": "ae44dfa9caf55b740ee2d46375d91bb3072703976debc0499ed876a7aaf56b71"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxStylesheet.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxStylesheet.js",
+            "sha256NormalizedLf": "43d87978ca4b481ae12f373e065b95d753aaf94c6bfcccd32951fb2e65ca4eec"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxCellState.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxCellState.js",
+            "sha256NormalizedLf": "b806c7ec051a6032df06404db93bca2e39545b7eed67047543037e6028d85113"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxGraphSelectionModel.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxGraphSelectionModel.js",
+            "sha256NormalizedLf": "cd36d877e0eb316a3124715328a33ee9113eed0257258d61a288599ac969e627"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxCellRenderer.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxCellRenderer.js",
+            "sha256NormalizedLf": "a62cd3edc97af145851ea25515b4b49c59748416dbe09e2e0a5a153da3373fca"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxEdgeStyle.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxEdgeStyle.js",
+            "sha256NormalizedLf": "ee3bd601ea125563976e4c946e084664cfe272034d56eb1b11c0d1f8381eed98"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxStyleRegistry.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxStyleRegistry.js",
+            "sha256NormalizedLf": "dbba92b127c76a2bbd82fbed3307606ee0e23e498d6172be586e1cf535d58212"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxGraphView.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxGraphView.js",
+            "sha256NormalizedLf": "5edd0e308d8a33538eb8fcfa8374259257cc70d9cdbfb92fa8318af6c3ccda40"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxGraph.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxGraph.js",
+            "sha256NormalizedLf": "95880a993e1b263e293022eaa57632a64fea7f1d99b26da5207d10c23b798b48"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/view/mxConnectionConstraint.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/view/mxConnectionConstraint.js",
+            "sha256NormalizedLf": "8dd4822c66a7ac9db88bf4f5e2a0ae8df445e4b43bbe72218736353a3f64b14b"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/io/mxCodecRegistry.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/io/mxCodecRegistry.js",
+            "sha256NormalizedLf": "8efb0215d8c34c525039bfbc0e1b6afe82ed45b2aa52fa4663b67f7dcc732f33"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/io/mxCodec.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/io/mxCodec.js",
+            "sha256NormalizedLf": "80223b4db5dbd78f22229cae7393d67192ac953f3ff11a3328fe4e3c90d984d2"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/io/mxObjectCodec.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/io/mxObjectCodec.js",
+            "sha256NormalizedLf": "9a98f38b7aa1a40101c040a92209d6dabf93ba0dfdb5726a0870330b860b91cd"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/io/mxCellCodec.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/io/mxCellCodec.js",
+            "sha256NormalizedLf": "f170c65138a2923f5efc339ef1510ab5d97c35f346a8133a64bd3cc2fc6424ae"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/io/mxModelCodec.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/io/mxModelCodec.js",
+            "sha256NormalizedLf": "f0d4490e556364609d9ad09e886702d1aa762f394fd56bb6612214c9b97b434f"
+        },
+        {
+            "path": "src/main/resources/drawio/upstream/mxgraph/io/mxStylesheetCodec.js",
+            "upstreamPath": "src/main/webapp/mxgraph/src/io/mxStylesheetCodec.js",
+            "sha256NormalizedLf": "d9d92d5009da31959f46e00f766cbd0c59e7d8c3bd5c90bc38629c63745629e7"
+        }
+    ],
+    "graphBundle": "src/main/resources/drawio/drawio-graph.js",
+    "resources": [
+        {
+            "path": "src/main/resources/drawio/upstream/styles/default.xml",
+            "upstreamPath": "src/main/webapp/styles/default.xml",
+            "sha256NormalizedLf": "e5767817bbbd86639f6db53d753fc9793f5993f892f738bedc35b896b2688ea6"
+        }
+    ]
 }

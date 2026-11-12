@@ -55,3 +55,11 @@ await buildBundle(manifest.sources, manifest.bundle);
 if (manifest.modelSources && manifest.modelBundle) {
     await buildBundle(manifest.modelSources, manifest.modelBundle);
 }
+if (manifest.graphSources && manifest.graphBundle) {
+    await buildBundle(manifest.graphSources, manifest.graphBundle);
+}
+for (const resource of manifest.resources || []) {
+    const text = normalizeLineEndings(await readFile(join(projectRoot, resource.path), 'utf8'));
+    verifySourceHash(resource.path, text, resource.sha256NormalizedLf);
+    process.stdout.write('Verified pinned resource: ' + resource.path + '\n');
+}
