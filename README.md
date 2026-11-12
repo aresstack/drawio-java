@@ -7,9 +7,10 @@ PNG or SVG. Consumers need no browser, no Node.js and no network access.
 
 > **Status: pre-release.** Diagrams render end to end through the original
 > draw.io code, and a reference corpus compares them with the official draw.io
-> viewer (BPMN `gateway2` approval flow: score 0.998). Before the first release,
-> one owner decision is open: the draw.io stencil license caveat
-> ([docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md)).
+> viewer (BPMN `gateway2` approval flow: score 0.998). The draw.io XML stencil
+> data, which carries an upstream restriction for Atlassian-related use, is a
+> separate optional artifact ([Dependencies](#dependencies),
+> [docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md)).
 >
 > - What works and what does not: [docs/SUPPORT-MATRIX.md](docs/SUPPORT-MATRIX.md)
 > - Security model and dependency audit: [docs/SECURITY.md](docs/SECURITY.md)
@@ -29,6 +30,52 @@ PNG or SVG. Consumers need no browser, no Node.js and no network access.
 - Provide PNG/BufferedImage and SVG outputs through the same Java2D drawing model.
 
 See [REUSE.md](REUSE.md) for the detailed component inventory and decisions.
+
+## Dependencies
+
+Two artifacts, always in the same version:
+
+| Artifact | Needed for |
+| --- | --- |
+| `com.aresstack:drawio-java` | Everything: parser, renderer, the original draw.io JavaScript and all JavaScript shapes (standard shapes, `mxgraph.bpmn.gateway2`, `event`, `task`, ...) |
+| `com.aresstack:drawio-java-stencils` (optional) | draw.io **XML stencils**: `mxgraph.flowchart.*`, `mxgraph.arrows.*`, the XML part of `mxgraph.basic.*`, legacy `mxgraph.bpmn.*` symbols and the BPMN task markers drawn from them |
+
+Maven:
+
+```xml
+<dependency>
+    <groupId>com.aresstack</groupId>
+    <artifactId>drawio-java</artifactId>
+    <version>${drawio-java.version}</version>
+</dependency>
+<!-- Optional: draw.io XML stencil data. Not for Atlassian products or the Atlassian Marketplace, see below. -->
+<dependency>
+    <groupId>com.aresstack</groupId>
+    <artifactId>drawio-java-stencils</artifactId>
+    <version>${drawio-java.version}</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+Gradle:
+
+```groovy
+dependencies {
+    implementation "com.aresstack:drawio-java:$drawioJavaVersion"
+    // Optional: draw.io XML stencil data. Not for Atlassian products or the Atlassian Marketplace, see below.
+    runtimeOnly "com.aresstack:drawio-java-stencils:$drawioJavaVersion"
+}
+```
+
+`drawio-java-stencils` contains only draw.io's stencil data. The upstream
+draw.io README forbids using its stencil libraries in, or distributing them
+for use with, Atlassian products or products distributed through the
+Atlassian Marketplace without written permission. Leave the artifact out in
+that case. The renderer finds it on the classpath with no configuration. Without it,
+shapes that need an XML stencil are reported as `stencil:<name>` and, under
+the default policy, fail with `UNSUPPORTED_STENCIL` instead of being
+approximated. Details: [docs/STENCILS.md](docs/STENCILS.md#optional-artifact-drawio-java-stencils),
+[docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md).
 
 ## Using the renderer (Issue #12)
 
@@ -67,9 +114,12 @@ On Linux/macOS:
 ./gradlew clean build
 ```
 
-`build` runs all tests, including the reference corpus, the Java 8 bytecode
-gate (`verifyJava8Bytecode`) and an offline smoke test against the packaged
-jar (`consumerSmokeTest`). Pass `-PtestJavaVersion=11|17|21` to run the tests
+`build` produces both jars in `build/libs` (`drawio-java` and
+`drawio-java-stencils`, each with sources and javadoc jars) and runs all
+tests, including the reference corpus, the Java 8 bytecode gate
+(`verifyJava8Bytecode`), the stencil split check (`verifyStencilArtifact`)
+and offline smoke tests against the packaged jars: `consumerSmokeTest` (main
+jar only) and `consumerSmokeStencilsTest` (with the stencil jar). Pass `-PtestJavaVersion=11|17|21` to run the tests
 on another installed JDK. The corpus report with rendered images and diffs is
 written to `build/reports/corpus/render.html`. CI runs all of this on JDK 8,
 11, 17 and 21 and on Linux and Windows; see [docs/RELEASE.md](docs/RELEASE.md).

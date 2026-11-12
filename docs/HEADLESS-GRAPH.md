@@ -35,7 +35,7 @@ the output layer is an immutable command recording.
 | 3 | `drawio-xml-dom.js` | this project: JSON to XML node model |
 | 4 | `drawio-headless.js` | this project: draw.io compatibility ports, headless overrides, `DrawioHeadless.render` |
 | 4b | `drawio-graph-ports.js` | **pinned upstream**, copied verbatim from `js/grapheditor/Graph.js` by `js-bundle/build.mjs` (`graphPorts` in `upstream.json`): (a) top-level members that `Shapes.js` and the blocks below call (table helpers, curve and multiple-copies statics, tie helpers, ...); (b) four whole top-level blocks (hash-checked line ranges): collapsed-table painting, label gaps, label placement, and the `mxGraphView`/`mxConnector`/`mxEdgeStyle` overrides (line jumps, edge ties, fixed point spacing, curved lines, `SideToSide`/`TopToBottom`/`ElbowConnector`) |
-| 5 | `drawio-shape-library.js`, `drawio-stencil-runtime.js`, `drawio-stencils.js` | #10, loaded when present |
+| 5 | `drawio-shape-library.js`, `drawio-stencil-runtime.js`, `drawio-stencils.js` | #10, loaded when present; `drawio-stencils.js` comes from the optional `drawio-java-stencils` artifact ([STENCILS.md](STENCILS.md#optional-artifact-drawio-java-stencils)) |
 | 6 | `drawio-canvas-adapter.js` | `DrawioJavaCanvas` (#6/#10) |
 | 7 | `drawio-render.js` | constant entry script; data arrives through `DrawioHost.loadResource` |
 

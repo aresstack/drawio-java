@@ -35,8 +35,11 @@ and the jar carries it in `META-INF/LICENSE`.
 
 Prerequisites, one-time decisions or settings by the owner:
 
-1. **Decide on the stencil data** ([LICENSE-REVIEW.md](LICENSE-REVIEW.md),
-   section 2) before shipping to any Atlassian-related consumer.
+1. **Stencil data:** done. It is published as the separate, optional
+   artifact `drawio-java-stencils` ([LICENSE-REVIEW.md](LICENSE-REVIEW.md),
+   section 2). Atlassian-related consumers depend on `drawio-java` only.
+   To ship it inside the main jar again, see
+   [STENCILS.md](STENCILS.md#folding-the-stencils-back-into-the-main-jar).
 2. For Maven Central, add the repository secrets `CENTRAL_USERNAME` and
    `CENTRAL_PASSWORD` (a Central Portal user token), plus `GPG_PRIVATE_KEY`
    (ASCII-armored) and `GPG_PASSPHRASE`. These are the same names
@@ -52,18 +55,28 @@ git tag v0.1.0 && git push origin v0.1.0
 `.github/workflows/release.yml` then:
 
 1. verifies the bundles and runs the full build with `-PreleaseVersion=0.1.0`
-   (tests, bytecode gate, consumer smoke);
+   (tests, bytecode gate, stencil split check, both consumer smoke runs);
 2. stages a Maven bundle (`gradlew publish` into `build/staging-deploy`),
-   signed when `GPG_PRIVATE_KEY` is set;
+   signed when `GPG_PRIVATE_KEY` is set. The bundle holds two artifacts:
+   - `com.aresstack:drawio-java` (jar, sources, javadoc, POM, Gradle module
+     metadata), MIT;
+   - `com.aresstack:drawio-java-stencils` (jar, sources, documentation-only
+     javadoc, POM), Apache-2.0 with the upstream Atlassian restriction in
+     the license comments and the description;
 3. uploads the bundle to the Central Portal as **USER_MANAGED** when the
    secrets exist, so a person still presses "Publish" after reviewing it;
-4. creates a GitHub Release with the main, sources and javadoc jars,
-   `LICENSE` and `THIRD-PARTY-NOTICES.md`.
+4. creates a GitHub Release with the jars of both artifacts (main, sources,
+   javadoc each), `LICENSE` and `THIRD-PARTY-NOTICES.md`.
 
 `workflow_dispatch` with a version runs steps 1 and 2 only. Use it as a dry
 run.
 
-The published POM lists GraalJS 21.3.20.0.3 and Batik svggen 1.20 as runtime
-dependencies. The jar contains the bundled draw.io JavaScript, the draw.io
-Apache-2.0 license (`drawio/upstream/LICENSE`), drawio-java's MIT license
-(`META-INF/LICENSE`) and `META-INF/THIRD-PARTY-NOTICES.md`.
+The published `drawio-java` POM lists GraalJS 21.3.20.0.3 and Batik svggen
+1.20 as runtime dependencies. The jar contains the bundled draw.io
+JavaScript, the draw.io Apache-2.0 license (`drawio/upstream/LICENSE`),
+drawio-java's MIT license (`META-INF/LICENSE`) and
+`META-INF/THIRD-PARTY-NOTICES.md`, but not the stencil data
+`drawio/drawio-stencils.js`. The `drawio-java-stencils` POM has no
+dependencies; its jar contains `drawio/drawio-stencils.js`,
+`META-INF/LICENSE` (draw.io Apache-2.0) and its own
+`META-INF/THIRD-PARTY-NOTICES.md` (from `src/stencils/`).

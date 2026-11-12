@@ -139,9 +139,12 @@ The original Draw.io **source code** is licensed under Apache 2.0. Its
 restricts the included **icon sets, stencil libraries and diagram templates**
 and derivatives in products distributed for Atlassian or its Marketplace
 without written permission. Apart from JavaScript sources, this repository
-bundles only the small, opt-in stencil subset of
+bundles only the small stencil subset of
 [docs/STENCILS.md](docs/STENCILS.md) (BPMN, basic, flowchart and arrow
-stencils, no icon packages). That subset is flagged for the #15 audit.
+stencils, no icon packages). It is not part of the `drawio-java` jar but
+published as the separate, optional artifact `drawio-java-stencils`
+([docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md), section 2), so
+Atlassian-related consumers can leave it out.
 
 Before distributing additional stencil/icon libraries, or distributing this
 renderer as part of a Confluence/Atlassian-related product, assess the actual

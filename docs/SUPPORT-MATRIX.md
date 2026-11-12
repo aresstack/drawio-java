@@ -59,8 +59,8 @@ Legend: ✅ supported and regression-tested · ⚠️ partial or known deviation
 | draw.io Shapes.js shapes (e.g. `process`, `parallelogram`) | ✅ | `styles-basic-shapes` |
 | **BPMN `mxgraph.bpmn.gateway2`** (exclusive, parallel, complex, event) | ✅ | `bpmn-approval-flow` (score 0.998), `bpmn-shapes-catalog`, golden gateway test |
 | BPMN events (`mxgraph.bpmn.event`, all outlines, common symbols) | ✅ | `bpmn-shapes-catalog` |
-| BPMN tasks, data and conversation (`mxgraph.bpmn.task`, `data`, `conversation`) | ✅ | `bpmn-shapes-catalog` |
-| XML stencil sets bundled offline: arrows, basic, bpmn, flowchart | ⚠️ | [STENCILS.md](STENCILS.md). See the license caveat in [LICENSE-REVIEW.md](LICENSE-REVIEW.md) |
+| BPMN tasks, data and conversation (`mxgraph.bpmn.task`, `data`, `conversation`) | ✅ | `bpmn-shapes-catalog`. The task-type markers service, user, manual, business rule and script and the standard loop, compensation and ad hoc markers are XML stencils and need `drawio-java-stencils` |
+| XML stencil sets offline: arrows, basic, bpmn, flowchart | ⚠️ | Only with the optional artifact `drawio-java-stencils` (upstream Atlassian restriction, [LICENSE-REVIEW.md](LICENSE-REVIEW.md)). Without it: `stencil:<name>`, `UNSUPPORTED_STENCIL` by default (`StencilArtifactAbsentTest`, `consumerSmokeTest`). [STENCILS.md](STENCILS.md) |
 | Other stencil sets (AWS, Azure, GCP, Cisco, UML packs, ...) | ❌ | `unknown-stencil` fails with `UNSUPPORTED_STENCIL` by default; `UnsupportedFeaturePolicy.WARN` gives a warning |
 | JavaScript shape libraries `mxBasic.js`, `mxFlowchart.js`, `mxArrows.js` (`mxgraph.arrows2.*`), `er/mxER.js` (ER shapes, crow's foot markers) | ✅ | `edge-jumps-shapes` acceptance (ER markers); others reported as unknown shape |
 | draw.io tables (`shape=table`, `tableRow`), line jumps (`jumpStyle`), placeholders (`placeholders=1`) | ✅ | `tables-shapes`, `edge-jumps-shapes` acceptance vs viewer; `replacesPlaceholdersLikeDrawio` |

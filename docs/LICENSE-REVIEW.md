@@ -8,7 +8,7 @@ the published POM pulls in, and the test assets in the repository.
 | Area | Status |
 |---|---|
 | draw.io JavaScript source (mxGraph, Graph.js parts, Shapes.js, mxBpmnShape2.js) | OK: Apache-2.0, LICENSE shipped in the jar, original headers kept |
-| draw.io **stencil data** (`drawio-stencils.js`: arrows, basic, bpmn, flowchart) | **Release blocker for Atlassian-related use.** See below |
+| draw.io **stencil data** (`drawio-stencils.js`: arrows, basic, bpmn, flowchart) | **Split out.** Not in the `drawio-java` jar; published as the optional `drawio-java-stencils` artifact, which carries the upstream Atlassian restriction. Leave it out for Atlassian-related use. See below |
 | GraalJS, Truffle, TRegex, graal-sdk | OK: UPL-1.0 (js also MIT), dependency only, not redistributed |
 | ICU4J | OK: Unicode/ICU license, dependency only |
 | Batik svggen, xmlgraphics-commons, commons-logging | OK: Apache-2.0, dependency only |
@@ -29,7 +29,7 @@ keep their own license and headers (`drawio/upstream/LICENSE` in the jar),
 and the UPL, ICU and Apache-2.0 dependencies are not relicensed. MIT applies
 to drawio-java's own code only.
 
-## 2. draw.io stencil libraries and the Atlassian restriction (blocker for Atlassian-related use)
+## 2. draw.io stencil libraries and the Atlassian restriction (resolved by the optional stencil artifact)
 
 The upstream README at the pinned commit `c72c9a98` says:
 
@@ -47,12 +47,21 @@ The upstream README at the pinned commit `c72c9a98` says:
 
 There is no upstream NOTICE file at that commit (checked: HTTP 404).
 
-**What the jar contains today:** the production pipeline
-(`OriginalGraphPipeline`) loads `drawio-stencils.js` by default. That file
-holds the original encoded stencil sets `arrows.xml`, `basic.xml`,
-`bpmn.xml` and `flowchart.xml`, so they are "stencil libraries" in the sense
-of the restriction. They are generic notation sets, not vendor icon packs,
-but the README makes no such distinction.
+**What is affected:** `drawio-stencils.js` holds the original encoded
+stencil sets `arrows.xml`, `basic.xml`, `bpmn.xml` and `flowchart.xml`, so
+they are "stencil libraries" in the sense of the restriction. They are
+generic notation sets, not vendor icon packs, but the README makes no such
+distinction. The production pipeline (`OriginalGraphPipeline`) loads the
+file whenever it is on the classpath.
+
+**Where it is now:** the `drawio-java` jar and its sources jar no longer
+contain `drawio/drawio-stencils.js`. The file is published only in the
+separate artifact `com.aresstack:drawio-java-stencils` (same version), whose
+POM description and `META-INF/THIRD-PARTY-NOTICES.md` state the upstream
+restriction, and whose `META-INF/LICENSE` is draw.io's Apache-2.0 text. The
+build checks the split (`verifyStencilArtifact`), and the offline consumer
+smoke test runs once without and once with the stencil jar. Details and the
+steps to undo the split are in [STENCILS.md](STENCILS.md#optional-artifact-drawio-java-stencils).
 
 **What is unaffected:** the JavaScript shape implementations, including
 `mxgraph.bpmn.gateway2`, `mxgraph.bpmn.event`, `mxgraph.bpmn.task` and the
@@ -72,16 +81,31 @@ purely as XML stencils, for example some BPMN markers and flowchart shapes.
   review cannot settle**. The output exception covers the rendered images,
   not the stencil data shipped inside the tool.
 
-**Recommendation (not implemented, owner decision):**
+**Recommendation:**
 
-1. Move the stencil data into a separate optional artifact, for example
-   `drawio-java-stencils`. The core jar would then contain only Apache-2.0
-   code, and the renderer would report the stencil shapes as
-   `UNSUPPORTED_STENCIL` when that artifact is absent. Consumers in an
-   Atlassian context can then leave it out.
-2. Until that split exists, or written permission is obtained, do not ship
-   the current jar inside Space Harvester or anything Confluence- or
-   Marketplace-related.
+1. **Implemented.** Move the stencil data into a separate optional artifact,
+   `drawio-java-stencils`. The core jar now contains no draw.io stencil
+   data, and the renderer reports the stencil shapes as
+   `stencil:<name>` (`UNSUPPORTED_STENCIL` under the default fail policy)
+   when that artifact is absent. Verified by `StencilArtifactAbsentTest` and
+   `consumerSmokeTest` (main jar only), while `mxgraph.bpmn.gateway2` and
+   the standard shapes still render. Consumers in an Atlassian context can
+   leave the artifact out.
+2. Ship only `drawio-java`, without `drawio-java-stencils`, inside Space
+   Harvester or anything Confluence- or Marketplace-related, unless written
+   permission is obtained. What such a consumer loses: the legacy BPMN
+   stencil symbols (`mxgraph.bpmn.gateway_and`, `mxgraph.bpmn.timer_start`,
+   ...), the BPMN task markers drawn from stencils (task types service,
+   user, manual, business rule and script; standard loop, compensation and
+   ad hoc), and the `mxgraph.flowchart.*`, `mxgraph.arrows.*` and XML
+   `mxgraph.basic.*` stencils. The BPMN 2 sidebar shapes (`gateway2`,
+   `event`, `task2`, `data2`, ...) are JavaScript and keep working apart
+   from those markers.
+
+The split is reversible without code changes, because loading is driven by
+the classpath. If written permission is obtained or the restriction is
+judged irrelevant, fold the data back into the main jar as described in
+[STENCILS.md](STENCILS.md#folding-the-stencils-back-into-the-main-jar).
 
 ## 3. Runtime dependencies (published POM)
 
@@ -104,11 +128,25 @@ The newer Oracle `org.graalvm.polyglot:js` artifacts (23.1 to 24.2) are
 licensed under the GraalVM Free Terms and Conditions, which is not an
 open-source license. Use `js-community` (UPL/MIT) for any future migration.
 
-## 4. What goes into the jar
+## 4. What goes into the jars
+
+`drawio-java`:
 
 - `drawio/upstream/LICENSE`: the Apache-2.0 text of draw.io (shipped today).
 - `META-INF/LICENSE`: drawio-java's own MIT license.
 - `META-INF/THIRD-PARTY-NOTICES.md` (see [RELEASE.md](RELEASE.md)).
+- Not `drawio/drawio-stencils.js` (see section 2).
+
+`drawio-java-stencils` (optional):
+
+- `drawio/drawio-stencils.js`: the draw.io stencil data.
+- `META-INF/LICENSE`: draw.io's Apache-2.0 text.
+- `META-INF/THIRD-PARTY-NOTICES.md`: provenance and the upstream Atlassian
+  restriction (source: `src/stencils/THIRD-PARTY-NOTICES.md`).
+- Its POM declares Apache-2.0, with the restriction in the license
+  `comments` and in the description. Its sources jar holds the same file and
+  notices; its javadoc jar holds only `src/stencils/README.md` and the
+  notice, because there is no Java API.
 
 ## 5. Test-only material (not published)
 

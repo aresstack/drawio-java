@@ -87,7 +87,20 @@ tasks.named('test', Test) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Optional stencil artifact (docs/LICENSE-REVIEW.md, section 2). The draw.io
+// XML stencil data carries the upstream Atlassian distribution restriction, so
+// it is left out of the main jar and published as drawio-java-stencils. The
+// source file stays in src/main/resources, where js-bundle/build.mjs writes and
+// verifies it, so this repository's own tests keep it on their classpath.
+// OriginalGraphPipeline loads it only when it is on the classpath; no code
+// change is needed in either direction. To fold it back into the main jar,
+// follow docs/STENCILS.md, "Optional artifact drawio-java-stencils".
+// ---------------------------------------------------------------------------
+def stencilResources = ['drawio/drawio-stencils.js']
+
 tasks.named('jar', Jar) {
+    exclude stencilResources
     manifest {
         attributes('Implementation-Title': 'drawio-java',
                 'Implementation-Version': project.version)
@@ -101,11 +114,91 @@ tasks.named('jar', Jar) {
     }
 }
 
+tasks.named('sourcesJar', Jar) {
+    exclude stencilResources
+}
+
+// ---- drawio-java-stencils (begin) -----------------------------------------
+def stencilsDir = rootProject.file('src/stencils')
+def drawioLicense = rootProject.file('src/main/resources/drawio/upstream/LICENSE')
+
+def stencilsJar = tasks.register('stencilsJar', Jar) {
+    group = 'build'
+    description = 'Assembles drawio-java-stencils: the optional draw.io XML stencil data.'
+    archiveBaseName = 'drawio-java-stencils'
+    from(tasks.named('processResources')) {
+        include stencilResources
+    }
+    // The stencil data is draw.io's, under draw.io's Apache-2.0 license plus
+    // the upstream README restriction described in the notice.
+    from(new File(stencilsDir, 'THIRD-PARTY-NOTICES.md')) {
+        into 'META-INF'
+    }
+    from(drawioLicense) {
+        into 'META-INF'
+    }
+    manifest {
+        attributes('Implementation-Title': 'drawio-java-stencils',
+                'Implementation-Version': project.version)
+    }
+}
+
+// Maven Central wants a sources and a javadoc jar for every jar artifact. The
+// stencil data is its own source; there is no Java API to document.
+def stencilsSourcesJar = tasks.register('stencilsSourcesJar', Jar) {
+    group = 'build'
+    description = 'Assembles the sources jar of drawio-java-stencils.'
+    archiveBaseName = 'drawio-java-stencils'
+    archiveClassifier = 'sources'
+    from(sourceSets.main.resources) {
+        include stencilResources
+    }
+    from(new File(stencilsDir, 'THIRD-PARTY-NOTICES.md')) {
+        into 'META-INF'
+    }
+    from(drawioLicense) {
+        into 'META-INF'
+    }
+}
+
+def stencilsJavadocJar = tasks.register('stencilsJavadocJar', Jar) {
+    group = 'build'
+    description = 'Assembles the documentation-only javadoc jar of drawio-java-stencils.'
+    archiveBaseName = 'drawio-java-stencils'
+    archiveClassifier = 'javadoc'
+    from(new File(stencilsDir, 'README.md'))
+    from(new File(stencilsDir, 'THIRD-PARTY-NOTICES.md')) {
+        into 'META-INF'
+    }
+}
+
+tasks.named('assemble') {
+    dependsOn stencilsJar, stencilsSourcesJar, stencilsJavadocJar
+}
+// ---- drawio-java-stencils (end) -------------------------------------------
+
 // ---------------------------------------------------------------------------
 // Publication (#15). `gradlew publish` stages a Maven-Central-layout bundle in
 // build/staging-deploy; the release workflow zips and uploads it. The project
 // is MIT-licensed (LICENSE, copied into META-INF by the jar task).
 // ---------------------------------------------------------------------------
+// POM metadata shared by both publications.
+def commonPom = { MavenPom pom ->
+    pom.url = 'https://github.com/aresstack/drawio-java'
+    pom.developers {
+        developer {
+            id = 'aresstack'
+            name = 'aresstack'
+            url = 'https://github.com/aresstack'
+        }
+    }
+    pom.scm {
+        url = 'https://github.com/aresstack/drawio-java'
+        connection = 'scm:git:https://github.com/aresstack/drawio-java.git'
+        developerConnection = 'scm:git:ssh://git@github.com/aresstack/drawio-java.git'
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -113,7 +206,7 @@ publishing {
             from components.java
             pom {
                 name = 'drawio-java'
-                description = 'Headless draw.io diagram rendering for Java 8+: the original draw.io JavaScript on GraalJS, painted with Java2D to BufferedImage, PNG and SVG. No browser, Node.js or network access.'
+                description = 'Headless draw.io diagram rendering for Java 8+: the original draw.io JavaScript on GraalJS, painted with Java2D to BufferedImage, PNG and SVG. No browser, Node.js or network access. The draw.io XML stencil data is published separately as the optional drawio-java-stencils.'
                 url = 'https://github.com/aresstack/drawio-java'
                 licenses {
                     license {
@@ -122,20 +215,30 @@ publishing {
                         distribution = 'repo'
                     }
                 }
-                developers {
-                    developer {
-                        id = 'aresstack'
-                        name = 'aresstack'
-                        url = 'https://github.com/aresstack'
-                    }
-                }
-                scm {
-                    url = 'https://github.com/aresstack/drawio-java'
-                    connection = 'scm:git:https://github.com/aresstack/drawio-java.git'
-                    developerConnection = 'scm:git:ssh://git@github.com/aresstack/drawio-java.git'
-                }
+                commonPom(delegate)
             }
         }
+        // ---- drawio-java-stencils (begin) ----
+        mavenStencils(MavenPublication) {
+            artifactId = 'drawio-java-stencils'
+            artifact stencilsJar
+            artifact stencilsSourcesJar
+            artifact stencilsJavadocJar
+            pom {
+                name = 'drawio-java-stencils'
+                description = 'Optional draw.io XML stencil data (arrows, basic, bpmn, flowchart) for drawio-java, unchanged from jgraph/drawio commit c72c9a98. Apache-2.0, with an additional upstream restriction: the draw.io README states that its icon sets and stencil libraries may not be used as software assets in, distributed for use with, or incorporated into Atlassian products or products distributed through the Atlassian Marketplace or plugin ecosystem without explicit written permission. Leave this artifact out in such products; drawio-java then reports these shapes as UNSUPPORTED_STENCIL.'
+                packaging = 'jar'
+                licenses {
+                    license {
+                        name = 'Apache-2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                        comments = 'draw.io stencil data. The upstream README adds a restriction for Atlassian products and the Atlassian Marketplace; see META-INF/THIRD-PARTY-NOTICES.md in the jar.'
+                    }
+                }
+                commonPom(delegate)
+            }
+        }
+        // ---- drawio-java-stencils (end) ----
     }
     repositories {
         maven {
@@ -151,7 +254,9 @@ signing {
     required = { signingKey != null }
     if (signingKey) {
         useInMemoryPgpKeys(signingKey.toString(), (signingPassword ?: '').toString())
-        sign publishing.publications.mavenJava
+        // Both publications, so every staged artifact of drawio-java-stencils
+        // gets its .asc like the main one.
+        sign publishing.publications.mavenJava, publishing.publications.mavenStencils
     }
 }
 
@@ -229,22 +334,89 @@ tasks.named('compileConsumerSmokeJava', JavaCompile) {
     dependsOn tasks.named('jar')
 }
 
+def consumerSmokeJvmArgs = headlessJvmArgs + [
+        '-DsocksProxyHost=127.0.0.1',
+        '-DsocksProxyPort=9',
+        '-Dpolyglot.engine.WarnInterpreterOnly=false'
+]
+
 def consumerSmokeTest = tasks.register('consumerSmokeTest', JavaExec) {
     group = 'verification'
-    description = 'Runs a minimal offline consumer against the packaged jar.'
+    description = 'Runs a minimal offline consumer against the packaged main jar alone.'
     classpath = sourceSets.consumerSmoke.runtimeClasspath
     mainClass = 'com.aresstack.drawio.consumersmoke.OfflineConsumerSmoke'
+    // main-only: XML stencils must fail as UNSUPPORTED_STENCIL. Use
+    // with-stencils here if the stencil data is folded back into the main jar.
+    args 'main-only'
     javaLauncher = testLauncher
-    jvmArgs headlessJvmArgs + [
-            '-DsocksProxyHost=127.0.0.1',
-            '-DsocksProxyPort=9',
-            '-Dpolyglot.engine.WarnInterpreterOnly=false'
-    ]
+    jvmArgs consumerSmokeJvmArgs
 }
 
 tasks.named('check') {
     dependsOn verifyJava8Bytecode, consumerSmokeTest
 }
+
+// ---- drawio-java-stencils checks (begin) ----------------------------------
+def consumerSmokeStencilsTest = tasks.register('consumerSmokeStencilsTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs the offline consumer against the main jar plus the drawio-java-stencils jar.'
+    classpath = sourceSets.consumerSmoke.runtimeClasspath + files(stencilsJar)
+    mainClass = 'com.aresstack.drawio.consumersmoke.OfflineConsumerSmoke'
+    args 'with-stencils'
+    javaLauncher = testLauncher
+    jvmArgs consumerSmokeJvmArgs
+}
+
+def verifyStencilArtifact = tasks.register('verifyStencilArtifact') {
+    group = 'verification'
+    description = 'Fails unless the stencil data is only in drawio-java-stencils, with its notices.'
+    def mainJar = tasks.named('jar', Jar)
+    def mainSources = tasks.named('sourcesJar', Jar)
+    dependsOn mainJar, mainSources, stencilsJar, stencilsSourcesJar, stencilsJavadocJar
+    inputs.files(mainJar, mainSources, stencilsJar, stencilsSourcesJar, stencilsJavadocJar)
+    doLast {
+        def entries = { Jar task ->
+            def file = task.archiveFile.get().asFile
+            new java.util.zip.ZipFile(file).withCloseable { zip -> zip.entries().collect { it.name } as Set }
+        }
+        def problems = []
+        [mainJar.get(), mainSources.get()].each { task ->
+            def names = entries(task)
+            stencilResources.each { resource ->
+                if (names.contains(resource)) {
+                    problems << "${task.archiveFileName.get()} must not contain ${resource}"
+                }
+            }
+            if (!names.contains('drawio/drawio-stencil-runtime.js') && task.name == 'jar') {
+                problems << "${task.archiveFileName.get()} lost drawio/drawio-stencil-runtime.js"
+            }
+        }
+        [stencilsJar.get(), stencilsSourcesJar.get()].each { task ->
+            def names = entries(task)
+            (stencilResources + ['META-INF/THIRD-PARTY-NOTICES.md', 'META-INF/LICENSE']).each { resource ->
+                if (!names.contains(resource)) {
+                    problems << "${task.archiveFileName.get()} is missing ${resource}"
+                }
+            }
+            def classes = names.findAll { it.endsWith('.class') }
+            if (!classes.isEmpty()) {
+                problems << "${task.archiveFileName.get()} must hold data only, found ${classes}"
+            }
+        }
+        if (!entries(stencilsJavadocJar.get()).contains('META-INF/THIRD-PARTY-NOTICES.md')) {
+            problems << "${stencilsJavadocJar.get().archiveFileName.get()} is missing META-INF/THIRD-PARTY-NOTICES.md"
+        }
+        if (!problems.isEmpty()) {
+            throw new GradleException('Stencil artifact split is broken:\n  ' + problems.join('\n  '))
+        }
+        logger.lifecycle("verifyStencilArtifact: ${stencilResources} only in ${stencilsJar.get().archiveFileName.get()}")
+    }
+}
+
+tasks.named('check') {
+    dependsOn consumerSmokeStencilsTest, verifyStencilArtifact
+}
+// ---- drawio-java-stencils checks (end) ------------------------------------
 
 // Developer tool: ./gradlew renderFiles -PrenderArgs="outDir file.drawio ..."
 tasks.register('renderFiles', JavaExec) {

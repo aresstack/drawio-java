@@ -50,7 +50,9 @@ unexpected format, if the entries are not contiguous, or if a selected set
 does not exist upstream. `node js-bundle/build.mjs --verify` checks all three
 generated bundles without writing them, and CI runs it.
 
-Current selection (about 17 KB in the JAR):
+Current selection (about 17 KB, published in the optional
+`drawio-java-stencils` jar, not in `drawio-java`; see
+[Optional artifact](#optional-artifact-drawio-java-stencils)):
 
 | Set | Package prefix | Stencils | Notes |
 | --- | --- | ---: | --- |
@@ -88,7 +90,8 @@ Load order inside one GraalJS context:
    `mxConnectionConstraint`, `mxStencil` and `mxStencilRegistry` (issue #9,
    `drawio-headless-env.js` + `drawio-graph.js`).
 2. `drawio-stencil-runtime.js` (this project).
-3. `drawio-stencils.js` (verbatim upstream subset).
+3. `drawio-stencils.js` (verbatim upstream subset), only when it is on the
+   classpath, that is when `drawio-java-stencils` is a dependency.
 
 `drawio-stencil-runtime.js` must come before the subset bundle, because the
 upstream decoder captures the current `mxStencilRegistry.loadStencil` as its
@@ -200,6 +203,16 @@ repeated custom shape is decoded once per render.
 
 `DrawioBinaryCodecTest` covers the Java codec directly.
 
+`StencilArtifactAbsentTest` runs `OriginalGraphPipeline` with the bundle list
+a consumer gets without `drawio-java-stencils` (shape library and stencil
+runtime, no `drawio-stencils.js`). It asserts `UNSUPPORTED_STENCIL` with
+`stencil:mxgraph.flowchart.decision`, `stencil:mxgraph.bpmn.gateway_and` and,
+for `mxgraph.bpmn.task;taskMarker=service`, `stencil:mxgraph.bpmn.service_task`;
+a warning under `UnsupportedFeaturePolicy.WARN`; and that
+`mxgraph.bpmn.gateway2` and `shape=process` still render without warnings.
+`consumerSmokeTest` and `consumerSmokeStencilsTest` repeat this against the
+packaged jars (see below).
+
 The tests use **test-only scaffolding** in `src/test/resources/drawio/`:
 `test-upstream/` holds unmodified copies of `mxStencil.js`,
 `mxStencilRegistry.js` and `mxConnectionConstraint.js`, and
@@ -242,11 +255,77 @@ The four selected sets are generic notation sets (BPMN, basic shapes,
 flowchart, arrows) and no vendor icon packs. They are nevertheless stencil
 libraries in the sense of that restriction. Therefore:
 
-- the subset is **opt-in**: `drawio-stencils.js` and
-  `drawio-stencil-runtime.js` are only evaluated when a caller loads them
-  explicitly;
+- the subset is **opt-in**: it is published only in the optional
+  `drawio-java-stencils` artifact, not in `drawio-java` (see below and
+  [LICENSE-REVIEW.md](LICENSE-REVIEW.md), section 2);
 - the selection is kept small and recorded in the manifest;
-- the subset must be reviewed in the release license audit (#15) before any
-  distribution, and before any Confluence/Atlassian-related distribution in
-  particular. Distributors of such products should exclude
-  `drawio/drawio-stencils.js` from their artifact unless they hold permission.
+- products in, or for use with, Atlassian products or the Atlassian
+  Marketplace must not depend on `drawio-java-stencils` unless they hold
+  written permission.
+
+## Optional artifact `drawio-java-stencils`
+
+| Artifact | Contains | License |
+| --- | --- | --- |
+| `com.aresstack:drawio-java` | All code, the draw.io JavaScript, `drawio-stencil-runtime.js` | drawio-java's own license; draw.io parts Apache-2.0 |
+| `com.aresstack:drawio-java-stencils` (optional, same version) | Only `drawio/drawio-stencils.js`, `META-INF/LICENSE` (draw.io Apache-2.0), `META-INF/THIRD-PARTY-NOTICES.md` | Apache-2.0 plus the upstream Atlassian restriction |
+
+How it works:
+
+- The file stays at `src/main/resources/drawio/drawio-stencils.js`, where
+  `node js-bundle/build.mjs` writes it and `--verify` checks it. The tests of
+  this repository therefore still see it on their classpath.
+- `build.gradle` excludes it from the `jar` and `sourcesJar` tasks
+  (`stencilResources`) and packs it into `stencilsJar` (plus
+  `stencilsSourcesJar` and a documentation-only `stencilsJavadocJar`, because
+  Maven Central requires both). The second publication `mavenStencils`
+  publishes them as `drawio-java-stencils`; signing covers both
+  publications. `./gradlew build` produces all jars in `build/libs`.
+- `OriginalGraphPipeline()` (and therefore `DrawioRenderer`) calls
+  `availableBundles(OPTIONAL_SHAPE_BUNDLES)`, which keeps
+  `drawio-stencils.js` only when `/drawio/drawio-stencils.js` is a classpath
+  resource. `drawio-stencil-runtime.js` is in the main jar and always
+  loads. Without the data, its `loadStencil` fallback finds no set, and
+  `getStencil` reports `stencil:<name>`: `UNSUPPORTED_STENCIL` under the
+  default `FAIL` policy, a warning under `WARN` (then `mxCellRenderer` paints
+  its default shape, as for every unknown stencil). JavaScript shapes such as
+  `mxgraph.bpmn.gateway2`, `mxgraph.bpmn.event` and `shape=process` are not
+  affected.
+- Checks in `./gradlew build`: `verifyStencilArtifact` fails if the main jar
+  or its sources jar contains `drawio/drawio-stencils.js`, or if the stencil
+  jars miss the data or their notices. `consumerSmokeTest` runs the offline
+  consumer against the main jar alone and expects `UNSUPPORTED_STENCIL` for
+  `mxgraph.flowchart.decision`; `consumerSmokeStencilsTest` adds the stencil
+  jar and expects the same diamond to render.
+
+Use the same version for both artifacts; the stencil data and the decoder are
+pinned to the same upstream commit as the rest of the bundle.
+
+### Folding the stencils back into the main jar
+
+The split is reversible and needs **no Java or JavaScript change**, because
+loading is driven only by the classpath. In `build.gradle`:
+
+1. Remove the exclude: set `def stencilResources = []` (or delete the two
+   `exclude stencilResources` lines in `jar` and `sourcesJar`).
+2. Drop the second publication and its jars: delete the blocks between
+   `// ---- drawio-java-stencils (begin)` and `(end)` (the three
+   `stencils*Jar` tasks with the `assemble` hook, and `mavenStencils` in
+   `publishing`), and remove `, publishing.publications.mavenStencils` from
+   `signing`.
+3. Drop the split checks: delete the block between
+   `// ---- drawio-java-stencils checks (begin)` and `(end)`
+   (`consumerSmokeStencilsTest`, `verifyStencilArtifact`), and change
+   `args 'main-only'` of `consumerSmokeTest` to `args 'with-stencils'`, so
+   the smoke test now expects the main jar to render the stencil.
+4. Optionally delete `src/stencils/`, and update `README.md` (dependency
+   snippet), [LICENSE-REVIEW.md](LICENSE-REVIEW.md) section 2,
+   [SHAPES.md](SHAPES.md), [SUPPORT-MATRIX.md](SUPPORT-MATRIX.md),
+   [RELEASE.md](RELEASE.md) and `THIRD-PARTY-NOTICES.md`.
+
+`StencilArtifactAbsentTest` stays valid either way: it passes the bundle list
+explicitly.
+
+`drawio-stencil-runtime.js` deliberately stays in the main jar in both
+layouts: it is the project's own code plus a port of Graph.js (Apache-2.0),
+contains no stencil data, and is what reports missing stencils.

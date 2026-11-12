@@ -47,9 +47,10 @@ repository's Apache License 2.0 is included at
 
 The upstream README imposes additional restrictions on icon sets, stencil
 libraries and templates (including certain Atlassian-related distributions).
-The bundled source selection currently excludes the stencil/icon/template
-assets; see [UPSTREAM.md](UPSTREAM.md) for provenance, legal cautions and
-unsupported resources. Reassess the license implications before adding
+The drawio-java jar contains no stencil, icon or template assets; the small
+stencil subset described below is published separately as the optional
+`drawio-java-stencils` artifact. See [UPSTREAM.md](UPSTREAM.md) for
+provenance, legal cautions and unsupported resources. Reassess the license implications before adding
 further upstream packages or publishing an Atlassian-related integration (#15).
 
 ## Apache Batik SVG generator (runtime dependency)
@@ -89,11 +90,15 @@ per-file header; the repository's Apache License 2.0 applies (see
 `src/main/resources/drawio/upstream/LICENSE`).
 
 These are **stencil libraries** in the sense of the upstream README
-restriction for products distributed for Atlassian or its Marketplace. The
-production pipeline loads them by default. The release license review
-([docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md)) treats this as a blocker
-for Atlassian-related distribution and recommends moving them to an optional
-artifact; see also [docs/STENCILS.md](docs/STENCILS.md).
+restriction for products distributed for Atlassian or its Marketplace.
+Therefore the file is **not part of the drawio-java jar**. It is published
+only in the separate, optional artifact `drawio-java-stencils`, which carries
+its own notice (`src/stencils/THIRD-PARTY-NOTICES.md`, packaged as
+`META-INF/THIRD-PARTY-NOTICES.md`) and draw.io's Apache-2.0 text as
+`META-INF/LICENSE`. The production pipeline loads the data only when that
+artifact is on the classpath. See
+[docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md) (section 2) and
+[docs/STENCILS.md](docs/STENCILS.md).
 
 Test-only copies of the original `mxStencil.js`, `mxStencilRegistry.js` and
 `mxConnectionConstraint.js` (same commit, Apache-2.0, original headers) live in

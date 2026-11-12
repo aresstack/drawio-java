@@ -47,9 +47,18 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
             "drawio-headless-env.js", "drawio-graph.js", "drawio-xml-dom.js", "drawio-headless.js",
             "drawio-graph-ports.js"));
 
+    /**
+     * The draw.io XML stencil data. It is published in the separate, optional
+     * {@code drawio-java-stencils} artifact because the upstream README
+     * restricts stencil libraries for Atlassian-related distribution
+     * (docs/LICENSE-REVIEW.md). Without it the stencil runtime still loads and
+     * every XML stencil is reported as {@code stencil:<name>}.
+     */
+    static final String STENCIL_DATA_BUNDLE = "drawio-stencils.js";
+
     /** Shape and stencil bundles loaded when present, in this order. */
     static final List<String> OPTIONAL_SHAPE_BUNDLES = Collections.unmodifiableList(java.util.Arrays.asList(
-            "drawio-shape-library.js", "drawio-stencil-runtime.js", "drawio-stencils.js"));
+            "drawio-shape-library.js", "drawio-stencil-runtime.js", STENCIL_DATA_BUNDLE));
 
     static final List<String> TAIL_BUNDLES = Collections.unmodifiableList(java.util.Arrays.asList(
             "drawio-canvas-adapter.js", "drawio-render.js"));

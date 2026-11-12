@@ -15,7 +15,7 @@ re-implemented in Java. Java only provides the canvas (see
 | 4 | `drawio-headless.js` | #9 | Headless `Graph` subclass (Shapes.js references it at load) |
 | 5 | **`drawio-shape-library.js`** | #10 | grapheditor `Shapes.js`, `shapes/mxBasic.js`, `shapes/bpmn/mxBpmnShape2.js`, `shapes/mxArrows.js`, `shapes/er/mxER.js`, `shapes/mxFlowchart.js` |
 | 6 | **`drawio-stencil-runtime.js`** | #10 | Budgeted `atob`/`pako.inflateRaw`/`TextDecoder` via host codec; headless `mxStencilRegistry.getStencil` |
-| 7 | **`drawio-stencils.js`** | #10 | Original `stencils.min.js` decoder + selected stencil sets |
+| 7 | **`drawio-stencils.js`** | #10 | Original `stencils.min.js` decoder + selected stencil sets. Only when on the classpath: shipped in the optional `drawio-java-stencils` artifact, not in `drawio-java` |
 | 8 | `drawio-canvas-adapter.js` | #10 | `DrawioJavaCanvas` → `DrawioCanvasBridge` → `Java2DCanvas` |
 | 9 | render entry | #9 | `mxImageExport` into `DrawioJavaCanvas` |
 
@@ -39,7 +39,17 @@ Core mxGraph shapes (`rectangle`, `ellipse`, `rhombus`, `triangle`, `cylinder`,
 `arrowConnector`, `doubleEllipse`, `connector` with markers) come from the core
 bundle of #9.
 
-## XML stencils (`drawio-stencils.js`)
+## XML stencils (`drawio-stencils.js`, optional artifact `drawio-java-stencils`)
+
+These sets are published separately as `com.aresstack:drawio-java-stencils`
+because the upstream README restricts stencil libraries for Atlassian
+products and the Atlassian Marketplace ([LICENSE-REVIEW.md](LICENSE-REVIEW.md),
+section 2). Without that artifact every stencil below is reported as
+`stencil:<name>` (`UNSUPPORTED_STENCIL` under the default policy), and so
+are the BPMN task markers that draw them (task types `service`, `user`,
+`manual`, `businessRule`, `script`; standard loop, compensation and ad hoc
+markers of `mxgraph.bpmn.task`/`task2`). The JavaScript shapes above are
+unaffected otherwise. See [STENCILS.md](STENCILS.md#optional-artifact-drawio-java-stencils).
 
 | Set | Package | Stencils | Typical use |
 | --- | --- | --- | --- |
