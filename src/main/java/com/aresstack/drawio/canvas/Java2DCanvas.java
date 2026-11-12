@@ -28,6 +28,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+import com.aresstack.drawio.layout.AwtTextMetrics;
+import com.aresstack.drawio.layout.HtmlLabelParser;
+import com.aresstack.drawio.layout.LabelLayout;
+import com.aresstack.drawio.layout.RunStyle;
+import com.aresstack.drawio.layout.TextMetrics;
+import com.aresstack.drawio.layout.TextRun;
+
 /**
  * Render Draw.io canvas operations through a caller-supplied Graphics2D backend.
  *
@@ -49,8 +56,11 @@ public final class Java2DCanvas implements DrawioCanvas {
     private static final FontRenderContext TEXT_CONTEXT = new FontRenderContext(null, true, true);
 
     private final Deque<SavedGraphics> saved = new ArrayDeque<SavedGraphics>();
+    private static final TextMetrics DEFAULT_TEXT_METRICS = new AwtTextMetrics();
+
     private final int maxImageBytes;
     private final long maxImagePixels;
+    private final TextMetrics textMetrics;
 
     private Graphics2D graphics;
     private CanvasState state;
@@ -68,7 +78,19 @@ public final class Java2DCanvas implements DrawioCanvas {
      * Create a canvas with explicit limits for embedded {@code data:} images.
      */
     public Java2DCanvas(Graphics2D graphics, int maxImageBytes, long maxImagePixels) {
+        this(graphics, maxImageBytes, maxImagePixels, DEFAULT_TEXT_METRICS);
+    }
+
+    /**
+     * Create a canvas with image limits and the text metrics used to lay out labels.
+     *
+     * <p>Use the same {@link TextMetrics} as the label measurement of the graph
+     * pipeline, so painted lines match the computed label bounds.
+     */
+    public Java2DCanvas(Graphics2D graphics, int maxImageBytes, long maxImagePixels,
+                        TextMetrics textMetrics) {
         Objects.requireNonNull(graphics, "graphics");
+        this.textMetrics = Objects.requireNonNull(textMetrics, "textMetrics");
         if (maxImageBytes < 1 || maxImagePixels < 1) {
             throw new IllegalArgumentException("Image limits must be positive");
         }
@@ -165,8 +187,9 @@ public final class Java2DCanvas implements DrawioCanvas {
                             double alpha1, double alpha2) {
         ensureOpen();
         validateFinite(x, y, width, height);
-        Color start = CanvasColors.parse(color1);
-        Color end = CanvasColors.parse(color2);
+        // CSS "transparent" is a zero-alpha stop in a gradient, not "no color".
+        Color start = gradientStop(color1);
+        Color end = gradientStop(color2);
         float startAlpha = validatedAlpha(alpha1);
         float endAlpha = validatedAlpha(alpha2);
         String normalized = direction == null ? "south" : normalize(direction);
@@ -505,28 +528,33 @@ public final class Java2DCanvas implements DrawioCanvas {
         }
 
         boolean html = "html".equals(format);
-        Font font = CanvasFonts.resolve(state.fontFamily, state.fontStyle, state.fontSize);
-        List<String> lines = html ? LabelLines.html(text) : LabelLines.plain(text);
-        if (html && wrap) {
-            lines = LabelLines.wrap(lines, font, TEXT_CONTEXT, width);
+        if (text.length() > HtmlLabelParser.MAX_LABEL_CHARACTERS) {
+            throw new IllegalArgumentException("Label exceeds the size limit");
         }
-
         double size = state.fontSize;
-        double lineHeight = html ? size * LINE_HEIGHT : Math.round(size * LINE_HEIGHT);
-        double textHeight = html ? lines.size() * lineHeight : size + (lines.size() - 1) * lineHeight;
+        RunStyle base = new RunStyle(state.fontFamily, size,
+                (state.fontStyle & FONT_BOLD) != 0, (state.fontStyle & FONT_ITALIC) != 0)
+                .withUnderline((state.fontStyle & FONT_UNDERLINE) != 0)
+                .withStrikeThrough((state.fontStyle & FONT_STRIKETHROUGH) != 0);
+        // RunStyle bounds the size like the headless label measurement does,
+        // so painting stays consistent with the bounds the graph computed.
+        size = base.getSize();
+        // The same layout measures labels in the headless view (DrawioHost.measureLabel),
+        // so painted lines match the bounds the graph computed. Plain text never wraps,
+        // as in mxSvgCanvas2D.plainText.
+        LabelLayout layout = LabelLayout.layout(text, html, base,
+                html && wrap ? width : 0, textMetrics);
+        List<LabelLayout.Line> lines = layout.getLines();
+
+        double plainLineHeight = Math.round(size * LINE_HEIGHT);
+        double textHeight = html ? layout.getHeight()
+                : size + (lines.size() - 1) * plainLineHeight;
         boolean fill = "fill".equals(overflow);
         double top = y;
         if ("middle".equals(valign)) {
             top -= fill ? height / 2 : textHeight / 2;
         } else if ("bottom".equals(valign)) {
             top -= fill ? height : textHeight + (html ? 0 : 1);
-        }
-
-        double maxWidth = 0;
-        double[] advances = new double[lines.size()];
-        for (int index = 0; index < lines.size(); index++) {
-            advances[index] = LabelLines.advance(font, TEXT_CONTEXT, lines.get(index));
-            maxWidth = Math.max(maxWidth, advances[index]);
         }
 
         Graphics2D textGraphics = (Graphics2D) graphics.create();
@@ -538,12 +566,20 @@ public final class Java2DCanvas implements DrawioCanvas {
             }
             textGraphics.setTransform(transform);
             textGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, state.alpha));
-            textGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            textGraphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-                    RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            // Keep an explicit caller choice (e.g. antialiasing disabled for output).
+            if (textGraphics.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
+                    == RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT) {
+                textGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                        RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            }
+            if (textGraphics.getRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS)
+                    == RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT) {
+                textGraphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+                        RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            }
 
             if (clip && width > 0 && height > 0) {
+                // As mxSvgCanvas2D.plainText: the clip box is not shifted for overflow=fill.
                 double clipX = alignedLeft(x, width, align);
                 double clipY = fill ? y : verticalBoxTop(y, height, valign);
                 double margin = 2 / state.scaleFactor;
@@ -552,28 +588,76 @@ public final class Java2DCanvas implements DrawioCanvas {
             }
 
             paintTextBackground(textGraphics, x, y, width, height, align, valign, overflow,
-                    top, textHeight, maxWidth);
+                    top, textHeight, layout.getWidth());
 
             if (state.fontColor == null) {
                 return;
             }
-            textGraphics.setPaint(state.fontColor);
-            textGraphics.setFont(font);
-            LineMetrics metrics = font.getLineMetrics("Ag", TEXT_CONTEXT);
-            double baseline = html
-                    ? top + (lineHeight - metrics.getAscent() - metrics.getDescent()) / 2 + metrics.getAscent()
-                    : top + size - 1;
-            for (int index = 0; index < lines.size(); index++) {
-                String line = lines.get(index);
-                if (!line.trim().isEmpty()) {
-                    double left = alignedLeft(x, advances[index], align);
-                    textGraphics.drawString(line, (float) left, (float) baseline);
+            double lineTop = top;
+            for (LabelLayout.Line line : lines) {
+                double lineHeight = html ? line.getHeight() : plainLineHeight;
+                double baseline;
+                if (html) {
+                    Font lineFont = CanvasFonts.resolve(state.fontFamily, state.fontStyle,
+                            line.getMaxFontSize());
+                    LineMetrics metrics = lineFont.getLineMetrics("Ag", TEXT_CONTEXT);
+                    baseline = lineTop + (lineHeight - metrics.getAscent() - metrics.getDescent()) / 2
+                            + metrics.getAscent();
+                } else {
+                    baseline = lineTop + size - 1;
                 }
-                baseline += lineHeight;
+                // Position runs with the advances of the fonts they are painted
+                // with (fractional metrics of this context); the layout only
+                // decides the line breaks.
+                List<TextRun> runs = line.getRuns();
+                Font[] fonts = new Font[runs.size()];
+                double[] advances = new double[runs.size()];
+                double lineWidth = 0;
+                for (int index = 0; index < runs.size(); index++) {
+                    TextRun run = runs.get(index);
+                    fonts[index] = CanvasFonts.resolve(run.getStyle().getFamily(),
+                            fontStyleBits(run.getStyle()), run.getStyle().getSize());
+                    advances[index] = run.getText().isEmpty() ? 0
+                            : fonts[index].getStringBounds(run.getText(),
+                                    textGraphics.getFontRenderContext()).getWidth();
+                    lineWidth += advances[index];
+                }
+                double left = alignedLeft(x, lineWidth, align);
+                for (int index = 0; index < runs.size(); index++) {
+                    TextRun run = runs.get(index);
+                    if (!run.getText().trim().isEmpty()) {
+                        Color color = runColor(run.getStyle().getColor());
+                        if (color != null) {
+                            textGraphics.setPaint(color);
+                            textGraphics.setFont(fonts[index]);
+                            textGraphics.drawString(run.getText(), (float) left, (float) baseline);
+                        }
+                    }
+                    left += advances[index];
+                }
+                lineTop += lineHeight;
             }
         } finally {
             textGraphics.dispose();
         }
+    }
+
+    private Color runColor(String color) {
+        if (color == null) {
+            return state.fontColor;
+        }
+        try {
+            return CanvasColors.parse(color);
+        } catch (IllegalArgumentException exception) {
+            // Inline label colors are untrusted data; an unknown one keeps the label color.
+            return state.fontColor;
+        }
+    }
+
+    private static int fontStyleBits(RunStyle style) {
+        return (style.isBold() ? FONT_BOLD : 0) | (style.isItalic() ? FONT_ITALIC : 0)
+                | (style.isUnderline() ? FONT_UNDERLINE : 0)
+                | (style.isStrikeThrough() ? FONT_STRIKETHROUGH : 0);
     }
 
     @Override
@@ -649,6 +733,13 @@ public final class Java2DCanvas implements DrawioCanvas {
             target.setStroke(new BasicStroke((float) state.fontBorderWidth));
             target.draw(box);
         }
+    }
+
+    private static Color gradientStop(String color) {
+        if (color != null && "transparent".equalsIgnoreCase(color.trim())) {
+            return new Color(0, 0, 0, 0);
+        }
+        return CanvasColors.parse(color);
     }
 
     private static double alignedLeft(double x, double width, String align) {

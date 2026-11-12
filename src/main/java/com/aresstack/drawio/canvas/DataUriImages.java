@@ -44,7 +44,8 @@ public final class DataUriImages {
     }
 
     /**
-     * Build a base64 {@code data:} URI for raster bytes after validating them.
+     * Build a base64 {@code data:} URI for raster bytes after validating and
+     * test-decoding them.
      *
      * @throws IllegalArgumentException if the bytes are not a supported image within limits
      */
@@ -80,6 +81,10 @@ public final class DataUriImages {
                 reader.dispose();
             }
         } catch (IOException exception) {
+            throw new IllegalArgumentException("Image could not be decoded", exception);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
             throw new IllegalArgumentException("Image could not be decoded", exception);
         }
     }
@@ -149,11 +154,21 @@ public final class DataUriImages {
             try {
                 reader.setInput(input, true, true);
                 checkPixels(reader, maxPixels);
+                // Decode once, so a damaged image is rejected at the policy
+                // boundary instead of failing later when the canvas paints it.
+                if (reader.read(0) == null) {
+                    throw new IllegalArgumentException("Image could not be decoded");
+                }
                 return reader.getFormatName().toLowerCase(Locale.ROOT);
             } finally {
                 reader.dispose();
             }
         } catch (IOException exception) {
+            throw new IllegalArgumentException("Image could not be read", exception);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            // Some ImageIO readers fail on malformed data with unchecked exceptions.
             throw new IllegalArgumentException("Image could not be read", exception);
         }
     }

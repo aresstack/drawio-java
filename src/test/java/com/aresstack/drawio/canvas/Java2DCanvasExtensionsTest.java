@@ -75,6 +75,92 @@ class Java2DCanvasExtensionsTest {
     }
 
     @Test
+    void treatsTransparentGradientStopsAsZeroAlpha() {
+        try (Fixture fixture = new Fixture(100, 100)) {
+            fixture.canvas.setGradient("#ff0000", "transparent", 0, 0, 0, 0, "south", 1, 1);
+            fixture.canvas.rect(10, 10, 80, 80);
+            fixture.canvas.fill();
+
+            assertTrue(fixture.color(50, 11).getRed() > 240);
+            assertTrue(fixture.alpha(50, 11) > 240);
+            assertTrue(fixture.alpha(50, 88) < 15, "fades out");
+        }
+    }
+
+    @Test
+    void keepsCallerTextAntialiasingChoice() {
+        try (Fixture fixture = new Fixture(200, 60)) {
+            fixture.graphics.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+            Java2DCanvas canvas = new Java2DCanvas(fixture.graphics);
+            canvas.setFontColor("#000000");
+            canvas.setFontSize(16);
+            canvas.text(100, 30, 0, 0, "Label", "center", "middle", false, "", null, false, 0, null);
+            canvas.close();
+
+            for (int y = 0; y < 60; y++) {
+                for (int x = 0; x < 200; x++) {
+                    int alpha = fixture.alpha(x, y);
+                    assertTrue(alpha == 0 || alpha == 255, "partial alpha at " + x + "," + y);
+                }
+            }
+        }
+    }
+
+    @Test
+    void paintsStyledHtmlRunsWithTheirOwnColors() {
+        try (Fixture fixture = new Fixture(240, 60)) {
+            fixture.canvas.setFontColor("#000000");
+            fixture.canvas.setFontSize(20);
+            fixture.canvas.text(120, 30, 0, 0,
+                    "<b>Bold</b> <font color=\"#ff0000\">RED</font>", "center", "middle",
+                    false, "html", null, false, 0, null);
+
+            int red = 0;
+            for (int y = 0; y < 60; y++) {
+                for (int x = 120; x < 240; x++) {
+                    Color color = fixture.color(x, y);
+                    if (color.getAlpha() > 200 && color.getRed() > 200 && color.getGreen() < 60) {
+                        red++;
+                    }
+                }
+            }
+            assertTrue(red > 20, "red run pixels: " + red);
+            int[] box = fixture.inkBounds();
+            assertTrue(box[0] < 100, "bold run left of center");
+        }
+    }
+
+    @Test
+    void alignsRunsWithTheAdvancesOfThePaintingFont() {
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 60; i++) {
+            text.append('i');
+        }
+        try (Fixture fixture = new Fixture(400, 40)) {
+            fixture.canvas.setFontColor("#000000");
+            fixture.canvas.setFontSize(12);
+            fixture.canvas.text(300, 20, 0, 0, "<b>" + text + "</b>" + text, "right", "middle",
+                    false, "html", null, false, 0, null);
+
+            int[] box = fixture.inkBounds();
+            // Right-aligned at x=300: neither past the anchor nor short of it.
+            assertTrue(box[2] <= 301, "ink ends at " + box[2]);
+            assertTrue(box[2] >= 296, "ink ends at " + box[2]);
+        }
+    }
+
+    @Test
+    void rejectsTruncatedImagesAtThePolicyBoundary() throws IOException {
+        String source = twoColorImage();
+        byte[] bytes = Base64.getDecoder().decode(source.substring(source.indexOf(',') + 1));
+        String truncated = "data:image/png;base64,"
+                + Base64.getEncoder().encodeToString(java.util.Arrays.copyOf(bytes, 33));
+        assertThrows(IllegalArgumentException.class,
+                () -> ImageSourcePolicy.dataUris(4096, 4096).resolve(truncated));
+    }
+
+    @Test
     void paintsShadowBehindFilledShapeWithScaledOffset() {
         try (Fixture fixture = new Fixture(100, 100)) {
             fixture.canvas.scale(2);

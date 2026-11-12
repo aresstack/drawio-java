@@ -81,4 +81,15 @@ class LabelLayoutTest {
         assertEquals(36, layout.getWidth(), 0);
         assertFalse(layout.getLines().isEmpty());
     }
+
+    @Test
+    void neverBreaksAWordAtAStyleChange() {
+        // "hello" is 30 px, wider than the 25 px wrap width: it overflows as one word.
+        LabelLayout layout = LabelLayout.layout("<b>hel</b>lo world", true, BASE, 25, FIXED);
+
+        assertEquals(2, layout.getLines().size());
+        assertEquals("hello", text(layout.getLines().get(0).getRuns()));
+        assertEquals("world", text(layout.getLines().get(1).getRuns()));
+        assertTrue(layout.getLines().get(0).getRuns().get(0).getStyle().isBold());
+    }
 }
