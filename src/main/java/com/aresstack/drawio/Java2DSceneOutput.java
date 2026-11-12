@@ -29,9 +29,13 @@ final class Java2DSceneOutput implements SceneOutput {
     @SuppressWarnings("unchecked")
     public <T> Rendered<T> write(DrawioScene scene, RenderSession session,
                                  DrawioRenderer.OutputKind kind) throws RenderException {
-        OutputOptions options = outputOptions(session.options()).toBuilder()
-                .textMetrics(session.textMetrics())
-                .build();
+        OutputOptions.Builder builder = outputOptions(session.options()).toBuilder()
+                .textMetrics(session.textMetrics());
+        if (session.options().getBackground() == null && scene.getPageBackground() != null) {
+            // draw.io exports paint the page background unless one is chosen.
+            builder.background(Color.decode(scene.getPageBackground()));
+        }
+        OutputOptions options = builder.build();
         try {
             CanvasRecording recording = renderer.record(scene, options);
             session.checkCancelled();

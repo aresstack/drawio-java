@@ -41,4 +41,17 @@ public interface DrawioScene {
     default Rectangle2D getLogicalBounds() {
         return null;
     }
+
+    /**
+     * Return the page background of the diagram ({@code mxGraphModel}
+     * attribute {@code background}) as {@code #rrggbb}, if it is a color.
+     *
+     * <p>The facade paints it when the request sets no background, as
+     * draw.io's export does.
+     *
+     * @return the page color, or {@code null} for none
+     */
+    default String getPageBackground() {
+        return null;
+    }
 }

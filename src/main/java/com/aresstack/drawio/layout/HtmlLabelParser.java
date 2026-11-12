@@ -290,7 +290,8 @@ public final class HtmlLabelParser {
             for (int i = 0; i < decoded.length(); i++) {
                 char c = decoded.charAt(i);
                 if (c == '\u00a0') {
-                    pending.append(' ');
+                    // Non-breaking spaces never collapse and never break a line.
+                    pending.append('\u00a0');
                     lastWasSpace = false;
                 } else if (Character.isWhitespace(c)) {
                     if (!lastWasSpace) {
@@ -420,7 +421,7 @@ public final class HtmlLabelParser {
             String lower = value.toLowerCase(Locale.ROOT).replace("!important", "").trim();
             if ("font-weight".equals(property)) {
                 style = style.withBold("bold".equals(lower) || "bolder".equals(lower)
-                        || (lower.matches("\\d+") && Integer.parseInt(lower) >= 600));
+                        || (lower.matches("\\d{1,4}") && Integer.parseInt(lower) >= 600));
             } else if ("font-style".equals(property)) {
                 style = style.withItalic("italic".equals(lower) || "oblique".equals(lower));
             } else if ("font-size".equals(property)) {

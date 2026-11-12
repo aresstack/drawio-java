@@ -73,8 +73,17 @@ public final class CanvasRecorder {
      *                      {@code null} if unknown
      */
     public CanvasRecording toScene(Rectangle2D logicalBounds) {
+        return toScene(logicalBounds, null);
+    }
+
+    /**
+     * Finish recording and return the immutable scene with a page background.
+     *
+     * @param pageBackground {@code #rrggbb} page color, or {@code null}
+     */
+    public CanvasRecording toScene(Rectangle2D logicalBounds, String pageBackground) {
         finished = true;
-        return new CanvasRecording(commands, logicalBounds);
+        return new CanvasRecording(commands, logicalBounds, pageBackground);
     }
 
     /**

@@ -22,10 +22,24 @@ public final class CanvasRecording implements DrawioScene {
 
     private final List<Command> commands;
     private final Rectangle2D logicalBounds;
+    private final String pageBackground;
 
     CanvasRecording(List<Command> commands, Rectangle2D logicalBounds) {
+        this(commands, logicalBounds, null);
+    }
+
+    CanvasRecording(List<Command> commands, Rectangle2D logicalBounds, String pageBackground) {
         this.commands = Collections.unmodifiableList(new ArrayList<Command>(commands));
         this.logicalBounds = logicalBounds == null ? null : validated(logicalBounds);
+        if (pageBackground != null && !pageBackground.matches("#[0-9a-fA-F]{6}")) {
+            throw new IllegalArgumentException("Page background must be #rrggbb");
+        }
+        this.pageBackground = pageBackground;
+    }
+
+    @Override
+    public String getPageBackground() {
+        return pageBackground;
     }
 
     /**

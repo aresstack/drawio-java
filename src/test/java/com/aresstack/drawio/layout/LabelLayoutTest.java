@@ -31,7 +31,7 @@ class LabelLayoutTest {
         assertEquals(3, lines.size());
         assertEquals("Review request", text(lines.get(0)));
         assertTrue(lines.get(0).get(1).getStyle().isBold());
-        assertEquals("Größe &A", text(lines.get(1)));
+        assertEquals("Größe\u00a0&A", text(lines.get(1)));
         assertEquals("next", text(lines.get(2)));
     }
 
@@ -137,5 +137,14 @@ class LabelLayoutTest {
         }
         LabelLayout layout = LabelLayout.layout(value.toString(), false, BASE, -1, new AwtTextMetrics());
         assertTrue(layout.getWidth() > 12000, String.valueOf(layout.getWidth()));
+    }
+
+    @Test
+    void neverBreaksAtNonBreakingSpacesAndIgnoresHugeFontWeights() {
+        LabelLayout layout = LabelLayout.layout("aaaa&nbsp;bbbb", true, BASE, 40, FIXED);
+        assertEquals(1, layout.getLines().size());
+        List<List<TextRun>> lines = HtmlLabelParser.parse(
+                "<span style=\"font-weight:99999999999\">x</span>", true, BASE);
+        assertFalse(lines.get(0).get(0).getStyle().isBold());
     }
 }

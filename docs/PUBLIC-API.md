@@ -61,6 +61,20 @@ try (DrawioRenderer renderer = DrawioRenderer.create()) {
 }
 ```
 
+Background: `RenderOptions.background("#rrggbb")` fills the output. When no
+background is set, the page background of the diagram (`mxGraphModel`
+attribute `background`, as a hex color) is painted, as draw.io's export
+does; without either, the output is transparent. A page background that is
+not a hex color is reported as the warning `page:background`.
+
+Style values outside their range are normalized at the canvas boundary the
+way browsers treat them (opacities clamped to 0..1, negative stroke width
+-> 1, negative corner radius -> 0, invalid dash arrays and unknown line
+caps/joins ignored, unknown gradient direction -> south). Colors the canvas
+cannot parse (for example `hsl(...)`, `currentColor`) are reported as
+`canvas:color` through `UnsupportedFeaturePolicy`.
+
+
 `src/test/java/com/example/consumer/ExternalConsumerTest.java` compiles
 against only these public types from a foreign package.
 

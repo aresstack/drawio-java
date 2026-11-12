@@ -170,4 +170,66 @@ class OriginalGraphPipelineTest {
         assertEquals(1, session.warnings().size(), String.valueOf(session.warnings()));
         assertEquals("placeholder:unresolved", session.warnings().get(0).getCapabilityId());
     }
+
+    private static String vertex(String id, String style, int x) {
+        return "<mxCell id=\"" + id + "\" value=\"\" style=\"" + style + "\" vertex=\"1\" parent=\"1\">"
+                + "<mxGeometry x=\"" + x + "\" y=\"10\" width=\"40\" height=\"30\" as=\"geometry\"/></mxCell>";
+    }
+
+    private static String model(String cells) {
+        return "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/>" + cells
+                + "</root></mxGraphModel>";
+    }
+
+    @Test
+    void outOfRangeStyleValuesAreNormalizedLikeBrowsers() throws Exception {
+        String xml = model(vertex("a", "opacity=150;fillOpacity=-5;textOpacity=200;", 10)
+                + vertex("b", "strokeWidth=-1;", 60)
+                + vertex("c", "rounded=1;arcSize=-20;", 110)
+                + vertex("d", "dashed=1;dashPattern=3 -3;", 160)
+                + vertex("e", "gradientColor=#ff0000;gradientDirection=northeast;", 210)
+                + vertex("f", "linecap=foo;", 260));
+        RenderSession session = new RenderSession(RenderOptions.defaults());
+        new OriginalGraphPipeline(Collections.<String>emptyList(), 1)
+                .prepare(new DiagramPage(0, "p", "Page", xml), session);
+        assertTrue(session.warnings().isEmpty(), String.valueOf(session.warnings()));
+    }
+
+    @Test
+    void unsupportedColorsAreReportedThroughThePolicy() {
+        String xml = model(vertex("a", "strokeColor=hsl(0,100%,50%);", 10));
+        RenderException failure = org.junit.jupiter.api.Assertions.assertThrows(RenderException.class,
+                () -> new OriginalGraphPipeline(Collections.<String>emptyList(), 1)
+                        .prepare(new DiagramPage(0, "p", "Page", xml), new RenderSession(RenderOptions.defaults())));
+        assertEquals("canvas:color", failure.getCapabilityId());
+    }
+
+    @Test
+    void unsupportedShapesAreNotHiddenBehindManyWarnings() {
+        StringBuilder cells = new StringBuilder();
+        for (int i = 0; i < 250; i++) {
+            cells.append("<mxCell id=\"e").append(i).append("\" edge=\"1\" parent=\"1\" target=\"nowhere\">")
+                    .append("<mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>");
+        }
+        cells.append(vertex("v", "shape=nosuchshape;", 10));
+        String xml = model(cells.toString());
+        RenderException failure = org.junit.jupiter.api.Assertions.assertThrows(RenderException.class,
+                () -> new OriginalGraphPipeline(Collections.<String>emptyList(), 1)
+                        .prepare(new DiagramPage(0, "p", "Page", xml), new RenderSession(RenderOptions.defaults())));
+        assertEquals("shape:nosuchshape", failure.getCapabilityId());
+    }
+
+    @Test
+    void pageBackgroundIsPaintedWhenTheRequestSetsNone() throws Exception {
+        String xml = "<mxGraphModel background=\"#FEC\"><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/>"
+                + vertex("a", "", 10) + "</root></mxGraphModel>";
+        try (com.aresstack.drawio.DrawioRenderer renderer = com.aresstack.drawio.DrawioRenderer.builder().build()) {
+            java.awt.image.BufferedImage image = renderer.renderImage(xml,
+                    RenderOptions.builder().padding(5).build()).getOutput();
+            assertEquals(0xffffeecc, image.getRGB(1, 1));
+            java.awt.image.BufferedImage chosen = renderer.renderImage(xml,
+                    RenderOptions.builder().padding(5).background("#0000ff").build()).getOutput();
+            assertEquals(0xff0000ff, chosen.getRGB(1, 1));
+        }
+    }
 }

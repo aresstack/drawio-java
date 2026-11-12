@@ -68,32 +68,33 @@ public final class DrawioCanvasBridge {
 
     @HostAccess.Export
     public void setAlpha(double alpha) {
-        canvas.setAlpha(alpha);
+        canvas.setAlpha(unitInterval(alpha));
     }
 
     @HostAccess.Export
     public void setFillAlpha(double alpha) {
-        canvas.setFillAlpha(alpha);
+        canvas.setFillAlpha(unitInterval(alpha));
     }
 
     @HostAccess.Export
     public void setStrokeAlpha(double alpha) {
-        canvas.setStrokeAlpha(alpha);
+        canvas.setStrokeAlpha(unitInterval(alpha));
     }
 
     @HostAccess.Export
     public void setFillColor(String color) {
-        canvas.setFillColor(color);
+        canvas.setFillColor(color("fillColor", color));
     }
 
     @HostAccess.Export
     public void setStrokeColor(String color) {
-        canvas.setStrokeColor(color);
+        canvas.setStrokeColor(color("strokeColor", color));
     }
 
     @HostAccess.Export
     public void setStrokeWidth(double width) {
-        canvas.setStrokeWidth(width);
+        // SVG ignores an invalid stroke-width and uses its initial value 1.
+        canvas.setStrokeWidth(Double.isNaN(width) || width < 0 ? 1 : width);
     }
 
     @HostAccess.Export
@@ -103,21 +104,34 @@ public final class DrawioCanvasBridge {
 
     @HostAccess.Export
     public void setDashPattern(String pattern) {
+        // SVG ignores a dash array with negative or non-numeric entries.
+        if (pattern != null && !VALID_DASHES.matcher(pattern).matches()) {
+            return;
+        }
         canvas.setDashPattern(pattern);
     }
 
     @HostAccess.Export
     public void setLineCap(String cap) {
+        if (cap != null && !LINE_CAPS.contains(cap.trim().toLowerCase(java.util.Locale.ROOT))) {
+            return;
+        }
         canvas.setLineCap(cap);
     }
 
     @HostAccess.Export
     public void setLineJoin(String join) {
+        if (join != null && !LINE_JOINS.contains(join.trim().toLowerCase(java.util.Locale.ROOT))) {
+            return;
+        }
         canvas.setLineJoin(join);
     }
 
     @HostAccess.Export
     public void setMiterLimit(double limit) {
+        if (Double.isNaN(limit) || limit < 1) {
+            return;
+        }
         canvas.setMiterLimit(limit);
     }
 
@@ -130,7 +144,16 @@ public final class DrawioCanvasBridge {
     public void setGradient(String color1, String color2, double x, double y,
                             double width, double height, String direction,
                             double alpha1, double alpha2) {
-        canvas.setGradient(color1, color2, x, y, width, height, direction, alpha1, alpha2);
+        String start = color("gradient", color1);
+        String end = color("gradient", color2);
+        if (start == null || end == null) {
+            canvas.setFillColor(start != null ? start : end);
+            return;
+        }
+        String normalized = direction == null ? null : direction.trim().toLowerCase(java.util.Locale.ROOT);
+        canvas.setGradient(start, end, x, y, width, height,
+                normalized == null || !GRADIENT_DIRECTIONS.contains(normalized) ? "south" : normalized,
+                unitInterval(alpha1), unitInterval(alpha2));
     }
 
     @HostAccess.Export
@@ -140,7 +163,8 @@ public final class DrawioCanvasBridge {
 
     @HostAccess.Export
     public void setShadowStyle(String color, double alpha, double dx, double dy, double blur) {
-        canvas.setShadowColor(color);
+        String shadow = color("shadowColor", color);
+        canvas.setShadowColor(shadow != null ? shadow : "#000000");
         canvas.setShadowAlpha(Math.max(0, Math.min(1, alpha)));
         canvas.setShadowOffset(dx, dy);
         canvas.setShadowBlur(Math.max(0, blur));
@@ -148,17 +172,17 @@ public final class DrawioCanvasBridge {
 
     @HostAccess.Export
     public void setFontColor(String color) {
-        canvas.setFontColor(color);
+        canvas.setFontColor(color("fontColor", color));
     }
 
     @HostAccess.Export
     public void setFontBackgroundColor(String color) {
-        canvas.setFontBackgroundColor(color);
+        canvas.setFontBackgroundColor(color("labelBackgroundColor", color));
     }
 
     @HostAccess.Export
     public void setFontBorderColor(String color) {
-        canvas.setFontBorderColor(color);
+        canvas.setFontBorderColor(color("labelBorderColor", color));
     }
 
     @HostAccess.Export
@@ -179,6 +203,42 @@ public final class DrawioCanvasBridge {
     @HostAccess.Export
     public void setFontStyle(int style) {
         canvas.setFontStyle(style);
+    }
+
+    private static final java.util.regex.Pattern VALID_DASHES = java.util.regex.Pattern.compile(
+            "\\s*(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[\\s,]+(?:\\d+(?:\\.\\d*)?|\\.\\d+))*\\s*");
+    private static final java.util.Set<String> LINE_CAPS = new java.util.HashSet<String>(
+            java.util.Arrays.asList("flat", "butt", "round", "square"));
+    private static final java.util.Set<String> LINE_JOINS = new java.util.HashSet<String>(
+            java.util.Arrays.asList("miter", "round", "bevel"));
+    private static final java.util.Set<String> GRADIENT_DIRECTIONS = new java.util.HashSet<String>(
+            java.util.Arrays.asList("south", "north", "east", "west", "radial"));
+
+    /** Browsers clamp opacities; style values like opacity=150 must not fail the page. */
+    private static double unitInterval(double value) {
+        return Double.isNaN(value) ? 1 : Math.max(0, Math.min(1, value));
+    }
+
+    private static double nonNegative(double value) {
+        return Double.isNaN(value) || value < 0 ? 0 : value;
+    }
+
+    /**
+     * Validate a style color at the guest boundary. A color the canvas cannot
+     * parse (for example {@code currentColor} or {@code hsl(...)}) is reported
+     * as {@code canvas:color} through the session policy and painted as none.
+     */
+    private String color(String property, String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            com.aresstack.drawio.canvas.CanvasColors.parse(value);
+            return value;
+        } catch (IllegalArgumentException exception) {
+            diagnostics.unsupported("canvas:color", "Unsupported " + property + " value");
+            return null;
+        }
     }
 
     /**
@@ -228,7 +288,7 @@ public final class DrawioCanvasBridge {
     @HostAccess.Export
     public void roundrect(double x, double y, double width, double height,
                           double radiusX, double radiusY) {
-        canvas.roundrect(x, y, width, height, radiusX, radiusY);
+        canvas.roundrect(x, y, width, height, nonNegative(radiusX), nonNegative(radiusY));
     }
 
     @HostAccess.Export

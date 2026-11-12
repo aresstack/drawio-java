@@ -24,16 +24,37 @@
     'use strict';
 
     var diagnostics = [];
-    var diagnosticKeys = {};
+    var diagnosticKeys = Object.create(null);
+    var diagnosticCapabilities = Object.create(null);
     var MAX_DIAGNOSTICS = 200;
+    var MAX_CAPABILITIES = 1000;
+    var truncated = false;
 
+    // Keeps at most MAX_DIAGNOSTICS entries, but the first entry of every
+    // capability is always kept (up to MAX_CAPABILITIES), so an unsupported
+    // shape is never hidden behind many warnings and the session's fail
+    // policy still sees it. Cutting the list is itself reported.
     function report(capability, detail) {
+        capability = String(capability);
+        detail = String(detail);
         var key = capability + '|' + detail;
-        if (diagnosticKeys[key] || diagnostics.length >= MAX_DIAGNOSTICS) {
+        if (diagnosticKeys[key]) {
+            return;
+        }
+        var firstOfCapability = !diagnosticCapabilities[capability];
+        var capabilityCount = Object.keys(diagnosticCapabilities).length;
+        if (diagnostics.length >= MAX_DIAGNOSTICS
+                && !(firstOfCapability && capabilityCount < MAX_CAPABILITIES)) {
+            if (!truncated) {
+                truncated = true;
+                diagnostics.push({capability: 'diagnostics:truncated',
+                    detail: 'further diagnostics of already reported capabilities were dropped'});
+            }
             return;
         }
         diagnosticKeys[key] = true;
-        diagnostics.push({capability: String(capability), detail: String(detail)});
+        diagnosticCapabilities[capability] = true;
+        diagnostics.push({capability: capability, detail: detail});
     }
 
     // ------------------------------------------------------------------
@@ -299,8 +320,12 @@
     var originalCreateShape = mxCellRenderer.prototype.createShape;
     mxCellRenderer.prototype.createShape = function (state) {
         var name = state.style != null ? state.style[mxConstants.STYLE_SHAPE] : null;
+        // Names under mxgraph.* are reported as stencil:<name> by the stencil
+        // runtime (drawio-stencil-runtime.js) when it is loaded.
+        var stencilRuntime = typeof DrawioStencils !== 'undefined' && DrawioStencils != null
+                && typeof name === 'string' && name.indexOf('mxgraph.') == 0;
         if (name != null && mxCellRenderer.defaultShapes[name] == null
-                && mxStencilRegistry.getStencil(name) == null) {
+                && mxStencilRegistry.getStencil(name) == null && !stencilRuntime) {
             report('shape:' + name, 'cell ' + state.cell.id + ' uses an unsupported shape');
         }
         return originalCreateShape.apply(this, arguments);
@@ -361,6 +386,27 @@
 
     var FONT_BOLD = 1;
     var FONT_ITALIC = 2;
+
+    // Page background (mxGraphModel background) as #rrggbb, or null.
+    function pageBackground(value) {
+        if (value == null || value == '' || value == mxConstants.NONE) {
+            return null;
+        }
+        var color = String(value).trim();
+        var lightDark = LIGHT_DARK.exec(color);
+        if (lightDark != null) {
+            color = lightDark[1].trim();
+        }
+        if (/^#[0-9a-fA-F]{3}$/.test(color)) {
+            color = '#' + color.charAt(1) + color.charAt(1) + color.charAt(2) + color.charAt(2)
+                + color.charAt(3) + color.charAt(3);
+        }
+        if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+            return color.toLowerCase();
+        }
+        report('page:background', 'page background is not a hex color and is not painted');
+        return null;
+    }
 
     function measureLabel(text) {
         var value = text.value;
@@ -472,7 +518,7 @@
             new mxImageExport().drawState(graph.getView().getState(model.getRoot()), canvas);
         }
 
-        var background = modelNode.getAttribute('background');
+        var background = pageBackground(modelNode.getAttribute('background'));
         return JSON.stringify({
             cells: cellCount,
             scale: graph.view.scale,

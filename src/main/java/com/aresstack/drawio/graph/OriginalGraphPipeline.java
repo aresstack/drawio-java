@@ -108,6 +108,12 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
             throw diagnostics.abort.getRenderException();
         }
         if (!result.isSuccessful()) {
+            if (recorder.size() >= CanvasRecorder.DEFAULT_MAX_COMMANDS) {
+                // The recorder's limit fires inside a host call and reaches
+                // Java as a guest error.
+                throw new RenderException(RenderErrorCode.LIMIT_EXCEEDED,
+                        "The diagram exceeds " + CanvasRecorder.DEFAULT_MAX_COMMANDS + " canvas commands");
+            }
             throw failure(result);
         }
 
@@ -123,7 +129,7 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
                 session.warn(diagnostic.getCapability(), diagnostic.getDetail());
             }
         }
-        return recorder.toScene(report.getBounds());
+        return recorder.toScene(report.getBounds(), report.getBackground());
     }
 
     private List<ScriptSource> sources() {
@@ -257,6 +263,7 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
         private final int cells;
         private final List<Diagnostic> diagnostics;
         private final List<String> domProbes;
+        private String background;
 
         private GraphReport(Rectangle2D bounds, String limitExceeded, int cells,
                             List<Diagnostic> diagnostics, List<String> domProbes) {
@@ -294,11 +301,16 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
                         probes.add(String.valueOf(item));
                     }
                 }
+                Object background = map.get("background");
                 Object limit = map.get("limitExceeded");
                 Object cells = map.get("cells");
-                return new GraphReport(bounds, limit == null ? null : String.valueOf(limit),
+                GraphReport report = new GraphReport(bounds, limit == null ? null : String.valueOf(limit),
                         cells instanceof Double ? ((Double) cells).intValue() : 0,
                         Collections.unmodifiableList(diagnostics), Collections.unmodifiableList(probes));
+                if (background instanceof String && ((String) background).matches("#[0-9a-f]{6}")) {
+                    report.background = (String) background;
+                }
+                return report;
             } catch (RuntimeException exception) {
                 throw new RenderException(RenderErrorCode.RENDER_FAILED,
                         "Graph pipeline returned an unreadable report", null, exception);
@@ -311,6 +323,10 @@ public final class OriginalGraphPipeline implements DiagramPipeline {
 
         Rectangle2D getBounds() {
             return bounds;
+        }
+
+        String getBackground() {
+            return background;
         }
 
         String getLimitExceeded() {
