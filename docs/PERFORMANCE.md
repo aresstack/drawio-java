@@ -61,6 +61,34 @@ Profiling the 100-vertex case (how much is mxGraphView, label measurement,
 bridge calls, the Java 8 Java2D lock) is the next step before any
 optimization.
 
+### Re-run with the full shape set (2026-11-12, main e8a288e)
+
+After the production shape and stencil bundles (#10) landed. `-Dbench.diagram=bpmn`
+makes every second vertex an original `mxgraph.bpmn.gateway2` (parallel,
+exclusive, complex) with a label below; `grid` keeps rounded rectangles.
+
+| Diagram | Engine | Vertices | Cold first | PNG warm median | SVG warm median | 4 workers PNG |
+|---------|--------|---------:|-----------:|----------------:|----------------:|--------------:|
+| grid | per runtime | 10 | 1961 ms | 176 ms | 176 ms | 9.6 req/s |
+| grid | shared | 10 | 1938 ms | 69 ms | 61 ms | 40.8 req/s |
+| grid | per runtime | 100 | 2835 ms | 512 ms | 429 ms | 4.6 req/s |
+| grid | shared | 100 | 2837 ms | 423 ms | 299 ms | 8.3 req/s |
+| bpmn | per runtime | 10 | 1975 ms | 191 ms | 171 ms | 10.4 req/s |
+| bpmn | shared | 10 | 1931 ms | 85 ms | 73 ms | 38.1 req/s |
+| bpmn | per runtime | 100 | 3057 ms | 566 ms | 420 ms | 4.4 req/s |
+| bpmn | shared | 100 | 3002 ms | 506 ms | 326 ms | 7.2 req/s |
+
+Output sizes (bpmn, 100 vertices): PNG 72 KiB, SVG 157 KiB. Heap after a
+full GC: ~32 MiB with the shared engine (it keeps the parsed bundles) and
+~11 MiB without; live threads back to the JVM baseline in every run.
+
+The earlier conclusions hold with the full shape set: the shared engine
+makes small diagrams 2.2–2.6x faster and quadruples parallel throughput;
+for 100 vertices it still gives 1.6–1.8x throughput. The whole suite
+(294 tests, including the official-viewer references and the golden
+corpus) passes identically with `-Ddrawio.graaljs.sharedEngine=false`, so
+the optimization does not change any golden output.
+
 ## Conclusions and changes
 
 1. **Cold start** (~1.3–1.9 s) is dominated by loading GraalJS/Truffle

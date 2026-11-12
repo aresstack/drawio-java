@@ -43,7 +43,7 @@ public final class FacadeBenchmark {
                 svgChars = vector.getOutput().length();
             }
             System.out.printf(Locale.ROOT,
-                    "facade %d vertices + %d edges: first=%d ms, PNG median=%d ms p90=%d ms (%d KiB),"
+                    "facade " + System.getProperty("bench.diagram", "grid") + " %d vertices + %d edges: first=%d ms, PNG median=%d ms p90=%d ms (%d KiB),"
                             + " SVG median=%d ms (%d KiB)%n",
                     vertices, vertices - 1, first, percentile(png, 50), percentile(png, 90),
                     pngBytes / 1024, percentile(svg, 50), svgChars / 1024);
@@ -68,13 +68,23 @@ public final class FacadeBenchmark {
         }
     }
 
-    /** A grid of labelled rounded rectangles connected in a chain by orthogonal edges. */
+    /**
+     * A grid of labelled vertices connected in a chain by orthogonal edges.
+     * With {@code -Dbench.diagram=bpmn} every second vertex is an original
+     * BPMN {@code gateway2} (alternating parallel/exclusive/complex).
+     */
     static String grid(int vertices) {
+        boolean bpmn = "bpmn".equals(System.getProperty("bench.diagram"));
+        String[] gateways = {"parallel", "exclusive", "complex"};
         StringBuilder xml = new StringBuilder("<mxGraphModel><root><mxCell id=\"0\"/>"
                 + "<mxCell id=\"1\" parent=\"0\"/>");
         for (int i = 0; i < vertices; i++) {
             xml.append("<mxCell id=\"v").append(i).append("\" value=\"Task ").append(i)
-                    .append("\" style=\"rounded=1;whiteSpace=wrap;html=1;\" vertex=\"1\" parent=\"1\">")
+                    .append("\" style=\"").append(bpmn && i % 2 == 1
+                            ? "shape=mxgraph.bpmn.gateway2;gwType=" + gateways[(i / 2) % 3]
+                                    + ";verticalLabelPosition=bottom;verticalAlign=top;"
+                            : "rounded=1;whiteSpace=wrap;html=1;")
+                    .append("\" vertex=\"1\" parent=\"1\">")
                     .append("<mxGeometry x=\"").append(20 + (i % 10) * 160).append("\" y=\"")
                     .append(20 + (i / 10) * 120).append("\" width=\"120\" height=\"60\" as=\"geometry\"/>")
                     .append("</mxCell>");
