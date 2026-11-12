@@ -1,12 +1,21 @@
 # drawio-java
 
-Headless Draw.io diagram rendering for Java. The planned renderer executes the
-original Draw.io shape and layout logic with GraalJS and delegates drawing to
-Java2D. No browser or Node.js runtime should be required by consumers.
+Headless draw.io diagram rendering for Java 8+. The renderer runs the
+original, pinned draw.io JavaScript (mxGraph model, view, codec and shapes,
+including BPMN) on GraalJS and paints it with Java2D into `BufferedImage`,
+PNG or SVG. Consumers need no browser, no Node.js and no network access.
 
-> **Status: bootstrap only.** This repository does not render diagrams yet.
-> The architecture and implementation milestones are tracked in
-> [Epic #1](https://github.com/aresstack/drawio-java/issues/1).
+> **Status: pre-release.** Diagrams render end to end through the original
+> draw.io code, and a reference corpus compares them with the official draw.io
+> viewer (BPMN `gateway2` approval flow: score 0.998). Before the first release,
+> two owner decisions are open: the project license and the draw.io stencil
+> license caveat ([docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md)).
+>
+> - What works and what does not: [docs/SUPPORT-MATRIX.md](docs/SUPPORT-MATRIX.md)
+> - Security model and dependency audit: [docs/SECURITY.md](docs/SECURITY.md)
+> - CI, reproducible builds and the release process: [docs/RELEASE.md](docs/RELEASE.md)
+> - Reference and regression corpus: [src/test/resources/drawio/corpus](src/test/resources/drawio/corpus/README.md)
+> - Milestones: [Epic #1](https://github.com/aresstack/drawio-java/issues/1)
 
 ## Scope
 
@@ -43,18 +52,27 @@ performance and resource control: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 ## Development
 
-JDK 8 and a Gradle 8.12 wrapper are used. Java 8 toolchains must be available.
+JDK 8 and a Gradle 8.12 wrapper are used. A Java 8 toolchain must be
+installed; Gradle itself can run on JDK 17.
 
 On Windows:
 
 ```powershell
-.\gradlew.bat clean test jar
+.\gradlew.bat clean build
 ```
 
 On Linux/macOS:
 
-```bash ./gradlew clean test jar
+```bash
+./gradlew clean build
 ```
+
+`build` runs all tests, including the reference corpus, the Java 8 bytecode
+gate (`verifyJava8Bytecode`) and an offline smoke test against the packaged
+jar (`consumerSmokeTest`). Pass `-PtestJavaVersion=11|17|21` to run the tests
+on another installed JDK. The corpus report with rendered images and diffs is
+written to `build/reports/corpus/render.html`. CI runs all of this on JDK 8,
+11, 17 and 21 and on Linux and Windows; see [docs/RELEASE.md](docs/RELEASE.md).
 
 ## GraalJS runtime (Issue #3)
 

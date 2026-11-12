@@ -54,16 +54,29 @@ further upstream packages or publishing an Atlassian-related integration (#15).
 
 ## Apache Batik SVG generator (runtime dependency)
 
-`org.apache.xmlgraphics:batik-svggen:1.17` and its transitive dependencies
+`org.apache.xmlgraphics:batik-svggen:1.20` and its transitive dependencies
 (`batik-awt-util`, `batik-util`, `batik-constants`, `batik-i18n`,
-`batik-shared-resources`, `xmlgraphics-commons` 2.9, `commons-io` 2.11.0,
-`commons-logging` 1.0.4) are used for SVG output (#11). All are licensed under
-the Apache License 2.0; they are resolved from Maven Central and not
-redistributed in this repository. Batik 1.17 includes the fixes for
-CVE-2022-44729 and CVE-2022-44730. `BoundsGraphics2D` extends Batik's
-`AbstractGraphics2D`; no Batik source code is copied.
+`batik-shared-resources`, `xmlgraphics-commons` 2.12, `commons-logging` 1.3.0)
+are used for SVG output (#11). All are licensed under the Apache License 2.0
+and carry their own NOTICE files; they are resolved from Maven Central and not
+redistributed in this repository or the drawio-java jar. `BoundsGraphics2D`
+extends Batik's `AbstractGraphics2D`; no Batik source code is copied.
 
-## Original draw.io stencil data (opt-in subset)
+## GraalVM JavaScript (runtime dependency)
+
+`org.graalvm.js:js`, `org.graalvm.regex:regex`, `org.graalvm.truffle:truffle-api`
+and `org.graalvm.sdk:graal-sdk` 21.3.20.0.3 are licensed under the
+Universal Permissive License 1.0 (UPL-1.0); `js` additionally declares MIT for
+included third-party code. Their jars contain no license file, so a fat jar or
+distribution that includes them must ship the UPL text
+(https://oss.oracle.com/licenses/upl/). They pull in `com.ibm.icu:icu4j` 71.1
+under the Unicode/ICU license; keep the `LICENSE` file contained in that jar.
+None of these binaries is redistributed by drawio-java itself.
+
+See [docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md) for the full release
+license review and [docs/SECURITY.md](docs/SECURITY.md) for the security audit.
+
+## Original draw.io stencil data (bundled subset)
 
 `js-bundle/upstream/stencils.min.js` (build input, not in the JAR) and the
 generated `src/main/resources/drawio/drawio-stencils.js` are taken unchanged
@@ -76,9 +89,11 @@ per-file header; the repository's Apache License 2.0 applies (see
 `src/main/resources/drawio/upstream/LICENSE`).
 
 These are **stencil libraries** in the sense of the upstream README
-restriction for products distributed for Atlassian or its Marketplace. Their
-use is opt-in and they must be reviewed in the release license audit (#15)
-before distribution; see [docs/STENCILS.md](docs/STENCILS.md).
+restriction for products distributed for Atlassian or its Marketplace. The
+production pipeline loads them by default. The release license review
+([docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md)) treats this as a blocker
+for Atlassian-related distribution and recommends moving them to an optional
+artifact; see also [docs/STENCILS.md](docs/STENCILS.md).
 
 Test-only copies of the original `mxStencil.js`, `mxStencilRegistry.js` and
 `mxConnectionConstraint.js` (same commit, Apache-2.0, original headers) live in
