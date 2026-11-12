@@ -47,7 +47,12 @@ String svg = renderer.renderSvg(scene, options);
 
 ## Geometry
 
-`device = padding + scale * (diagram - sourceOrigin)`.
+`device = offset + scale * diagram`, with
+`offset = floor(padding - scale * sourceOrigin)` per axis. Flooring at the
+output scale is what Draw.io's export does (`Graph.getSvg` at the pinned
+commit, jgraph/drawio#4938): content moves by whole output pixels, so 1-px
+strokes that are crisp in the scene (half-pixel centers) stay crisp instead of
+smearing over two pixels, and a fractional origin clips less than one pixel.
 
 - **Size:** `width = ceil(sourceWidth * scale) + 2 * padding` (same for
   height), at least 1 pixel. With `width(n)` the total width is exactly `n`
@@ -61,6 +66,10 @@ String svg = renderer.renderSvg(scene, options);
   bounds are therefore not clipped. `LOGICAL` reproduces Draw.io's own export
   framing and clips paint outside the logical bounds; `PAINTED` uses the
   tightest box.
+- **Stroke control:** raster output uses `STROKE_PURE` (geometrically exact,
+  like browsers). Batik's own rasterizer normalizes strokes for
+  `shape-rendering="auto"`; tests rasterize our SVG with `geometricPrecision`
+  to compare geometry, and then raster and SVG agree pixel for pixel.
 - **SVG** uses the identical transform: user units are output pixels,
   `width`/`height` are the pixel size and `viewBox="0 0 width height"`.
 - **DPI:** `dpi(x)` only writes the PNG `pHYs` chunk. `resolution(x)` also

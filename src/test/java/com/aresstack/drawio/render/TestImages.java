@@ -39,9 +39,20 @@ final class TestImages {
         return factory.newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
     }
 
-    /** Rasterize SVG with Batik at its intrinsic size, external resources disabled. */
+    /**
+     * Rasterize SVG with Batik at its intrinsic size, external resources disabled.
+     *
+     * <p>Batik rasterizes {@code shape-rendering="auto"} with Java2D stroke
+     * normalization (strokes nudged to pixel centers), whereas browsers and
+     * our raster output render geometrically exact ({@code STROKE_PURE}).
+     * Request {@code geometricPrecision} on the root so the comparison checks
+     * geometry rather than Batik's normalization.
+     */
     static BufferedImage rasterize(String svg) throws IOException, TranscoderException {
-        return rasterize(new ByteArrayInputStream(svg.getBytes(StandardCharsets.UTF_8)), null, null);
+        String geometric = svg.replaceFirst("shape-rendering=\"auto\"",
+                "shape-rendering=\"geometricPrecision\"");
+        return rasterize(new ByteArrayInputStream(geometric.getBytes(StandardCharsets.UTF_8)),
+                null, null);
     }
 
     static BufferedImage rasterize(InputStream svg, Float width, Float height)

@@ -149,6 +149,51 @@ class SceneRendererTest {
     }
 
     @Test
+    void fractionalOriginMovesContentByWholePixelsLikeDrawioExport() {
+        // Graph bounds of a 1px-stroked cell at x=20 are 19.5 (half stroke).
+        DrawioScene scene = new DrawioScene() {
+            @Override
+            public void paint(DrawioCanvas canvas) {
+                canvas.setStrokeColor("#000000");
+                canvas.setStrokeWidth(1);
+                canvas.rect(20.5, 10.5, 100, 50);
+                canvas.stroke();
+            }
+
+            @Override
+            public Rectangle2D getLogicalBounds() {
+                return new Rectangle2D.Double(19.5, 9.5, 102, 52);
+            }
+        };
+        OutputOptions options = OutputOptions.builder().boundsMode(BoundsMode.LOGICAL).build();
+
+        OutputGeometry geometry = renderer.layout(scene, options);
+        BufferedImage image = renderer.renderImage(scene, options);
+
+        // Draw.io Graph.getSvg: dx = floor(border - bounds.x * scale) = floor(-19.5) = -20.
+        assertEquals(-20.0, geometry.getOffsetX(), 0);
+        assertEquals(-10.0, geometry.getOffsetY(), 0);
+        assertEquals(102, geometry.getWidth());
+        assertEquals(52, geometry.getHeight());
+        // The stroke centered on x = 20.5 covers exactly device column 0.
+        assertEquals(255, TestImages.alpha(image, 0, 30), "crisp stroke column");
+        assertEquals(0, TestImages.alpha(image, 1, 30), "no smear into the next column");
+        assertEquals(255, TestImages.alpha(image, 50, 0), "crisp top stroke row");
+        assertEquals(0, TestImages.alpha(image, 50, 1));
+    }
+
+    @Test
+    void fractionalScaledOriginFloorsAtOutputScale() {
+        OutputGeometry geometry = renderer.layout(box(new Rectangle2D.Double(0.3, 0.3, 120, 60)),
+                OutputOptions.builder().boundsMode(BoundsMode.LOGICAL).scale(1.5).padding(4).build());
+
+        // floor(4 - 0.45) = 3
+        assertEquals(3.0, geometry.getOffsetX(), 0);
+        assertEquals(3.0, geometry.toDevice(0, 0).getX(), 1e-9);
+        assertEquals(3.0 + 1.5 * 10, geometry.toDevice(10, 0).getX(), 1e-9);
+    }
+
+    @Test
     void fitWidthScalesProportionally() {
         OutputOptions options = OutputOptions.builder().width(218).padding(5).build();
 
@@ -248,7 +293,7 @@ class SceneRendererTest {
 
         int differences = TestImages.countDifferentPixels(raster, vector, 48);
         int total = raster.getWidth() * raster.getHeight();
-        assertTrue(differences < total / 100,
+        assertTrue(differences < total / 1000,
                 "Raster and SVG differ at " + differences + " of " + total + " pixels");
     }
 
