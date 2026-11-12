@@ -159,7 +159,7 @@ reported as unsupported until a licensed offline resolution is available.
 
 ## Production shape library (#10)
 
-`drawio-shape-library.js` bundles three original files, pinned with their
+`drawio-shape-library.js` bundles six original files, pinned with their
 LF-normalized SHA-256 in `shapeLibrarySources` of the manifest:
 
 | Original path relative to `src/main/webapp` | Vendored at |
@@ -167,6 +167,17 @@ LF-normalized SHA-256 in `shapeLibrarySources` of the manifest:
 | `js/grapheditor/Shapes.js` | `js-bundle/upstream/grapheditor/Shapes.js` |
 | `shapes/mxBasic.js` | `js-bundle/upstream/shapes/mxBasic.js` |
 | `shapes/bpmn/mxBpmnShape2.js` | `src/main/resources/drawio/upstream/mxBpmnShape2.js` |
+| `shapes/mxArrows.js` | `js-bundle/upstream/shapes/mxArrows.js` |
+| `shapes/er/mxER.js` | `js-bundle/upstream/shapes/mxER.js` |
+| `shapes/mxFlowchart.js` | `js-bundle/upstream/shapes/mxFlowchart.js` |
+
+## Graph.js ports (#9)
+
+`drawio-graph-ports.js` is generated from `js/grapheditor/Graph.js`
+(vendored at `js-bundle/upstream/grapheditor/Graph.js`, a build input, not
+packaged) by copying named top-level members and four whole top-level
+blocks verbatim (`graphPorts` in the manifest). See
+[docs/HEADLESS-GRAPH.md](docs/HEADLESS-GRAPH.md).
 
 The files under `js-bundle/upstream/` are build inputs and are not packaged;
 only the generated bundle ships in the JAR. The bundle needs the original

@@ -62,7 +62,8 @@ Legend: ✅ supported and regression-tested · ⚠️ partial or known deviation
 | BPMN tasks, data and conversation (`mxgraph.bpmn.task`, `data`, `conversation`) | ✅ | `bpmn-shapes-catalog` |
 | XML stencil sets bundled offline: arrows, basic, bpmn, flowchart | ⚠️ | [STENCILS.md](STENCILS.md). See the license caveat in [LICENSE-REVIEW.md](LICENSE-REVIEW.md) |
 | Other stencil sets (AWS, Azure, GCP, Cisco, UML packs, ...) | ❌ | `unknown-stencil` fails with `UNSUPPORTED_STENCIL` by default; `UnsupportedFeaturePolicy.WARN` gives a warning |
-| JavaScript shape libraries `mxBasic.js`, `mxFlowchart.js`, `mxArrows.js` | ❌ | Reported as unknown stencil |
+| JavaScript shape libraries `mxBasic.js`, `mxFlowchart.js`, `mxArrows.js` (`mxgraph.arrows2.*`), `er/mxER.js` (ER shapes, crow's foot markers) | ✅ | `edge-jumps-shapes` acceptance (ER markers); others reported as unknown shape |
+| draw.io tables (`shape=table`, `tableRow`), line jumps (`jumpStyle`), placeholders (`placeholders=1`) | ✅ | `tables-shapes`, `edge-jumps-shapes` acceptance vs viewer; `replacesPlaceholdersLikeDrawio` |
 | Inline stencils `shape=stencil(...)` | ❌ | [STENCILS.md](STENCILS.md), known gaps |
 
 ## Text

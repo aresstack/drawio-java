@@ -13,7 +13,7 @@ re-implemented in Java. Java only provides the canvas (see
 | 2 | `drawio-graph.js` | #9 | Original mxClient core: mxUtils, mxConstants, mxShape and core shapes, mxText, mxMarker, mxStencil, mxStencilRegistry, model, view, codecs |
 | 3 | `drawio-xml-dom.js` | #9 | Pure-JS XML nodes built from Java-parsed XML |
 | 4 | `drawio-headless.js` | #9 | Headless `Graph` subclass (Shapes.js references it at load) |
-| 5 | **`drawio-shape-library.js`** | #10 | grapheditor `Shapes.js`, `shapes/mxBasic.js`, `shapes/bpmn/mxBpmnShape2.js` |
+| 5 | **`drawio-shape-library.js`** | #10 | grapheditor `Shapes.js`, `shapes/mxBasic.js`, `shapes/bpmn/mxBpmnShape2.js`, `shapes/mxArrows.js`, `shapes/er/mxER.js`, `shapes/mxFlowchart.js` |
 | 6 | **`drawio-stencil-runtime.js`** | #10 | Budgeted `atob`/`pako.inflateRaw`/`TextDecoder` via host codec; headless `mxStencilRegistry.getStencil` |
 | 7 | **`drawio-stencils.js`** | #10 | Original `stencils.min.js` decoder + selected stencil sets |
 | 8 | `drawio-canvas-adapter.js` | #10 | `DrawioJavaCanvas` → `DrawioCanvasBridge` → `Java2DCanvas` |
@@ -56,7 +56,7 @@ All 139 stencils paint through the original `mxStencil.drawShape` into Java2D
 | Feature | Diagnostic | Reason / next step |
 | --- | --- | --- |
 | Stencil packages not bundled (`mxgraph.aws4.*`, `mxgraph.cisco.*`, `mxgraph.mockup.*`, ...) | `stencil:<name>` diagnostic → `UNSUPPORTED_STENCIL` under the default fail policy (`DrawioStencils.missing` in JS) | Vendor icon/stencil libraries carry the upstream Atlassian distribution restriction; add sets deliberately via the `include` list after the #15 license audit. |
-| JS shape libraries other than basic/BPMN (`mxArrows.js`, `mxFlowchart.js`, `mxAWS4.js`, ...) | unknown shape → reported by the pipeline | Add to `shapeLibrarySources` on demand from the test corpus (#13). |
+| JS shape libraries other than basic/BPMN/arrows2/ER/flowchart (`mxAWS4.js`, `mxCisco.js`, `mxMockup*.js`, ...) | unknown shape → reported by the pipeline | Add to `shapeLibrarySources` on demand from the test corpus (#13). |
 | Sketch/rough style, `fillStyle` hachure/dots/cross-hatch | `canvas:fillStyle:<style>` | Requires rough.js; out of scope. |
 | Vertical writing modes | `canvas:text-direction:vertical-*` | No vertical text layout in Java2D path yet. |
 | Embedded SVG images, external image URLs | `image:svg`, `image:external` | Policy: no SVG engine, no network. Hosts may supply bytes via `ResourcePolicy.withResolver`. |
