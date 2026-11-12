@@ -365,13 +365,6 @@ class DrawioRendererTest {
     }
 
     @Test
-    void defaultPipelineFailsExplicitlyInsteadOfApproximating() {
-        DrawioRenderer renderer = DrawioRenderer.builder().output(new FakeOutput()).build();
-        renderers.add(renderer);
-        assertCode(RenderErrorCode.RENDER_FAILED, () -> renderer.renderSvg(MODEL));
-    }
-
-    @Test
     void upstreamCommitConstantMatchesPinnedBundle() throws Exception {
         String manifest = new String(Files.readAllBytes(Paths.get("js-bundle/upstream.json")),
                 StandardCharsets.UTF_8);

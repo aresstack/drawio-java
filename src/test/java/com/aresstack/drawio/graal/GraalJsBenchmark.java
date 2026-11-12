@@ -43,6 +43,11 @@ public final class GraalJsBenchmark {
 
     public static void main(String[] args) throws Exception {
         System.out.println(environment());
+        if ("facade".equals(System.getProperty("bench.mode"))) {
+            com.aresstack.drawio.FacadeBenchmark.run(CELLS, WARM_RUNS, THREADS);
+            System.out.println(heapAndThreads());
+            return;
+        }
         String modes = System.getProperty("bench.mode", "unshared,shared");
         for (String name : modes.split(",")) {
             boolean shared = "shared".equals(name.trim());

@@ -82,7 +82,7 @@ tasks.register('benchmark', JavaExec) {
     }
     maxHeapSize = '1g'
     jvmArgs headlessJvmArgs
-    systemProperties System.getProperties().findAll { it.key.toString().startsWith('bench.') }
+    systemProperties System.getProperties().findAll { it.key.toString().startsWith('bench.') || it.key.toString().startsWith('drawio.') }
 }
 
 // ---------------------------------------------------------------------------

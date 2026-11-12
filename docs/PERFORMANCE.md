@@ -34,6 +34,33 @@ ratios are what matters.
 Heap used after a full GC at the end of each run: 4–7 MiB. Live threads
 returned to the JVM baseline (5).
 
+## Full production path (after #9 landed)
+
+`./gradlew benchmark -Dbench.mode=facade -Dbench.cells=N` renders a chain
+of N labelled rounded rectangles with N-1 orthogonal edges through the
+public `DrawioRenderer`: parser, original `mxGraph`/`mxGraphView` pipeline
+with the 1.5 MB `drawio-graph.js` bundle, recording, PNG or SVG. Same
+machine, GraalJS 21.3.20.0.3, 4 workers.
+
+| Engine | Vertices | Cold first | PNG warm median | SVG warm median | 4 workers PNG |
+|--------|---------:|-----------:|----------------:|----------------:|--------------:|
+| per runtime | 10 | 2474 ms | 173 ms | 153 ms | 12.9 req/s |
+| shared | 10 | 2133 ms | 75 ms | 71 ms | 33.9 req/s |
+| per runtime | 100 | 3294 ms | 582 ms | 452 ms | 4.7 req/s |
+| shared | 100 | 3398 ms | 563 ms | 376 ms | 6.6 req/s |
+
+Output sizes for 100 vertices: PNG 50 KiB, SVG 144 KiB. Heap after GC
+10–24 MiB; no threads left behind.
+
+With the real bundle the shared engine matters even more for typical
+small diagrams (2.3x faster, 2.6x throughput). Large diagrams are
+dominated by view validation and painting in interpreter-mode JavaScript;
+running on a JVM with the Graal compiler (GraalVM JDK) would JIT-compile
+the guest code, but that is a deployment choice, not a library change.
+Profiling the 100-vertex case (how much is mxGraphView, label measurement,
+bridge calls, the Java 8 Java2D lock) is the next step before any
+optimization.
+
 ## Conclusions and changes
 
 1. **Cold start** (~1.3–1.9 s) is dominated by loading GraalJS/Truffle
