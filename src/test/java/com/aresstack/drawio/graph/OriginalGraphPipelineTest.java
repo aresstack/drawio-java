@@ -121,4 +121,24 @@ class OriginalGraphPipelineTest {
         assertTrue(!all.contains("rect["), all);
         assertTrue(session.warnings().isEmpty(), String.valueOf(session.warnings()));
     }
+
+    @Test
+    void escapesWrappedPlainTextLabelsLikeDrawio() throws Exception {
+        String xml = "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/>"
+                + "<mxCell id=\"plain\" value=\"A &lt; B &amp;&amp; &lt;b&gt;C&lt;/b&gt;\""
+                + " style=\"whiteSpace=wrap;html=0;\" vertex=\"1\" parent=\"1\">"
+                + "<mxGeometry x=\"10\" y=\"10\" width=\"120\" height=\"40\" as=\"geometry\"/></mxCell>"
+                + "<mxCell id=\"html\" value=\"&lt;b&gt;D&lt;/b&gt;\" style=\"whiteSpace=wrap;html=1;\""
+                + " vertex=\"1\" parent=\"1\">"
+                + "<mxGeometry x=\"10\" y=\"60\" width=\"120\" height=\"40\" as=\"geometry\"/></mxCell>"
+                + "</root></mxGraphModel>";
+        DrawioScene scene = new OriginalGraphPipeline(Collections.<String>emptyList(), 1)
+                .prepare(new DiagramPage(0, "p", "Page", xml), new RenderSession(RenderOptions.defaults()));
+        String all = String.join("\n", record(scene));
+        // Graph.js getLabelValue: wrapped html=0 labels are entity-escaped, so
+        // the HTML text layout shows the markup literally.
+        assertTrue(all.contains("A &lt; B &amp;&amp; &lt;b&gt;C&lt;/b&gt;"), all);
+        // html=1 labels keep their markup.
+        assertTrue(all.contains("<b>D</b>"), all);
+    }
 }

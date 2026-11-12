@@ -64,7 +64,7 @@ use them fails loudly.
 Compatibility ports from the pinned `js/grapheditor/Graph.js` (each marked
 in the source): shadow constants, `mxCodec.allowlist` (reduced to diagram
 types), `mxText.baseSpacingTop/Bottom`, `ignoreRelativeEdgeParent`,
-`isHtmlLabel` (`html=1` or `whiteSpace=wrap`), object values with a `label`
+`isHtmlLabel` (`html=1` or `whiteSpace=wrap`), entity escaping of wrapped `html=0` labels (`getLabelValue`), object values with a `label`
 attribute, and `default` color resolution for the light theme.
 `light-dark(a, b)` colors render their light value.
 

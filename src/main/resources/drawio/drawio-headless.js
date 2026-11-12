@@ -65,6 +65,19 @@
      */
     function Graph(model, stylesheet) {
         mxGraph.call(this, null, model, null, stylesheet);
+
+        // Graph.js Graph constructor: "HTML entities are displayed as plain
+        // text in wrapped plain text labels". The html=1 branch (DOMPurify
+        // sanitizing, style scoping) is not ported: HtmlLabelParser in Java
+        // interprets only a safe formatting subset and executes nothing.
+        this.cellRenderer.getLabelValue = function (state) {
+            var result = mxCellRenderer.prototype.getLabelValue.apply(this, arguments);
+            if (result != null && state.view.graph.isHtmlLabel(state.cell)
+                    && mxUtils.getValue(state.style, 'html', '0') == '0') {
+                result = mxUtils.htmlEntities(result, false);
+            }
+            return result;
+        };
     }
 
     mxUtils.extend(Graph, mxGraph);
