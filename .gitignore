@@ -8,3 +8,4 @@ out/
 *.class
 .DS_Store
 *.log
+gradle.lockfile

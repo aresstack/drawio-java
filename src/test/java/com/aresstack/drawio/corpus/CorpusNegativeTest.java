@@ -14,6 +14,7 @@ import com.aresstack.drawio.DrawioRenderer;
 import com.aresstack.drawio.api.DiagramFormatException;
 import com.aresstack.drawio.api.DrawioDocument;
 import com.aresstack.drawio.api.PageSelector;
+import com.aresstack.drawio.api.RenderErrorCode;
 import com.aresstack.drawio.api.RenderException;
 import com.aresstack.drawio.api.RenderOptions;
 import com.aresstack.drawio.api.RenderResult;
@@ -109,7 +110,10 @@ class CorpusNegativeTest {
                     || ("WARN".equals(negative.expect) && !result.getWarnings().isEmpty());
         } catch (RenderException exception) {
             observed = exception.getCode() + ": " + exception.getMessage();
-            ok = "SAFE".equals(negative.expect) || exception.getCode().name().equals(negative.expect);
+            // SAFE tolerates a clean rejection, but never a timeout: that would mean
+            // data was evaluated as code (e.g. an injected infinite loop ran).
+            ok = ("SAFE".equals(negative.expect) && exception.getCode() != RenderErrorCode.TIMEOUT)
+                    || exception.getCode().name().equals(negative.expect);
             assertNoInputEcho(exception.getMessage(), xml);
         } catch (RuntimeException exception) {
             observed = "unexpected " + exception.getClass().getName() + ": " + exception.getMessage();

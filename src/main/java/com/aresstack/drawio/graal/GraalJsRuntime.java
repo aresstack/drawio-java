@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.HostAccess;
+import org.graalvm.polyglot.EnvironmentAccess;
+import org.graalvm.polyglot.PolyglotAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 
@@ -163,6 +165,13 @@ public final class GraalJsRuntime implements AutoCloseable {
                 .allowIO(false)
                 .allowCreateThread(false)
                 .allowNativeAccess(false)
+                .allowPolyglotAccess(PolyglotAccess.NONE)
+                .allowEnvironmentAccess(EnvironmentAccess.NONE)
+                // Defense in depth (#15). The js.* switches that would remove
+                // eval/load/print globals are experimental in GraalJS 21.3 and
+                // are deliberately not used; GraalJsSecurityTest pins what the
+                // guest can and cannot reach instead.
+                .allowExperimentalOptions(false)
                 .out(SharedEngine.DISCARD_OUTPUT)
                 .err(SharedEngine.DISCARD_OUTPUT);
         if (engine != null) {

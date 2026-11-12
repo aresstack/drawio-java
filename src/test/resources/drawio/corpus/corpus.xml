@@ -113,7 +113,7 @@
       <label cell="ac" text="quer"/>
     </page>
   </fixture>
-  <fixture id="images-data-uri" file="images-data-uri.drawio" sha256="f11df00b3ee974a2a8f4dcdac0c84dc57df61a7c6c5899e94085f7b2604c8033" features="image data-uri external-url-blocked" render="pending" issue="#9">
+  <fixture id="images-data-uri" file="images-data-uri.drawio" sha256="f11df00b3ee974a2a8f4dcdac0c84dc57df61a7c6c5899e94085f7b2604c8033" features="image data-uri external-url-blocked" render="match" issue="">
     <note>The external image URL uses the reserved .invalid TLD and must never be fetched.</note>
     <page index="0" name="Bilder" vertices="2" edges="0" minScore="0.85" png="reference/images-data-uri.png" pngSha256="d90c81aa6b3f483e9f5e6b055fd14159aaa2aa8895d55c6a544922a58ea35e6e" svg="reference/images-data-uri.svg" svgSha256="9bfb1cca1be7ddb2e22dbc64834acacd14bb8ceb1aaa5b3c3bde83d7418fd323">
       <shape name="image" count="2"/>
@@ -201,5 +201,8 @@
   </negative>
   <negative id="active-content-label" file="negative/active-content-label.drawio" sha256="270be43ef85033ba7ebd11d3307678425ad5b8e4ab57cfb89316e27ab57f5c84" stage="render" expect="SAFE" render="match">
     <note>Script, event-handler and javascript: content in HTML labels must never execute or fetch; rendering may succeed with the text only.</note>
+  </negative>
+  <negative id="codec-eval-injection" file="negative/codec-eval-injection.drawio" sha256="4ebc7cb85831524f8792ce4e0cbdef1519809aa027d68970d286800289358da0" stage="render" expect="SAFE" render="match">
+    <note>Function source in an mxCodec add element and in edgeStyle/perimeter styles. With mxObjectCodec/mxGraphView allowEval=false this must never be evaluated; an infinite loop here would surface as TIMEOUT.</note>
   </negative>
 </corpus>
