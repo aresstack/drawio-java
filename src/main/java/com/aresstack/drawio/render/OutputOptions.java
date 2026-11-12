@@ -108,7 +108,13 @@ public final class OutputOptions {
         return antialiasing;
     }
 
-    /** Whether SVG text is emitted as outlines instead of {@code <text>}. */
+    /**
+     * Whether SVG text is emitted as outlines instead of {@code <text>}
+     * (default {@code false}, like Draw.io's own SVG export). {@code <text>}
+     * stays selectable and searchable but depends on the viewer's fonts, and
+     * underline/strikethrough are not emitted; outlines look exactly like the
+     * raster output on every viewer and keep text decorations.
+     */
     public boolean isSvgTextAsShapes() {
         return svgTextAsShapes;
     }

@@ -81,10 +81,22 @@ smearing over two pixels, and a fractional origin clips less than one pixel.
   DOM; serialized with a secure JAXP identity transformer.
 - No DOCTYPE, no external DTD, no generator comment, `version="1.1"`,
   `xmlns` and `xmlns:xlink` declared on the root.
-- Raster images would be embedded as `data:` URIs (Batik base64 handler);
-  clip paths are referenced by local `url(#id)` only. Fonts are not embedded
-  (`setEmbeddedFontsOn(false)`); text is emitted as `<text>` unless
-  `svgTextAsShapes(true)` is set (outlines, independent of viewer fonts).
+- Raster images are embedded as `data:image/png;base64` URIs, encoded with
+  the JDK PNG writer in memory (Batik's own encoder needs batik-codec and
+  threw a NullPointerException without it). Clip paths and gradients are
+  referenced by local `url(#id)` only.
+- Gradients: Batik only converts the legacy `GradientPaint` and fills
+  everything else black. `SvgGradients` (a Batik `ExtensionHandler`) turns
+  the `LinearGradientPaint`/`RadialGradientPaint` used by `Java2DCanvas` into
+  `<linearGradient>`/`<radialGradient>` with `userSpaceOnUse` stops,
+  spread method, gradient transform and stop opacity.
+- Text: default is `<text>` (selectable, like Draw.io's SVG export). Java
+  logical font names (`SansSerif`, `Serif`, `Monospaced`, `Dialog`) are
+  replaced with CSS generics, because browsers do not know them. The viewer's
+  fonts decide the final look, and underline/strikethrough are not emitted
+  in this mode. `svgTextAsShapes(true)` writes outlines via `TextLayout`
+  instead: identical to the raster output on every viewer, decorations
+  included. Fonts are never embedded or referenced externally.
 - `KEY_RENDERING=QUALITY` is applied only to raster output, because Batik maps
   it to `color-interpolation="linearRGB"`, which would change browser colors.
 - `maxSvgChars` aborts serialization once the document grows too large.
@@ -125,10 +137,15 @@ lock; JavaScript execution and recording still run in parallel. Override with
   against the pinned official Draw.io viewer reference, plus scaled raster vs
   SVG parity and painted bounds.
 
-## Not yet covered (depends on other tickets)
+- `SceneRendererTest` also covers the #10 canvas features in both formats:
+  gradients (real SVG gradient, raster and SVG agree within 8/255 per
+  channel), shadow inside the bounds, outlined text with underline (same
+  amount of ink; only glyph edge anti-aliasing differs), selectable text with
+  CSS generic families and XML escaping, and embedded `data:` images.
 
-- Text, gradients, shadows and images are drawn only once #10 adds them to
-  `Java2DCanvas`; because they go through ordinary `Graphics2D` calls they are
-  automatically included in bounds, PNG and SVG. Font mapping between Java
-  logical fonts and SVG `font-family` needs a check when text lands.
-- Full diagrams from XML depend on the #9 pipeline producing a `DrawioScene`.
+## Known limits
+
+- Shadow blur is not rendered by `Java2DCanvas` (see docs/CANVAS.md), so it
+  is absent in both formats alike.
+- `<text>` mode depends on viewer fonts; for exact visual parity use
+  `svgTextAsShapes(true)`.

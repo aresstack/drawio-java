@@ -49,8 +49,9 @@ final class SvgOutput {
         context.setEmbeddedFontsOn(false);
         context.setImageHandler(new PngDataUriImageHandler());
         context.setPrecision(4);
+        context.setExtensionHandler(new SvgGradients());
 
-        SVGGraphics2D graphics = new SVGGraphics2D(context, options.isSvgTextAsShapes());
+        SVGGraphics2D graphics = new OutlineTextSvgGraphics2D(context, options.isSvgTextAsShapes());
         try {
             graphics.setSVGCanvasSize(SceneRenderer.size(geometry));
             SceneRenderer.paint(graphics, recording, geometry, options, false);
@@ -58,6 +59,7 @@ final class SvgOutput {
             Element root = document.getDocumentElement();
             graphics.getRoot(root);
             decorateRoot(root, geometry);
+            replaceLogicalFontFamilies(root);
             serialize(document, new LimitedWriter(output, options.getMaxSvgChars()));
             output.flush();
         } finally {
@@ -78,6 +80,43 @@ final class SvgOutput {
         root.removeAttributeNS(null, "zoomAndPan");
         root.removeAttributeNS(null, "contentStyleType");
         root.removeAttributeNS(null, "preserveAspectRatio");
+    }
+
+    /**
+     * Replace Java logical font names, which browsers do not know, with the
+     * equivalent CSS generic families. Only relevant for {@code <text>}
+     * output ({@code svgTextAsShapes(false)}).
+     */
+    private static void replaceLogicalFontFamilies(Element root) {
+        org.w3c.dom.NodeList all = root.getElementsByTagNameNS("*", "*");
+        replaceFontFamily(root);
+        for (int index = 0; index < all.getLength(); index++) {
+            replaceFontFamily((Element) all.item(index));
+        }
+    }
+
+    private static void replaceFontFamily(Element element) {
+        if (!element.hasAttributeNS(null, "font-family")) {
+            return;
+        }
+        String family = element.getAttributeNS(null, "font-family").replace("'", "").trim();
+        String generic;
+        switch (family.toLowerCase(Locale.ROOT)) {
+            case "dialog":
+            case "sansserif":
+                generic = "sans-serif";
+                break;
+            case "serif":
+                generic = "serif";
+                break;
+            case "monospaced":
+            case "dialoginput":
+                generic = "monospace";
+                break;
+            default:
+                return;
+        }
+        element.setAttributeNS(null, "font-family", generic);
     }
 
     private static Document newDocument() throws IOException {
@@ -121,6 +160,40 @@ final class SvgOutput {
             factory.setAttribute(name, "");
         } catch (IllegalArgumentException ignored) {
             // Not every JAXP implementation supports these attributes.
+        }
+    }
+
+    /**
+     * Draw outlined text with {@link java.awt.font.TextLayout} so underline
+     * and strikethrough attributes are kept.
+     *
+     * <p>Batik's text-as-shapes path converts strings to glyph outlines,
+     * which drop text decorations that the raster output paints.
+     */
+    static final class OutlineTextSvgGraphics2D extends SVGGraphics2D {
+
+        OutlineTextSvgGraphics2D(SVGGeneratorContext context, boolean textAsShapes) {
+            super(context, textAsShapes);
+        }
+
+        private OutlineTextSvgGraphics2D(OutlineTextSvgGraphics2D source) {
+            super(source);
+        }
+
+        @Override
+        public java.awt.Graphics create() {
+            return new OutlineTextSvgGraphics2D(this);
+        }
+
+        @Override
+        public void drawString(String text, float x, float y) {
+            if (!textAsShapes || text == null || text.isEmpty()) {
+                super.drawString(text, x, y);
+                return;
+            }
+            java.awt.font.TextLayout layout =
+                    new java.awt.font.TextLayout(text, getFont(), getFontRenderContext());
+            fill(layout.getOutline(java.awt.geom.AffineTransform.getTranslateInstance(x, y)));
         }
     }
 

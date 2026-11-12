@@ -325,6 +325,108 @@ class SceneRendererTest {
         assertEquals(new Color(255, 0, 0), new Color(vector.getRGB(8, 8)));
     }
 
+    /** Gradient box with shadow and an underlined bold label (canvas features from #10). */
+    private static DrawioScene labelledGradientBox() {
+        return canvas -> {
+            canvas.setStrokeColor("#6c8ebf");
+            canvas.setGradient("#dae8fc", "#7ea6e0", 10, 10, 160, 60, "south", 1, 1);
+            canvas.setShadow(true);
+            canvas.setShadowColor("#000000");
+            canvas.setShadowAlpha(0.25);
+            canvas.setShadowOffset(3, 3);
+            canvas.roundrect(10, 10, 160, 60, 8, 8);
+            canvas.fillAndStroke();
+            canvas.setShadow(false);
+            canvas.setFontColor("#000000");
+            canvas.setFontSize(14);
+            canvas.setFontFamily("Helvetica,Arial,sans-serif");
+            canvas.setFontStyle(DrawioCanvas.FONT_BOLD | DrawioCanvas.FONT_UNDERLINE);
+            canvas.text(90, 40, 150, 50, "Gateway \u00c4rger <&>", "center", "middle", true, "",
+                    null, false, 0, null);
+        };
+    }
+
+    @Test
+    void gradientsAreRealSvgGradients() throws Exception {
+        OutputOptions options = OutputOptions.builder().scale(2).background(Color.WHITE).build();
+        DrawioScene scene = canvas -> {
+            canvas.setGradient("#ff0000", "#0000ff", 0, 0, 100, 100, "south", 1, 1);
+            canvas.rect(0, 0, 100, 100);
+            canvas.fill();
+        };
+
+        String svg = renderer.renderSvg(scene, options);
+        Document document = TestImages.parseSecure(svg);
+        BufferedImage raster = renderer.renderImage(scene, options);
+        BufferedImage vector = TestImages.rasterize(svg);
+
+        assertEquals(1, document.getElementsByTagNameNS(SvgOutput.SVG_NAMESPACE,
+                "linearGradient").getLength());
+        assertNoExternalReferences(document);
+        assertTrue(new Color(vector.getRGB(100, 5)).getRed() > 200, "top is red in SVG");
+        assertTrue(new Color(vector.getRGB(100, 195)).getBlue() > 200, "bottom is blue in SVG");
+        assertEquals(0, TestImages.countDifferentPixels(raster, vector, 8));
+    }
+
+    @Test
+    void textShadowAndGradientLookTheSameInSvgOutlines() throws Exception {
+        OutputOptions options = OutputOptions.builder().scale(2).padding(4)
+                .background(Color.WHITE).svgTextAsShapes(true).build();
+        CanvasRecording scene = renderer.record(labelledGradientBox(), options);
+
+        String svg = renderer.renderSvg(scene, options);
+        Document document = TestImages.parseSecure(svg);
+        BufferedImage raster = renderer.renderImage(scene, options);
+        BufferedImage vector = TestImages.rasterize(svg);
+
+        assertEquals(0, document.getElementsByTagNameNS(SvgOutput.SVG_NAMESPACE, "text")
+                .getLength());
+        assertNoExternalReferences(document);
+        // Glyph rasterization and outline filling differ only along glyph edges.
+        int total = raster.getWidth() * raster.getHeight();
+        int differences = TestImages.countDifferentPixels(raster, vector, 48);
+        assertTrue(differences < total / 50, "differ at " + differences + " of " + total);
+        assertEquals(darkPixelsInRows(raster, 0, raster.getHeight()),
+                darkPixelsInRows(vector, 0, vector.getHeight()),
+                darkPixelsInRows(raster, 0, raster.getHeight()) / 10.0,
+                "same amount of ink incl. underline");
+        // Shadow to the lower right stays inside the output and is visible in both.
+        // The box ends at x=170.5, its shadow at 173.5 (device x = -15 + 2 * x).
+        int shadowX = (int) Math.round(-15 + 2 * 172.0);
+        Color rasterShadow = new Color(raster.getRGB(shadowX, raster.getHeight() / 2));
+        Color vectorShadow = new Color(vector.getRGB(shadowX, vector.getHeight() / 2));
+        assertTrue(rasterShadow.getRed() < 230, "raster shadow " + rasterShadow);
+        assertTrue(vectorShadow.getRed() < 230, "SVG shadow " + vectorShadow);
+    }
+
+    @Test
+    void defaultSvgTextIsSelectableWithCssGenericFamiliesAndEscaped() throws Exception {
+        OutputOptions options = OutputOptions.defaults();
+
+        String svg = renderer.renderSvg(labelledGradientBox(), options);
+        Document document = TestImages.parseSecure(svg);
+        NodeList texts = document.getElementsByTagNameNS(SvgOutput.SVG_NAMESPACE, "text");
+
+        assertEquals(1, texts.getLength());
+        assertEquals("Gateway \u00c4rger <&>", texts.item(0).getTextContent());
+        assertFalse(svg.contains("'SansSerif'") || svg.contains("'Dialog'"),
+                "Java logical font names are mapped to CSS generics");
+        assertTrue(svg.contains("&lt;&amp;&gt;"));
+    }
+
+    private static int darkPixelsInRows(BufferedImage image, int from, int to) {
+        int dark = 0;
+        for (int y = from; y < to; y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                Color color = new Color(image.getRGB(x, y));
+                if (color.getRed() + color.getGreen() + color.getBlue() < 150) {
+                    dark++;
+                }
+            }
+        }
+        return dark;
+    }
+
     @Test
     void transparencySurvivesBothFormats() throws Exception {
         DrawioScene scene = canvas -> {
