@@ -21,6 +21,26 @@ Java2D. No browser or Node.js runtime should be required by consumers.
 
 See [REUSE.md](REUSE.md) for the detailed component inventory and decisions.
 
+## Using the renderer (Issue #12)
+
+```java
+try (DrawioRenderer renderer = DrawioRenderer.create()) {
+    RenderResult<byte[]> png = renderer.renderPng(xml, RenderOptions.builder()
+            .page(PageSelector.name("Process")).scale(2.0).build());
+    RenderResult<String> svg = renderer.renderSvg(xml);
+} catch (RenderException e) {
+    // e.getCode(): INVALID_XML, UNSUPPORTED_STENCIL, MISSING_RESOURCE, TIMEOUT, LIMIT_EXCEEDED, ...
+}
+```
+
+`DrawioRenderer` is thread-safe and meant to be long-lived: bounded worker
+threads, one isolated JavaScript context per request, timeouts that
+force-close the context, structured warnings and stable error codes, no
+network or file access. Unsupported shapes fail by default instead of being
+approximated. Until the graph pipeline (#9) is wired in, requests fail with
+`RENDER_FAILED`. Details: [docs/PUBLIC-API.md](docs/PUBLIC-API.md),
+performance and resource control: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+
 ## Development
 
 JDK 8 and a Gradle 8.12 wrapper are used. Java 8 toolchains must be available.
@@ -39,7 +59,8 @@ On Linux/macOS:
 ## GraalJS runtime (Issue #3)
 
 The library now contains a small Java 8-compatible GraalJS execution adapter,
-pinned to GraalVM JavaScript **21.2.0**, following patterns from Mermaid Java
+pinned to GraalVM JavaScript **21.3.20.0.3** (newest Java 8-compatible
+line, see [docs/GRAALJS-VERSION.md](docs/GRAALJS-VERSION.md)), following patterns from Mermaid Java
 and Playwright4J.
 
 ```java
@@ -71,9 +92,8 @@ runtime unusable; create another runtime to retry.
 a hardened sandbox guaranteeing resource isolation from malicious JavaScript.
 Use trusted, pinned Draw.io JavaScript bundles; treat diagram XML as untrusted
 *data*, not JavaScript source. Complete memory/resource limits, security audits
-and a stable consumer-facing API remain in #12/#15. JavaScript 21.2.0 is an
-older version that must be reassessed for support and vulnerabilities before
-releasing or using untrusted scripts. The pinned original Draw.io scripts
+remain in #15. GraalJS 21.3 is the newest Java 8-compatible line but still
+old; a full CVE review is part of the release audit (#15). The pinned original Draw.io scripts
 are now included for the registration proof; the full renderer is still work in #6–#10.
 
 ## Pinned Draw.io source bundle (Issue #4)

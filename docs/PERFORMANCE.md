@@ -20,7 +20,8 @@ starts), `-Dbench.cells=N`, `-Dbench.runs=N`, `-Dbench.threads=N`.
 
 Environment: OpenJDK 1.8.0_512 (Ubuntu package, HotSpot, no Graal compiler,
 so GraalJS runs in interpreter mode), Linux x86_64 container, 4 CPUs,
-`-Xmx1g`, GraalJS 21.2.0. Absolute numbers depend on the machine; the
+`-Xmx1g`, GraalJS 21.2.0 (re-run with 21.3.20.0.3 after the upgrade:
+shared engine, 100 cells: cold 1438 ms, warm median 26 ms, 97 req/s). Absolute numbers depend on the machine; the
 ratios are what matters.
 
 | Mode | Cells | Cold first request | Warm median | Warm p90 | 4 threads |
@@ -76,7 +77,7 @@ returned to the JVM baseline (5).
 - Re-measure with the real `mxGraph`/`mxGraphView` pipeline and golden
   corpus (#9, #13) and confirm that golden images are identical with the
   shared engine on and off.
-- Heap ceiling per render: GraalJS 21.2 on a stock JDK has no per-context
+- Heap ceiling per render: GraalJS 21.3 on a stock JDK has no per-context
   heap limit. The practical controls are the cell limit
   (`RenderLimits.maxCells`, checked before any JavaScript runs), the
   parser's decompression budget, output pixel limits and the worker count.
