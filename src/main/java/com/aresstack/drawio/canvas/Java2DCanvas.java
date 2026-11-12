@@ -52,6 +52,8 @@ import com.aresstack.drawio.layout.TextRun;
  */
 public final class Java2DCanvas implements DrawioCanvas {
 
+    private static final float MIN_DASH_LENGTH = 0.01f;
+
     private static final double LINE_HEIGHT = 1.2;
     private static final FontRenderContext TEXT_CONTEXT = new FontRenderContext(null, true, true);
 
@@ -266,12 +268,18 @@ public final class Java2DCanvas implements DrawioCanvas {
             } catch (NumberFormatException exception) {
                 continue;
             }
-            if (!Float.isFinite(length) || length <= 0) {
-                throw new IllegalArgumentException("Dash lengths must be positive");
+            if (!Float.isFinite(length) || length < 0) {
+                throw new IllegalArgumentException("Dash lengths must not be negative");
             }
             dash[count++] = length;
         }
-        state.dashPattern = count == 0 ? null : java.util.Arrays.copyOf(dash, count);
+        // Zero-length dashes are valid (dashPattern=0 4 with round caps draws
+        // dots). An all-zero pattern is solid, as SVG treats stroke-dasharray.
+        boolean visibleGap = false;
+        for (int index = 0; index < count; index++) {
+            visibleGap |= dash[index] > 0;
+        }
+        state.dashPattern = count == 0 || !visibleGap ? null : java.util.Arrays.copyOf(dash, count);
     }
 
     @Override
@@ -385,10 +393,9 @@ public final class Java2DCanvas implements DrawioCanvas {
     public void setFontSize(double size) {
         ensureOpen();
         validateFinite(size);
-        if (size <= 0 || size > 1024) {
-            throw new IllegalArgumentException("Font size must be within (0, 1024]");
-        }
-        state.fontSize = size;
+        // draw.io hides labels with fontSize=0: such text is not painted.
+        // Oversized values are bounded like the label measurement does.
+        state.fontSize = Math.min(Math.max(size, 0), 1024);
     }
 
     @Override
@@ -522,7 +529,7 @@ public final class Java2DCanvas implements DrawioCanvas {
         ensureOpen();
         validateFinite(x, y, width, height, rotation);
         Objects.requireNonNull(text, "text");
-        if (state.fontColor == null && state.fontBackgroundColor == null
+        if (state.fontSize <= 0 || state.fontColor == null && state.fontBackgroundColor == null
                 && state.fontBorderColor == null) {
             return;
         }
@@ -888,7 +895,10 @@ public final class Java2DCanvas implements DrawioCanvas {
         if (dashPattern != null) {
             float dashScale = state.fixDash ? (float) state.scaleFactor : Math.max(width, 0.01f);
             for (int index = 0; index < dashPattern.length; index++) {
-                dashPattern[index] *= dashScale;
+                // Java 8's stroker drops zero-length dashes, so the round-cap
+                // dots of "0 4" would vanish; a minimal length draws them on
+                // every JDK and stays invisible with butt caps.
+                dashPattern[index] = Math.max(dashPattern[index] * dashScale, MIN_DASH_LENGTH);
             }
         }
         return new BasicStroke(width, state.lineCap, state.lineJoin,
