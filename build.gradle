@@ -36,3 +36,10 @@ tasks.named('test', Test) {
         exceptionFormat 'full'
     }
 }
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes('Implementation-Title': 'drawio-java',
+                'Implementation-Version': project.version)
+    }
+}
