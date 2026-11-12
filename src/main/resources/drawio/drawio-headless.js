@@ -317,9 +317,20 @@
 
     // Reports shapes without registered implementation instead of letting
     // mxCellRenderer fall back to a rectangle or connector silently.
+    // Exception: names that draw.io files use for the plain rectangle. The
+    // browser paints them with defaultVertexShape (mxRectangleShape), which is
+    // exactly the rectangle intended, so the output matches and no warning is
+    // due. Only vertices: on an edge the fallback is a connector.
+    var DEFAULT_VERTEX_SHAPE_ALIASES = Object.freeze({ rect: true });
     var originalCreateShape = mxCellRenderer.prototype.createShape;
     mxCellRenderer.prototype.createShape = function (state) {
         var name = state.style != null ? state.style[mxConstants.STYLE_SHAPE] : null;
+        if (typeof name === 'string' && DEFAULT_VERTEX_SHAPE_ALIASES[name] === true
+                && Object.prototype.hasOwnProperty.call(DEFAULT_VERTEX_SHAPE_ALIASES, name)
+                && state.view.graph.getModel().isVertex(state.cell)
+                && mxCellRenderer.defaultShapes[name] == null) {
+            return originalCreateShape.apply(this, arguments);
+        }
         // Names under mxgraph.* are reported as stencil:<name> by the stencil
         // runtime (drawio-stencil-runtime.js) when it is loaded.
         var stencilRuntime = typeof DrawioStencils !== 'undefined' && DrawioStencils != null

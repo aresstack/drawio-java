@@ -238,10 +238,11 @@ issue #9 core bundle; nothing of this scaffolding is in the JAR.
   string. The adapter should convert it with `Number(...)` before calling
   the Java bridge. None of the bundled sets uses them.
 - JavaScript shapes of the same libraries (`mxBasic.js`, `mxFlowchart.js`,
-  `mxArrows.js`) are not bundled. Styles that use them are reported as
-  `unknown-stencil`.
-- `shape=stencil(<base64>)` inline stencils are a separate Graph.js path and
-  are not handled here.
+  `mxArrows.js`, `er/mxER.js`) are bundled in `drawio-shape-library.js`
+  ([SHAPES.md](SHAPES.md)); other JS libraries are reported as `shape:<name>`.
+- Inline stencils `shape=stencil(<base64>)` are handled by the runtime (see
+  above). They live in `drawio-stencil-runtime.js`, which is part of the main
+  jar, so they work without `drawio-java-stencils`.
 
 ## Licensing note (flagged for #15)
 

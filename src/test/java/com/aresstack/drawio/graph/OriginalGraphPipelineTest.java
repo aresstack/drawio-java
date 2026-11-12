@@ -220,6 +220,36 @@ class OriginalGraphPipelineTest {
     }
 
     @Test
+    void shapeRectIsTheRectangleLikeInDrawio() throws Exception {
+        // draw.io paints an unregistered vertex shape name with mxRectangleShape;
+        // for "rect" that is the intended shape, so no warning and the same drawing.
+        RenderSession session = new RenderSession(RenderOptions.defaults());
+        List<String> rect = record(new OriginalGraphPipeline(Collections.<String>emptyList(), 1)
+                .prepare(new DiagramPage(0, "p", "Page", model(vertex("a", "shape=rect;", 10))), session));
+        List<String> plain = record(new OriginalGraphPipeline(Collections.<String>emptyList(), 1)
+                .prepare(new DiagramPage(0, "p", "Page", model(vertex("a", "", 10))),
+                        new RenderSession(RenderOptions.defaults())));
+        assertTrue(session.warnings().isEmpty(), String.valueOf(session.warnings()));
+        assertEquals(plain, rect);
+    }
+
+    @Test
+    void flexArrowAndLinkEdgesRenderWithTheirFlatLineJoin() throws Exception {
+        // Shapes.js sets lineJoin "flat", which browsers ignore; it must not fail the render.
+        String xml = model(vertex("a", "", 10) + vertex("b", "", 200)
+                + "<mxCell id=\"e1\" style=\"shape=flexArrow;\" edge=\"1\" parent=\"1\" source=\"a\" target=\"b\">"
+                + "<mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>"
+                + "<mxCell id=\"e2\" style=\"shape=link;\" edge=\"1\" parent=\"1\">"
+                + "<mxGeometry relative=\"1\" as=\"geometry\"><mxPoint x=\"10\" y=\"100\" as=\"sourcePoint\"/>"
+                + "<mxPoint x=\"240\" y=\"100\" as=\"targetPoint\"/></mxGeometry></mxCell>");
+        RenderSession session = new RenderSession(RenderOptions.defaults());
+        String all = String.join("\n", record(new OriginalGraphPipeline()
+                .prepare(new DiagramPage(0, "p", "Page", xml), session)));
+        assertTrue(session.warnings().isEmpty(), String.valueOf(session.warnings()));
+        assertTrue(all.contains("lineTo"), all);
+    }
+
+    @Test
     void pageBackgroundIsPaintedWhenTheRequestSetsNone() throws Exception {
         String xml = "<mxGraphModel background=\"#FEC\"><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/>"
                 + vertex("a", "", 10) + "</root></mxGraphModel>";

@@ -48,7 +48,9 @@ Legend: ✅ supported and regression-tested · ⚠️ partial or known deviation
 | Edge pointing at a missing cell | ⚠️ | Rendered with a structured warning `edge:dangling-target` (`dangling-edge-reference`) |
 | Rotation, flip, opacity, dashed lines, stroke width | ✅ | `styles-basic-shapes` |
 | Gradients and shadows | ✅ | `styles-basic-shapes` |
-| Placeholders, translations, data styles and rules, collapsed tables (Graph.js) | ❌ | [HEADLESS-GRAPH.md](HEADLESS-GRAPH.md), known gaps |
+| Collapsed tables, label placement, line jumps (Graph.js ports) | ✅ | `tables-shapes`, `edge-jumps-shapes` acceptance vs viewer |
+| Placeholders `%name%` (`placeholders=1`): id, width, height, length, cell and ancestor attributes | ⚠️ | `replacesPlaceholdersLikeDrawio`; editor-only forms (`%date{...}%`, `%page%`, ...) stay verbatim with warning `placeholder:unresolved` |
+| Translations, data styles and rules (Graph.js) | ❌ | [HEADLESS-GRAPH.md](HEADLESS-GRAPH.md), known gaps |
 | Sketch style (`sketch=1`, hachure fills) | ❌ | Reported as `canvas:fillStyle:*` |
 
 ## Shapes
@@ -64,7 +66,8 @@ Legend: ✅ supported and regression-tested · ⚠️ partial or known deviation
 | Other stencil sets (AWS, Azure, GCP, Cisco, UML packs, ...) | ❌ | `unknown-stencil` fails with `UNSUPPORTED_STENCIL` by default; `UnsupportedFeaturePolicy.WARN` gives a warning |
 | JavaScript shape libraries `mxBasic.js`, `mxFlowchart.js`, `mxArrows.js` (`mxgraph.arrows2.*`), `er/mxER.js` (ER shapes, crow's foot markers) | ✅ | `edge-jumps-shapes` acceptance (ER markers); others reported as unknown shape |
 | draw.io tables (`shape=table`, `tableRow`), line jumps (`jumpStyle`), placeholders (`placeholders=1`) | ✅ | `tables-shapes`, `edge-jumps-shapes` acceptance vs viewer; `replacesPlaceholdersLikeDrawio` |
-| Inline stencils `shape=stencil(...)` | ❌ | [STENCILS.md](STENCILS.md), known gaps |
+| Inline stencils `shape=stencil(...)` (custom shapes saved in the file) | ✅ | `InlineStencilPipelineTest`: painted through the strict XML parser, undecodable data and DTDs give `stencil:inline`; works without `drawio-java-stencils` ([STENCILS.md](STENCILS.md#inline-stencils-shapestencildata)) |
+| `shape=rect` on vertices | ✅ | Painted as the plain rectangle like draw.io's default vertex shape, without a warning (`shapeRectIsTheRectangleLikeInDrawio`); other unknown shape names give `shape:<name>` |
 
 ## Text
 
