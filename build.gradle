@@ -104,8 +104,7 @@ tasks.named('jar', Jar) {
 // ---------------------------------------------------------------------------
 // Publication (#15). `gradlew publish` stages a Maven-Central-layout bundle in
 // build/staging-deploy; the release workflow zips and uploads it. The project
-// license is not decided yet, so the POM license comes from -PpomLicenseName
-// / -PpomLicenseUrl and publishing refuses to run without it.
+// is MIT-licensed (LICENSE, copied into META-INF by the jar task).
 // ---------------------------------------------------------------------------
 publishing {
     publications {
@@ -116,12 +115,11 @@ publishing {
                 name = 'drawio-java'
                 description = 'Headless draw.io diagram rendering for Java 8+: the original draw.io JavaScript on GraalJS, painted with Java2D to BufferedImage, PNG and SVG. No browser, Node.js or network access.'
                 url = 'https://github.com/aresstack/drawio-java'
-                if (findProperty('pomLicenseName')) {
-                    licenses {
-                        license {
-                            name = findProperty('pomLicenseName').toString()
-                            url = (findProperty('pomLicenseUrl') ?: '').toString()
-                        }
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                        distribution = 'repo'
                     }
                 }
                 developers {
@@ -143,15 +141,6 @@ publishing {
         maven {
             name = 'staging'
             url = layout.buildDirectory.dir('staging-deploy')
-        }
-    }
-}
-
-tasks.withType(PublishToMavenRepository).configureEach {
-    doFirst {
-        if (!project.findProperty('pomLicenseName')) {
-            throw new GradleException('Refusing to publish without a project license: pass -PpomLicenseName and '
-                    + '-PpomLicenseUrl (see docs/LICENSE-REVIEW.md).')
         }
     }
 }

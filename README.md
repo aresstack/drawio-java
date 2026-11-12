@@ -8,8 +8,8 @@ PNG or SVG. Consumers need no browser, no Node.js and no network access.
 > **Status: pre-release.** Diagrams render end to end through the original
 > draw.io code, and a reference corpus compares them with the official draw.io
 > viewer (BPMN `gateway2` approval flow: score 0.998). Before the first release,
-> two owner decisions are open: the project license and the draw.io stencil
-> license caveat ([docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md)).
+> one owner decision is open: the draw.io stencil license caveat
+> ([docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md)).
 >
 > - What works and what does not: [docs/SUPPORT-MATRIX.md](docs/SUPPORT-MATRIX.md)
 > - Security model and dependency audit: [docs/SECURITY.md](docs/SECURITY.md)
@@ -267,3 +267,10 @@ are configurable. See [docs/OUTPUT.md](docs/OUTPUT.md).
 
 Follow the [epic checklist](https://github.com/aresstack/drawio-java/issues/1)
 for subsequent full-diagram rendering, tests, release and integrations.
+
+## License
+
+drawio-java is licensed under the [MIT License](LICENSE). The bundled draw.io
+JavaScript keeps its Apache-2.0 license (`src/main/resources/drawio/upstream/LICENSE`);
+see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) and
+[docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md).

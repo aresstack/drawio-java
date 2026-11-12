@@ -15,24 +15,19 @@ the published POM pulls in, and the test assets in the repository.
 | Code adapted from mermaid-java | OK: MIT, notice in THIRD-PARTY-NOTICES.md |
 | Corpus fixtures and reference images | OK: synthetic, CC0-1.0, no confidential data |
 | Fonts | None bundled. Java2D uses the platform's fonts |
-| **drawio-java's own license** | **Missing.** The repository has no LICENSE file, so the project cannot be published yet |
+| drawio-java's own license | OK: MIT (decided by the owner on 2026-11-12), `LICENSE` in the repository and in the jar's `META-INF/` |
 
-## 1. drawio-java's own license (blocker)
+## 1. drawio-java's own license (resolved: MIT)
 
-The repository has no `LICENSE` file, and no license is declared for the
-build. Maven Central requires a license in the POM. The sibling projects
-differ: mermaid-java is MIT (Copyright (c) 2026 aresstack) and Playwright4J
-is Apache-2.0.
+The owner chose the **MIT License** on 2026-11-12, the same as mermaid-java
+(`Copyright (c) 2026 aresstack`). The text is in [`LICENSE`](../LICENSE), the
+jar build copies it to `META-INF/LICENSE`, and the published POM declares
+`MIT License` (https://opensource.org/licenses/MIT).
 
-Either choice works with all dependencies:
-
-- **Apache-2.0** matches draw.io upstream and its patent grant.
-- **MIT** matches mermaid-java.
-
-This is the owner's decision. The release workflow is set up so that the
-POM license comes from the Gradle properties `pomLicenseName` and
-`pomLicenseUrl`, and it refuses to publish while they are unset (see
-[RELEASE.md](RELEASE.md)).
+MIT is compatible with every dependency: the Apache-2.0 draw.io sources
+keep their own license and headers (`drawio/upstream/LICENSE` in the jar),
+and the UPL, ICU and Apache-2.0 dependencies are not relicensed. MIT applies
+to drawio-java's own code only.
 
 ## 2. draw.io stencil libraries and the Atlassian restriction (blocker for Atlassian-related use)
 
@@ -112,9 +107,8 @@ open-source license. Use `js-community` (UPL/MIT) for any future migration.
 ## 4. What goes into the jar
 
 - `drawio/upstream/LICENSE`: the Apache-2.0 text of draw.io (shipped today).
-- Release builds also add `META-INF/LICENSE` (drawio-java's own license,
-  once chosen) and `META-INF/THIRD-PARTY-NOTICES.md` (see
-  [RELEASE.md](RELEASE.md)).
+- `META-INF/LICENSE`: drawio-java's own MIT license.
+- `META-INF/THIRD-PARTY-NOTICES.md` (see [RELEASE.md](RELEASE.md)).
 
 ## 5. Test-only material (not published)
 

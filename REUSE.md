@@ -60,9 +60,9 @@ targets Java 8; `playwright4j` targets Java 21.
 - **Draw.io upstream** must be evaluated separately for actual shape/stencil
   assets, bundled JS, fonts and third-party dependencies in #4/#15. Do not assume
   a single license covers every bundled asset.
-- **drawio-java's own license:** not yet selected. Set the project's release
-  license before publishing binaries (#15). Avoid implying that source-origin
-  licenses automatically assign one to this new repository.
+- **drawio-java's own license:** MIT ([LICENSE](LICENSE)), chosen by the owner
+  on 2026-11-12. It covers drawio-java's own code; bundled upstream sources
+  keep their original licenses (see [docs/LICENSE-REVIEW.md](docs/LICENSE-REVIEW.md)).
 
 ## Follow-up issue ownership
 

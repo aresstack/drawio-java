@@ -47,6 +47,7 @@ public final class OfflineConsumerSmoke {
             check("jar".equals(url.getProtocol()),
                     "bundled resource must come from the packaged jar, was " + url);
         }
+        checkLicenseInJar();
 
         DrawioDocument document = new DrawioDocumentParser().parse(readFixture("/consumer-smoke.drawio"));
         DiagramPage page = document.firstPage();
@@ -74,6 +75,27 @@ public final class OfflineConsumerSmoke {
         check(image.getRGB(1, 1) == 0, "Java2D canvas painted outside the rectangle");
 
         System.out.println("drawio-java offline consumer smoke OK on Java " + javaVersion);
+    }
+
+    /** The packaged jar itself (not a dependency) must carry the MIT license and the notices. */
+    private static void checkLicenseInJar() throws Exception {
+        java.io.File jarFile = new java.io.File(
+                GraalJsRuntime.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        try (java.util.jar.JarFile jar = new java.util.jar.JarFile(jarFile)) {
+            java.util.zip.ZipEntry license = jar.getEntry("META-INF/LICENSE");
+            check(license != null, "META-INF/LICENSE missing from " + jarFile.getName());
+            try (InputStream in = jar.getInputStream(license)) {
+                java.io.ByteArrayOutputStream text = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                for (int n; (n = in.read(buffer)) > 0; ) {
+                    text.write(buffer, 0, n);
+                }
+                check(new String(text.toByteArray(), "UTF-8").startsWith("MIT License"),
+                        "META-INF/LICENSE is not the MIT license");
+            }
+            check(jar.getEntry("META-INF/THIRD-PARTY-NOTICES.md") != null,
+                    "META-INF/THIRD-PARTY-NOTICES.md missing from " + jarFile.getName());
+        }
     }
 
     private static String readFixture(String path) throws IOException {
