@@ -392,5 +392,19 @@
             "upstreamPath": "src/main/webapp/styles/default.xml",
             "sha256NormalizedLf": "e5767817bbbd86639f6db53d753fc9793f5993f892f738bedc35b896b2688ea6"
         }
-    ]
+    ],
+    "stencils": {
+        "source": {
+            "path": "js-bundle/upstream/stencils.min.js",
+            "upstreamPath": "src/main/webapp/js/stencils.min.js",
+            "sha256NormalizedLf": "b6acdcf854ae27368cbc3108564d93de1eec91090126d2ebca9a69664bbecb3d"
+        },
+        "bundle": "src/main/resources/drawio/drawio-stencils.js",
+        "include": [
+            "arrows.xml",
+            "basic.xml",
+            "bpmn.xml",
+            "flowchart.xml"
+        ]
+    }
 }

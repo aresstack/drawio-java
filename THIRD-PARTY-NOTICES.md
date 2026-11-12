@@ -63,3 +63,23 @@ redistributed in this repository. Batik 1.17 includes the fixes for
 CVE-2022-44729 and CVE-2022-44730. `BoundsGraphics2D` extends Batik's
 `AbstractGraphics2D`; no Batik source code is copied.
 
+## Original draw.io stencil data (opt-in subset)
+
+`js-bundle/upstream/stencils.min.js` (build input, not in the JAR) and the
+generated `src/main/resources/drawio/drawio-stencils.js` are taken unchanged
+from `src/main/webapp/js/stencils.min.js` of
+[jgraph/drawio](https://github.com/jgraph/drawio) at commit
+`c72c9a98b7a6ce392556ed04c05e0ff19f43f5c3`. The generated file contains the
+original decoder and the encoded stencil sets `arrows.xml`, `basic.xml`,
+`bpmn.xml` and `flowchart.xml`. The upstream file carries no
+per-file header; the repository's Apache License 2.0 applies (see
+`src/main/resources/drawio/upstream/LICENSE`).
+
+These are **stencil libraries** in the sense of the upstream README
+restriction for products distributed for Atlassian or its Marketplace. Their
+use is opt-in and they must be reviewed in the release license audit (#15)
+before distribution; see [docs/STENCILS.md](docs/STENCILS.md).
+
+Test-only copies of the original `mxStencil.js`, `mxStencilRegistry.js` and
+`mxConnectionConstraint.js` (same commit, Apache-2.0, original headers) live in
+`src/test/resources/drawio/test-upstream/` and are not packaged.

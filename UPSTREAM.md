@@ -23,7 +23,8 @@ The bundled output contains these two scripts in the same order and retains
 the original copyright headers.
 
 **Excluded:** the full editor, viewer, network loaders, remote fonts, stencil
-XML packs, templates and vendor icon packs. This is a **minimal first-stage
+sets other than the opt-in offline subset described below, templates and
+vendor icon packs. This is a **minimal first-stage
 shape bundle**, not a production-ready Draw.io viewer.
 
 ## Reproduce and verify the bundle
@@ -77,6 +78,26 @@ stylesheet `styles/default.xml` is pinned under `resources`.
 `node js-bundle/build.mjs --verify` checks all bundles and resources.
 See [docs/HEADLESS-GRAPH.md](docs/HEADLESS-GRAPH.md).
 
+## Offline stencil subset (Issue #10)
+
+The original `src/main/webapp/js/stencils.min.js` of the same pinned commit
+is checked in **unchanged** as `js-bundle/upstream/stencils.min.js`. It is
+build input only and not part of the JAR. Its LF-normalized SHA-256 and the
+selected stencil sets (`stencils.include`) are recorded in the manifest.
+`node js-bundle/build.mjs` copies the file's preamble, the selected
+`f['<set>.xml']` entry lines and the original decoder tail verbatim into
+`src/main/resources/drawio/drawio-stencils.js`; `--verify` checks it together
+with the other bundles.
+
+Selected sets: `arrows.xml`, `basic.xml`, `bpmn.xml`, `flowchart.xml`.
+The project's own `drawio-stencil-runtime.js` supplies `atob`,
+`pako.inflateRaw` and `TextDecoder` through the budgeted
+`DrawioBinaryCodec` host bridge and ports draw.io's offline-only
+`mxStencilRegistry.getStencil` logic from `js/grapheditor/Graph.js`.
+Unknown `mxgraph.*` stencils are reported, never replaced. Data flow, tests,
+known gaps and the license caveat are documented in
+[docs/STENCILS.md](docs/STENCILS.md).
+
 ## Original JavaScript API entry points
 
 - `mxAbstractCanvas2D.prototype.translate` stores `state.dx`/`state.dy`.
@@ -117,8 +138,10 @@ The original Draw.io **source code** is licensed under Apache 2.0. Its
 [README](https://github.com/jgraph/drawio/blob/dev/README.md) additionally
 restricts the included **icon sets, stencil libraries and diagram templates**
 and derivatives in products distributed for Atlassian or its Marketplace
-without written permission. This repository currently bundles two JavaScript
-source files, **not** the XML stencil or icon packages.
+without written permission. Apart from JavaScript sources, this repository
+bundles only the small, opt-in stencil subset of
+[docs/STENCILS.md](docs/STENCILS.md) (BPMN, basic, flowchart and arrow
+stencils, no icon packages). That subset is flagged for the #15 audit.
 
 Before distributing additional stencil/icon libraries, or distributing this
 renderer as part of a Confluence/Atlassian-related product, assess the actual
