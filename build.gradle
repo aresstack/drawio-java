@@ -192,17 +192,23 @@ tasks.named('assemble') {
 // POM metadata shared by both publications.
 def commonPom = { MavenPom pom ->
     pom.url = 'https://github.com/aresstack/drawio-java'
+    // Same developer entry as mermaid-java's pom.xml.
     pom.developers {
         developer {
-            id = 'aresstack'
-            name = 'aresstack'
-            url = 'https://github.com/aresstack'
+            id = 'miguel0888'
+            name = 'miguel0888'
+            organization = 'aresstack'
+            organizationUrl = 'https://github.com/aresstack'
         }
     }
     pom.scm {
         url = 'https://github.com/aresstack/drawio-java'
         connection = 'scm:git:https://github.com/aresstack/drawio-java.git'
         developerConnection = 'scm:git:ssh://git@github.com/aresstack/drawio-java.git'
+    }
+    pom.issueManagement {
+        system = 'GitHub'
+        url = 'https://github.com/aresstack/drawio-java/issues'
     }
 }
 
@@ -255,12 +261,31 @@ publishing {
     }
 }
 
+// Signing, two ways (docs/RELEASE.md):
+// - CI, like mermaid-java: actions/setup-java imports the GPG_PRIVATE_KEY
+//   secret into gpg, the build runs with -PsignWithGpg and Gradle signs through
+//   the gpg command. The passphrase comes from MAVEN_GPG_PASSPHRASE, the same
+//   variable mermaid-java's maven-gpg-plugin reads.
+// - Local or ad hoc: -PsigningKey=<ASCII-armored secret key> and
+//   -PsigningPassword=<passphrase> (or ORG_GRADLE_PROJECT_signingKey/...),
+//   signed in memory without a gpg installation.
+// Without either, `publish` stages an unsigned bundle (fine for dry runs; Maven
+// Central rejects it).
 signing {
     def signingKey = findProperty('signingKey')
     def signingPassword = findProperty('signingPassword')
-    required = { signingKey != null }
-    if (signingKey) {
+    def signWithGpg = project.hasProperty('signWithGpg')
+    required = { signWithGpg || signingKey != null }
+    if (signWithGpg) {
+        def passphrase = System.getenv('MAVEN_GPG_PASSPHRASE')
+        if (passphrase && !project.hasProperty('signing.gnupg.passphrase')) {
+            project.ext.set('signing.gnupg.passphrase', passphrase)
+        }
+        useGpgCmd()
+    } else if (signingKey) {
         useInMemoryPgpKeys(signingKey.toString(), (signingPassword ?: '').toString())
+    }
+    if (signWithGpg || signingKey) {
         // Both publications, so every staged artifact of drawio-java-stencils
         // gets its .asc like the main one.
         sign publishing.publications.mavenJava, publishing.publications.mavenStencils
