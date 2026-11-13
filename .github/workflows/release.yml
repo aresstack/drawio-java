@@ -1,13 +1,28 @@
 name: Release
 
-# Tag vX.Y.Z on main to build, verify and stage a release (#15).
-# - Always: full Java 8 build + tests, Java 8 bytecode gate, offline consumer
-#   smoke, a staged Maven bundle (signed when GPG_PRIVATE_KEY is set), then a
-#   GitHub Release with the jars, LICENSE and THIRD-PARTY-NOTICES.md.
-# - Maven Central: only when the repository has the CENTRAL_USERNAME /
-#   CENTRAL_PASSWORD (Central Portal user token) and GPG_PRIVATE_KEY /
-#   GPG_PASSPHRASE secrets. The bundle is uploaded as USER_MANAGED, so it
-#   still has to be published by hand in the Central Portal after review.
+# One tag-triggered pipeline for GitHub Releases and Maven Central
+# (docs/RELEASE.md).
+#
+# Push a tag vX.Y.Z on main:
+#   job "release"       full Java 8 build + tests, Java 8 bytecode gate, both
+#                       consumer smoke runs, a staged and signed Maven bundle
+#                       (com.aresstack:drawio-java + drawio-java-stencils) and
+#                       a GitHub Release with the jars.
+#   job "maven-central" uploads that bundle to the Central Portal and publishes
+#                       it automatically, like mermaid-java. It only runs when
+#                       gradle.properties says mavenCentral.publish=true in the
+#                       tagged commit. Until the library is ready for Central
+#                       the switch is false, so tags make GitHub Releases only.
+#
+# Run the workflow by hand ("Run workflow"):
+#   - on a tag, with publish_to_central ticked: publish that already released
+#     tag to Maven Central (no new GitHub Release). This is the way to put a
+#     tag on Central that was cut while the switch was still false.
+#   - on a branch, with a version: dry run, build and stage only.
+#
+# Secrets (organization level, same names as mermaid-java): CENTRAL_USERNAME,
+# CENTRAL_PASSWORD (Central Portal user token), GPG_PRIVATE_KEY (ASCII-armored)
+# and GPG_PASSPHRASE.
 on:
   push:
     tags:
@@ -15,11 +30,19 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to stage without publishing (e.g. 0.1.0-rc1)'
-        required: true
+        description: 'Dry run on a branch only: version to stage (e.g. 0.1.0-rc1). Ignored on a tag.'
+        required: false
+      publish_to_central:
+        description: 'Run on a tag only: publish that tag to Maven Central. Cannot be undone.'
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   GRADLE_TOOLCHAIN_ARGS: >-
@@ -30,8 +53,16 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      central: ${{ steps.plan.outputs.central }}
     steps:
       - uses: actions/checkout@v4
+      # Same setup-java signing setup as mermaid-java: the action imports
+      # GPG_PRIVATE_KEY into gpg; Gradle signs through the gpg command
+      # (-PsignWithGpg) with the passphrase from MAVEN_GPG_PASSPHRASE.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -39,55 +70,133 @@ jobs:
             8
             17
           cache: gradle
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Determine version
-        id: version
+      - name: Plan release (version, Maven Central or not)
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_CENTRAL: ${{ github.event.inputs.publish_to_central }}
         run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then v="${GITHUB_REF_NAME#v}"; else v="${{ github.event.inputs.version }}"; fi
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            v="${GITHUB_REF_NAME#v}"
+          else
+            v="$INPUT_VERSION"
+          fi
+          if [ -z "$v" ]; then
+            echo "::error::No version: push a v* tag, or give a version when running on a branch."
+            exit 1
+          fi
+          switch=$(sed -n 's/^mavenCentral\.publish[[:space:]]*=[[:space:]]*//p' gradle.properties | tr -d '[:space:]')
+          central=false
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            if [ "$EVENT" = "push" ] && [ "$switch" = "true" ]; then central=true; fi
+            if [ "$EVENT" = "workflow_dispatch" ] && [ "$INPUT_CENTRAL" = "true" ]; then central=true; fi
+          elif [ "$INPUT_CENTRAL" = "true" ]; then
+            echo "::error::Maven Central publishing runs on a tag only. Pick the tag under 'Use workflow from'."
+            exit 1
+          fi
+          case "$v" in *-SNAPSHOT) [ "$central" = "true" ] && { echo "::error::Maven Central does not take SNAPSHOT versions."; exit 1; } ;; esac
           echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "central=$central" >> "$GITHUB_OUTPUT"
+          echo "Version $v, Maven Central: $central (gradle.properties mavenCentral.publish=$switch, event $EVENT)" >> "$GITHUB_STEP_SUMMARY"
       - name: Verify pinned offline Draw.io bundles
         run: node js-bundle/build.mjs --verify
       - name: Build and verify
-        run: bash ./gradlew --no-daemon $GRADLE_TOOLCHAIN_ARGS -PreleaseVersion=${{ steps.version.outputs.version }} clean build
+        run: bash ./gradlew --no-daemon $GRADLE_TOOLCHAIN_ARGS -PreleaseVersion=${{ steps.plan.outputs.version }} clean build
       - name: Stage Maven bundle
-        id: stage
         env:
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          HAS_GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY != '' }}
+          CENTRAL: ${{ steps.plan.outputs.central }}
         run: |
-          if [ -n "$CENTRAL_USERNAME" ] && [ -n "$ORG_GRADLE_PROJECT_signingKey" ]; then
-            echo "central=true" >> "$GITHUB_OUTPUT"
+          sign=""
+          if [ "$HAS_GPG_KEY" = "true" ]; then
+            sign="-PsignWithGpg"
+          elif [ "$CENTRAL" = "true" ]; then
+            echo "::error::Maven Central needs signed artifacts, but the GPG_PRIVATE_KEY secret is not available to this repository."
+            exit 1
+          else
+            echo "::warning::GPG_PRIVATE_KEY is not available; staging an unsigned bundle."
           fi
-          bash ./gradlew --no-daemon $GRADLE_TOOLCHAIN_ARGS -PreleaseVersion=${{ steps.version.outputs.version }} publish
-          (cd build/staging-deploy && find . -name 'maven-metadata*' -delete && zip -qr ../central-bundle.zip .)
-          echo "staged=true" >> "$GITHUB_OUTPUT"
-      - name: Upload bundle to Maven Central (manual publish)
-        if: github.ref_type == 'tag' && steps.stage.outputs.staged == 'true' && steps.stage.outputs.central == 'true'
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
-        run: |
-          token=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
-          curl -sSf -X POST \
-            -H "Authorization: Bearer $token" \
-            -F "bundle=@build/central-bundle.zip" \
-            "https://central.sonatype.com/api/v1/publisher/upload?name=drawio-java-${{ steps.version.outputs.version }}&publishingType=USER_MANAGED"
+          bash ./gradlew --no-daemon $GRADLE_TOOLCHAIN_ARGS -PreleaseVersion=${{ steps.plan.outputs.version }} $sign publish
+          # Central wants the artifacts, POMs, .asc signatures and checksums;
+          # drop Maven repository metadata and checksums of signatures.
+          cd build/staging-deploy
+          find . \( -name 'maven-metadata*' -o -name '*.asc.md5' -o -name '*.asc.sha*' \) -delete
+          zip -qr ../central-bundle.zip .
+          echo "Staged bundle:" >> "$GITHUB_STEP_SUMMARY"
+          find . -type f -name '*.jar' -o -type f -name '*.pom' | sort | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
       - name: GitHub Release
-        if: github.ref_type == 'tag'
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" --verify-tag --title "drawio-java ${{ steps.version.outputs.version }}" \
+          gh release create "${GITHUB_REF_NAME}" --verify-tag --title "drawio-java ${{ steps.plan.outputs.version }}" \
             --notes "See docs/SUPPORT-MATRIX.md for supported and unsupported features and docs/SECURITY.md / docs/LICENSE-REVIEW.md for the audits." \
             build/libs/*.jar LICENSE THIRD-PARTY-NOTICES.md
       - name: Keep staged artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ steps.version.outputs.version }}
+          name: release-${{ steps.plan.outputs.version }}
           path: |
             build/libs/
             build/central-bundle.zip
-          if-no-files-found: ignore
+          if-no-files-found: error
+
+  maven-central:
+    needs: release
+    if: needs.release.outputs.central == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.release.outputs.version }}
+          path: staged
+      - name: Upload to Maven Central and publish
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          if [ -z "$CENTRAL_USERNAME" ] || [ -z "$CENTRAL_PASSWORD" ]; then
+            echo "::error::CENTRAL_USERNAME / CENTRAL_PASSWORD are not available to this repository."
+            exit 1
+          fi
+          api=https://central.sonatype.com/api/v1/publisher
+          token=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
+          # AUTOMATIC = publish as soon as validation passes (mermaid-java's
+          # central-publishing-maven-plugin runs with autoPublish=true).
+          id=$(curl -sSf -X POST -H "Authorization: Bearer $token" \
+            -F "bundle=@staged/central-bundle.zip" \
+            "$api/upload?name=drawio-java-$VERSION&publishingType=AUTOMATIC")
+          echo "Central deployment $id"
+          echo "Maven Central deployment \`$id\` for $VERSION" >> "$GITHUB_STEP_SUMMARY"
+          for i in $(seq 1 180); do
+            sleep 15
+            status=$(curl -sSf -X POST -H "Authorization: Bearer $token" "$api/status?id=$id")
+            state=$(echo "$status" | jq -r .deploymentState)
+            echo "[$i] $state"
+            case "$state" in
+              PUBLISHED)
+                echo "Published: https://central.sonatype.com/artifact/com.aresstack/drawio-java/$VERSION" >> "$GITHUB_STEP_SUMMARY"
+                exit 0 ;;
+              FAILED)
+                echo "$status" | jq .
+                echo "::error::Maven Central rejected the deployment; see the errors above."
+                exit 1 ;;
+            esac
+          done
+          if [ "$state" = "PUBLISHING" ]; then
+            echo "::notice::Validated and still publishing after 45 minutes; it finishes on Central's side."
+            exit 0
+          fi
+          echo "::error::Deployment $id is stuck in $state; check https://central.sonatype.com/publishing/deployments"
+          exit 1
