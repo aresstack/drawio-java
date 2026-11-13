@@ -234,6 +234,239 @@ cells.append(v("conv", "", "shape=mxgraph.bpmn.conversation;perimeter=hexagonPer
                "aspect=fixed;bpmnConversationType=conv;", 120, 310, 50, 40))
 write("bpmn-shapes-catalog.drawio", mxfile([("bpmn", "BPMN-Formen", model(cells), False)]))
 
+# --- 9./10. Complex BPMN collaborations (pools, lanes, message flows, boundary
+# events, markers), with the styles of the draw.io BPMN sidebar
+# (Sidebar-BPMN.js): task2, event, gateway2, data2, datastore, swimlane.
+# Coordinates below are absolute; the helpers make them relative to the
+# parent container like draw.io does.
+POINTS4 = ("points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],"
+           "[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];")
+TASK2 = (POINTS4 + "shape=mxgraph.bpmn.task2;whiteSpace=wrap;rectStyle=rounded;size=10;html=1;container=1;"
+         "expand=0;collapsible=0;fillColor=#dae8fc;strokeColor=#6c8ebf;")
+EV_START = EVENT + "fillColor=#d5e8d4;strokeColor=#82b366;"
+EV_MID = EVENT + "fillColor=#ffffff;strokeColor=#000000;"
+EV_END = EVENT + "fillColor=#f8cecc;strokeColor=#b85450;"
+GW = GATEWAY + "fillColor=#fff2cc;strokeColor=#d6b656;"
+LABEL_RIGHT = "labelPosition=right;verticalLabelPosition=middle;align=left;verticalAlign=middle;spacingLeft=2;"
+LABEL_TOP = "verticalLabelPosition=top;verticalAlign=bottom;"
+POOL = ("swimlane;html=1;startSize=30;horizontal=0;collapsible=0;fontStyle=1;fillColor=#f5f5f5;"
+        "strokeColor=#666666;swimlaneFillColor=#ffffff;")
+LANE = "swimlane;html=1;startSize=30;horizontal=0;collapsible=0;fillColor=#f5f5f5;strokeColor=#666666;"
+SEQ = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;"
+SEQ_DEFAULT = SEQ + "startArrow=dash;startFill=0;startSize=8;"
+SEQ_COND = SEQ + "startArrow=diamondThin;startFill=0;startSize=14;"
+MSG = ("edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;dashPattern=8 4;endArrow=blockThin;endFill=0;"
+       "endSize=10;startArrow=oval;startFill=0;startSize=7;")
+ASSOC = "edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;dashPattern=1 3;"
+DATA_ASSOC = "edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=1 3;"
+DATA_OBJ = ("shape=mxgraph.bpmn.data2;labelPosition=center;verticalLabelPosition=bottom;align=center;"
+            "verticalAlign=top;size=15;html=1;")
+DATA_STORE = "shape=datastore;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;"
+GROUP = ("rounded=1;arcSize=6;dashed=1;dashPattern=8 3 1 3;strokeWidth=2;fillColor=none;html=1;"
+         "verticalAlign=top;align=left;spacingLeft=10;fontStyle=2;strokeColor=#666666;")
+
+
+class Abs(object):
+    """Collects cells with absolute coordinates and writes them relative to their parent."""
+
+    def __init__(self):
+        self.cells = []
+        self.origin = {"1": (0, 0)}
+
+    def v(self, cid, value, style, x, y, w, h, parent="1"):
+        px, py = self.origin[parent]
+        self.origin[cid] = (x, y)
+        self.cells.append(v(cid, value, style, x - px, y - py, w, h, parent))
+
+    def e(self, cid, value, style, src, tgt, parent="1", points=None):
+        px, py = self.origin[parent]
+        pts = [(x - px, y - py) for x, y in points] if points else None
+        self.cells.append(e(cid, value, style, src, tgt, parent, pts))
+
+
+EXIT_TOP = "exitX=0.5;exitY=0;exitDx=0;exitDy=0;"
+EXIT_BOTTOM = "exitX=0.5;exitY=1;exitDx=0;exitDy=0;"
+EXIT_RIGHT = "exitX=1;exitY=0.5;exitDx=0;exitDy=0;"
+ENTRY_TOP = "entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+ENTRY_BOTTOM = "entryX=0.5;entryY=1;entryDx=0;entryDy=0;"
+ENTRY_LEFT = "entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+
+# 9. Order-to-cash collaboration: customer pool, company pool with three lanes.
+d = Abs()
+d.v("customer", "Kunde", POOL, 0, 0, 1700, 200)
+d.v("c_start", "Bedarf erkannt", EV_START + "outline=standard;symbol=general;", 80, 80, 40, 40, "customer")
+d.v("c_order", "Bestellung aufgeben", TASK2 + "taskMarker=send;", 160, 65, 120, 70, "customer")
+d.v("c_evgw", "", GW + "outline=standard;symbol=multiple;", 340, 75, 50, 50, "customer")
+d.v("c_reject", "Absage erhalten", EV_MID + "outline=catching;symbol=message;" + LABEL_TOP, 680, 20, 40, 40, "customer")
+d.v("c_end1", "Storniert", EV_END + "outline=end;symbol=general;", 780, 20, 40, 40, "customer")
+d.v("c_deliv", "Lieferung erhalten", EV_MID + "outline=catching;symbol=message;" + LABEL_TOP, 1150, 80, 40, 40, "customer")
+d.v("c_pay", "Rechnung bezahlen", TASK2 + "taskMarker=user;", 1250, 65, 120, 70, "customer")
+d.v("c_end2", "Bestellung abgeschlossen", EV_END + "outline=end;symbol=general;", 1440, 80, 40, 40, "customer")
+d.e("cf1", "", SEQ, "c_start", "c_order", "customer")
+d.e("cf2", "", SEQ, "c_order", "c_evgw", "customer")
+d.e("cf3", "", SEQ + EXIT_TOP + ENTRY_LEFT, "c_evgw", "c_reject", "customer")
+d.e("cf4", "", SEQ, "c_reject", "c_end1", "customer")
+d.e("cf5", "", SEQ, "c_evgw", "c_deliv", "customer")
+d.e("cf6", "", SEQ, "c_deliv", "c_pay", "customer")
+d.e("cf7", "", SEQ, "c_pay", "c_end2", "customer")
+
+d.v("company", "Versandhandel GmbH", POOL, 0, 240, 1700, 620)
+d.v("sales", "Vertrieb", LANE, 30, 240, 1670, 200, "company")
+d.v("store", "Lager", LANE, 30, 440, 1670, 200, "company")
+d.v("acct", "Buchhaltung", LANE, 30, 640, 1670, 220, "company")
+
+d.v("s_start", "Bestellung<br>eingegangen", EV_START + "outline=standard;symbol=message;", 200, 320, 40, 40, "sales")
+d.v("s_check", "Bestellung prüfen", TASK2 + "taskMarker=user;", 280, 305, 120, 70, "sales")
+d.v("s_timer", "48 h", EV_MID + "outline=boundInt;symbol=timer;" + LABEL_RIGHT, 365, 360, 30, 30, "sales")
+d.v("s_esc", "Eskaliert", EV_END + "outline=end;symbol=escalation;" + LABEL_RIGHT, 470, 395, 30, 30, "sales")
+d.v("s_erp", "ERP", DATA_STORE + LABEL_RIGHT, 420, 255, 50, 40, "sales")
+d.v("s_gw", "Ware verfügbar?", GW + "gwType=exclusive;" + LABEL_TOP, 520, 315, 50, 50, "sales")
+d.v("s_rej", "Absage senden", TASK2 + "taskMarker=send;", 640, 305, 120, 70, "sales")
+d.v("s_end_rej", "Abgelehnt", EV_END + "outline=end;symbol=message;", 830, 320, 40, 40, "sales")
+d.v("s_note", "Prüfung gegen den Lagerbestand im ERP",
+    "shape=partialRectangle;html=1;top=0;bottom=0;right=0;fillColor=none;align=left;spacingLeft=6;"
+    "whiteSpace=wrap;", 600, 390, 170, 40, "sales")
+d.e("sf1", "", SEQ, "s_start", "s_check", "sales")
+d.e("sf2", "", SEQ, "s_check", "s_gw", "sales")
+d.e("sf3", "nein", SEQ_DEFAULT, "s_gw", "s_rej", "sales")
+d.e("sf4", "", SEQ, "s_rej", "s_end_rej", "sales")
+d.e("sf5", "", SEQ + EXIT_BOTTOM + "entryX=0;entryY=0.5;entryDx=0;entryDy=0;", "s_timer", "s_esc", "sales")
+d.e("sa1", "", DATA_ASSOC + "exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;",
+    "s_erp", "s_check", "sales")
+d.e("sa2", "", ASSOC + "exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;",
+    "s_note", "s_gw", "sales")
+
+d.v("w_group", "Lagerlogistik", GROUP, 605, 480, 650, 155, "store")
+d.v("w_par", "", GW + "gwType=parallel;", 520, 515, 50, 50, "store")
+d.v("w_pick", "Ware kommissionieren", TASK2 + "taskMarker=abstract;isLoopSub=1;isLoopStandard=1;",
+    630, 505, 120, 70, "store")
+d.v("w_esc", "Engpass", EV_MID + "outline=boundNonint;symbol=escalation;" + LABEL_RIGHT, 715, 560, 30, 30, "store")
+d.v("w_restock", "Nachschub bestellen", TASK2 + "taskMarker=service;", 790, 585, 110, 45, "store")
+d.v("w_end_restock", "", EV_END + "outline=end;symbol=general;", 950, 592, 30, 30, "store")
+d.v("w_label", "Versandlabel erstellen", TASK2 + "taskMarker=service;", 850, 505, 120, 70, "store")
+d.v("w_ship", "Ware versenden", TASK2 + "taskMarker=send;", 1110, 505, 120, 70, "store")
+d.e("wf1", "", SEQ, "w_par", "w_pick", "store")
+d.e("wf2", "", SEQ, "w_pick", "w_label", "store")
+d.e("wf3", "", SEQ, "w_label", "w_ship", "store")
+d.e("wf4", "", SEQ + EXIT_BOTTOM + ENTRY_LEFT, "w_esc", "w_restock", "store")
+d.e("wf5", "", SEQ, "w_restock", "w_end_restock", "store")
+
+d.v("b_inv", "Rechnung erstellen", TASK2 + "taskMarker=service;", 630, 705, 120, 70, "acct")
+d.v("b_doc", "Rechnung", DATA_OBJ + "bpmnTransferType=output;" + LABEL_RIGHT, 785, 650, 35, 45, "acct")
+d.v("b_send", "Rechnung senden", TASK2 + "taskMarker=send;", 850, 705, 120, 70, "acct")
+d.v("j_par", "", GW + "gwType=parallel;", 1145, 715, 50, 50, "acct")
+d.v("b_evgw", "", GW + "outline=standard;symbol=multiple;", 1250, 715, 50, 50, "acct")
+d.v("b_paid", "Zahlung<br>eingegangen", EV_MID + "outline=catching;symbol=message;", 1350, 680, 40, 40, "acct")
+d.v("b_book", "Zahlung verbuchen", TASK2 + "taskMarker=businessRule;", 1430, 665, 120, 70, "acct")
+d.v("b_end", "Abgeschlossen", EV_END + "outline=end;symbol=terminate;", 1610, 680, 40, 40, "acct")
+d.v("b_timer", "30 Tage", EV_MID + "outline=catching;symbol=timer;", 1350, 770, 40, 40, "acct")
+d.v("b_dun", "Mahnung senden", TASK2 + "taskMarker=script;", 1430, 760, 120, 60, "acct")
+d.e("bf1", "", SEQ, "b_inv", "b_send", "acct")
+d.e("bf2", "", SEQ, "b_send", "j_par", "acct")
+d.e("bf3", "", SEQ, "j_par", "b_evgw", "acct")
+d.e("bf4", "", SEQ + EXIT_TOP + ENTRY_LEFT, "b_evgw", "b_paid", "acct")
+d.e("bf5", "", SEQ, "b_paid", "b_book", "acct")
+d.e("bf6", "", SEQ, "b_book", "b_end", "acct")
+d.e("bf7", "", SEQ + EXIT_BOTTOM + ENTRY_LEFT, "b_evgw", "b_timer", "acct")
+d.e("bf8", "", SEQ, "b_timer", "b_dun", "acct")
+d.e("bf9", "erneut warten", SEQ + EXIT_BOTTOM + ENTRY_BOTTOM, "b_dun", "b_evgw", "acct",
+    points=[(1490, 845), (1275, 845)])
+d.e("ba1", "", DATA_ASSOC + "exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;",
+    "b_inv", "b_doc", "acct")
+
+# Flows that cross lanes or pools live on the layer, like edges drawn between pools in draw.io.
+d.e("xf1", "ja", SEQ + EXIT_BOTTOM + ENTRY_TOP, "s_gw", "w_par")
+d.e("xf2", "", SEQ + EXIT_BOTTOM + ENTRY_LEFT, "w_par", "b_inv")
+d.e("xf3", "", SEQ + EXIT_BOTTOM + ENTRY_TOP, "w_ship", "j_par")
+d.e("mf1", "Bestellung", MSG + EXIT_BOTTOM + ENTRY_TOP, "c_order", "s_start")
+d.e("mf2", "Absage", MSG + EXIT_TOP + ENTRY_BOTTOM, "s_rej", "c_reject")
+d.e("mf3", "Lieferung", MSG + EXIT_TOP + ENTRY_BOTTOM, "w_ship", "c_deliv")
+d.e("mf4", "Rechnung", MSG + EXIT_TOP + "entryX=0.25;entryY=1;entryDx=0;entryDy=0;", "b_send", "c_pay",
+    points=[(910, 655), (1280, 655)])
+d.e("mf5", "Zahlung", MSG + "exitX=0.75;exitY=1;exitDx=0;exitDy=0;" + ENTRY_TOP, "c_pay", "b_paid")
+write("bpmn-order-collaboration.drawio",
+      mxfile([("order", "Bestellabwicklung", model(d.cells, 1700, 900), False)]))
+
+# 10. Incident management: multi-instance black-box pool, inclusive gateways,
+# expanded subprocess with boundary events, event subprocess, call activity,
+# compensation, ad-hoc subprocess, data collection, text annotation.
+W = 1640
+d = Abs()
+d.v("monitor", "Monitoring-Systeme", "swimlane;shape=mxgraph.bpmn.swimlane;html=1;horizontal=1;startSize=60;"
+    "collapsible=0;fontStyle=1;isCollection=1;fillColor=#f5f5f5;strokeColor=#666666;", 0, 0, W, 60)
+d.v("it", "IT-Betrieb", POOL, 0, 100, W, 560)
+d.v("desk", "Service Desk", LANE, 30, 100, W - 30, 220, "it")
+d.v("l2", "2nd-Level-Support", LANE, 30, 320, W - 30, 340, "it")
+
+d.v("i_start", "Alarm<br>empfangen", EV_START + "outline=standard;symbol=message;", 80, 190, 40, 40, "desk")
+d.v("i_cmdb", "CMDB", DATA_STORE + LABEL_RIGHT, 195, 110, 50, 40, "desk")
+d.v("i_ticket", "Ticket erfassen", TASK2 + "taskMarker=user;", 160, 175, 120, 70, "desk")
+d.v("i_prio", "Priorität bestimmen", TASK2 + "taskMarker=businessRule;", 320, 175, 120, 70, "desk")
+d.v("i_split", "", GW + "outline=end;symbol=general;", 480, 185, 50, 50, "desk")
+d.v("i_inform", "Kunden informieren", TASK2 + "taskMarker=send;", 580, 115, 120, 60, "desk")
+d.v("i_work", "Workaround suchen", TASK2 + "taskMarker=manual;", 580, 245, 120, 60, "desk")
+d.v("i_join", "", GW + "outline=end;symbol=general;", 750, 185, 50, 50, "desk")
+d.v("i_gw", "Gelöst?", GW + "gwType=exclusive;" + LABEL_TOP, 840, 185, 50, 50, "desk")
+d.v("i_close", "Ticket schließen", TASK2 + "taskMarker=user;", 960, 175, 120, 70, "desk")
+d.v("i_end", "Störung behoben", EV_END + "outline=end;symbol=terminate;", 1140, 190, 40, 40, "desk")
+d.e("if1", "", SEQ, "i_start", "i_ticket", "desk")
+d.e("if2", "", SEQ, "i_ticket", "i_prio", "desk")
+d.e("if3", "", SEQ, "i_prio", "i_split", "desk")
+d.e("if4", "immer", SEQ + EXIT_TOP + ENTRY_LEFT, "i_split", "i_inform", "desk")
+d.e("if5", "Prio 1-2", SEQ_COND + EXIT_BOTTOM + ENTRY_LEFT, "i_split", "i_work", "desk")
+d.e("if6", "", SEQ + EXIT_RIGHT + ENTRY_TOP, "i_inform", "i_join", "desk")
+d.e("if7", "", SEQ + EXIT_RIGHT + ENTRY_BOTTOM, "i_work", "i_join", "desk")
+d.e("if8", "", SEQ, "i_join", "i_gw", "desk")
+d.e("if9", "ja", SEQ, "i_gw", "i_close", "desk")
+d.e("if10", "", SEQ, "i_close", "i_end", "desk")
+d.e("ia1", "", DATA_ASSOC + EXIT_BOTTOM + "entryX=0.5;entryY=0;entryDx=0;entryDy=0;", "i_cmdb", "i_ticket", "desk")
+
+d.v("evsub", "SLA-Überwachung", "rounded=1;arcSize=4;dashed=1;dashPattern=1 2;fillColor=none;container=1;"
+    "collapsible=0;verticalAlign=top;align=left;spacingLeft=10;html=1;strokeColor=#666666;", 90, 380, 470, 140, "l2")
+d.v("e_start", "4 h ohne<br>Lösung", EV_START + "outline=eventNonint;symbol=timer;", 120, 430, 40, 40, "evsub")
+d.v("e_esc", "Teamleitung eskalieren", TASK2 + "taskMarker=send;", 210, 415, 120, 70, "evsub")
+d.v("e_end", "Eskaliert", EV_END + "outline=end;symbol=escalation;", 400, 430, 40, 40, "evsub")
+d.e("ef1", "", SEQ, "e_start", "e_esc", "evsub")
+d.e("ef2", "", SEQ, "e_esc", "e_end", "evsub")
+d.v("sla_note", "Zielzeit laut SLA: 4 Stunden",
+    "shape=partialRectangle;html=1;top=0;bottom=0;right=0;fillColor=none;align=left;spacingLeft=6;"
+    "whiteSpace=wrap;", 330, 330, 190, 34, "l2")
+d.e("na1", "", ASSOC + "exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;",
+    "sla_note", "e_start", "l2")
+d.v("adhoc", "Wissensdatenbank pflegen", TASK2 + "taskMarker=abstract;isLoopSub=1;isAdHoc=1;",
+    110, 565, 140, 70, "l2")
+
+d.v("sub", "Fehler analysieren", "rounded=1;arcSize=4;whiteSpace=wrap;html=1;verticalAlign=top;align=left;"
+    "spacingLeft=10;container=1;collapsible=0;fillColor=#ffffff;strokeColor=#6c8ebf;", 780, 360, 460, 150, "l2")
+d.v("a_start", "", EV_START + "outline=standard;symbol=general;", 800, 415, 30, 30, "sub")
+d.v("a_logs", "Logs auswerten", TASK2 + "taskMarker=script;", 860, 400, 110, 60, "sub")
+d.v("a_check", "Systeme prüfen", TASK2 + "taskMarker=service;isLoopMultiParallel=1;", 1010, 400, 110, 60, "sub")
+d.v("a_end", "", EV_END + "outline=end;symbol=general;", 1170, 415, 30, 30, "sub")
+d.e("af1", "", SEQ, "a_start", "a_logs", "sub")
+d.e("af2", "", SEQ, "a_logs", "a_check", "sub")
+d.e("af3", "", SEQ, "a_check", "a_end", "sub")
+d.v("logs", "Fehlerprotokolle", DATA_OBJ + "bpmnTransferType=input;isCollection=1;" + LABEL_RIGHT,
+    860, 560, 35, 45, "l2")
+d.e("la1", "", DATA_ASSOC + EXIT_TOP + "entryX=0.25;entryY=1;entryDx=0;entryDy=0;", "logs", "a_logs", "l2")
+d.v("s2_err", "Hardware-<br>defekt", EV_MID + "outline=boundInt;symbol=error;labelPosition=right;align=left;",
+    1100, 495, 30, 30, "l2")
+d.v("s2_call", "Hardware tauschen", TASK2 + "taskMarker=abstract;bpmnShapeType=call;", 1140, 570, 120, 60, "l2")
+d.v("s2_sig", "Techniker<br>beauftragt", EV_END + "outline=end;symbol=signal;" + LABEL_RIGHT, 1300, 585, 30, 30, "l2")
+d.v("s2_fix", "Fix einspielen", TASK2 + "taskMarker=user;", 1290, 400, 120, 70, "l2")
+d.v("s2_comp", "", EV_MID + "outline=boundInt;symbol=compensation;", 1395, 455, 30, 30, "l2")
+d.v("s2_undo", "Fix zurücknehmen", TASK2 + "taskMarker=abstract;isLoopComp=1;", 1470, 520, 120, 60, "l2")
+d.e("sf1", "", SEQ + EXIT_RIGHT + ENTRY_LEFT, "sub", "s2_fix", "l2")
+d.e("sf2", "", SEQ + EXIT_BOTTOM + ENTRY_LEFT, "s2_err", "s2_call", "l2")
+d.e("sf3", "", SEQ, "s2_call", "s2_sig", "l2")
+d.e("sa1", "", DATA_ASSOC + EXIT_BOTTOM + ENTRY_LEFT, "s2_comp", "s2_undo", "l2")
+
+d.e("xf1", "nein", SEQ_DEFAULT + EXIT_BOTTOM + "entryX=0.185;entryY=0;entryDx=0;entryDy=0;", "i_gw", "sub")
+d.e("xf2", "", SEQ + EXIT_TOP + ENTRY_BOTTOM, "s2_fix", "i_close")
+d.e("mf1", "Alarm", MSG + "exitX=%.4f;exitY=1;exitDx=0;exitDy=0;" % (100.0 / W) + ENTRY_TOP, "monitor", "i_start")
+d.e("mf2", "Status", MSG + EXIT_TOP + "entryX=%.4f;entryY=1;entryDx=0;entryDy=0;" % (640.0 / W), "i_inform", "monitor")
+write("bpmn-incident-management.drawio",
+      mxfile([("incident", "Störungsmanagement", model(d.cells, W, 700), False)]))
+
 # --- Negative / security fixtures
 NEG = os.path.join(OUT, "negative")
 os.makedirs(NEG, exist_ok=True)

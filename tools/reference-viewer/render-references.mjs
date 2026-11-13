@@ -10,7 +10,16 @@
 // Usage:
 //   node tools/reference-viewer/render-references.mjs \
 //     --viewer /path/to/viewer-static.min.js \
-//     [--corpus src/test/resources/drawio/corpus] [--out <corpus>/reference] [--only id]
+//     [--corpus src/test/resources/drawio/corpus] [--out <corpus>/reference] [--only id] \
+//     [--stencils js-bundle/upstream/stencils.min.js] [--viewport 1400x1200]
+//
+// --stencils loads the pinned upstream stencils.min.js after the viewer, the
+// way the draw.io offline app does (the viewer's onDrawioViewerLoad hook
+// defers rendering until it is loaded), so XML stencils (BPMN task markers,
+// flowchart, arrows, basic) appear in the reference instead of being blocked.
+// Its SHA-256 must match js-bundle/upstream.json. --viewport widens the page
+// for diagrams wider than 1400 px: the viewer shrinks a diagram to the width
+// of its container, which would make the reference smaller than 1:1.
 //
 // Requires the 'playwright' package with a Chromium build (dev machine only).
 import { createHash } from 'node:crypto';
@@ -39,12 +48,26 @@ if (!viewerPath) {
 const corpusDir = path.resolve(arg('--corpus', 'src/test/resources/drawio/corpus'));
 const outDir = path.resolve(arg('--out', path.join(corpusDir, 'reference')));
 const only = arg('--only');
+const stencilsPath = arg('--stencils');
+const [viewportWidth, viewportHeight] = arg('--viewport', '1400x1200').split('x').map(Number);
 
 const viewer = readFileSync(viewerPath);
 const viewerSha = createHash('sha256').update(viewer).digest('hex');
 if (!PINNED_VIEWER_SHA256.has(viewerSha)) {
   console.error(`viewer SHA-256 ${viewerSha} does not match the pinned upstream viewer`);
   process.exit(3);
+}
+
+let stencils = null;
+if (stencilsPath) {
+  stencils = readFileSync(stencilsPath);
+  const pinned = JSON.parse(readFileSync(path.resolve('js-bundle/upstream.json'), 'utf8'));
+  const expected = pinned.stencils.source.sha256NormalizedLf;
+  const actual = createHash('sha256').update(stencils.toString('utf8').replace(/\r\n/g, '\n')).digest('hex');
+  if (expected !== actual) {
+    console.error(`stencils.min.js SHA-256 ${actual} does not match js-bundle/upstream.json`);
+    process.exit(3);
+  }
 }
 
 const require = createRequire(import.meta.url);
@@ -81,7 +104,7 @@ const fixtures = readdirSync(corpusDir).filter((f) => f.endsWith('.drawio')).sor
 mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width: 1400, height: 1200 }, deviceScaleFactor: 1, locale: 'en-US' });
+const context = await browser.newContext({ viewport: { width: viewportWidth, height: viewportHeight }, deviceScaleFactor: 1, locale: 'en-US' });
 await context.route('**/*', (route) => {
   const url = route.request().url();
   if (url.startsWith('data:') || url.startsWith('about:') || url.startsWith('http://drawio-java.local/')) {
@@ -100,13 +123,16 @@ for (const file of fixtures) {
     const config = { xml, page: index, border: 0, zoom: 1 };
     const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#ffffff">
 <div class="mxgraph" data-mxgraph="${escapeHtmlAttr(JSON.stringify(config))}"></div>
+${stencils ? '<script>window.onDrawioViewerLoad = function() {};</script>' : ''}
 <script src="http://drawio-java.local/viewer-static.min.js"></script>
+${stencils ? '<script src="http://drawio-java.local/stencils.min.js"></script><script>GraphViewer.processElements();</script>' : ''}
 </body></html>`;
     const page = await context.newPage();
     page.on('requestfailed', (r) => blocked.push(`${id}#${index}: ${r.url().slice(0, 120)}`));
     await page.route('http://drawio-java.local/**', (route) => {
       const u = route.request().url();
       if (u.endsWith('/viewer-static.min.js')) return route.fulfill({ body: viewer, contentType: 'application/javascript; charset=utf-8' });
+      if (stencils && u.endsWith('/stencils.min.js')) return route.fulfill({ body: stencils, contentType: 'application/javascript; charset=utf-8' });
       return route.fulfill({ body: html, contentType: 'text/html; charset=utf-8' });
     });
     await page.goto('http://drawio-java.local/index.html');
