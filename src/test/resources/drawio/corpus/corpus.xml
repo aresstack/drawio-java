@@ -74,6 +74,68 @@
       <label cell="data" text="Daten"/>
     </page>
   </fixture>
+  <fixture id="bpmn-order-collaboration" file="bpmn-order-collaboration.drawio" sha256="55258c363dea75e2f38106b1501b66aaf46233dfbfcdad037d4379fd76fc9a78" features="bpmn collaboration pools lanes message-flows task2 task-markers boundary-events event-based-gateway parallel-gateway default-flow data-object data-store group annotation xml-stencil umlauts" render="match" issue="">
+    <note>Order-to-cash collaboration: customer pool, company pool with three lanes, message flows between the pools, interrupting and non-interrupting boundary events, loop subprocess, event-based gateway with a loop back. Styles as produced by the draw.io BPMN sidebar.</note>
+    <note>Reference rendered with --stencils js-bundle/upstream/stencils.min.js (task markers drawn by the official viewer) and --viewport 1800x1200 (the diagram is wider than the default viewport).</note>
+    <page index="0" name="Bestellabwicklung" vertices="40" edges="37" minScore="0.90" png="reference/bpmn-order-collaboration.png" pngSha256="ae07a222fc2d79be57c287eb907104328ce3f30c098471316ac9b07f8d15908c" svg="reference/bpmn-order-collaboration.svg" svgSha256="76c4ac3cbb5356defb6984e1afe195ca46597ebb25f0571687cd70430f534add">
+      <shape name="mxgraph.bpmn.event" count="14"/>
+      <shape name="mxgraph.bpmn.task2" count="12"/>
+      <shape name="mxgraph.bpmn.gateway2" count="5"/>
+      <shape name="mxgraph.bpmn.data2" count="1"/>
+      <label cell="customer" text="Kunde"/>
+      <label cell="company" text="Versandhandel GmbH"/>
+      <label cell="sales" text="Vertrieb"/>
+      <label cell="store" text="Lager"/>
+      <label cell="acct" text="Buchhaltung"/>
+      <label cell="c_order" text="Bestellung aufgeben"/>
+      <label cell="c_pay" text="Rechnung bezahlen"/>
+      <label cell="s_check" text="Bestellung prüfen"/>
+      <label cell="s_gw" text="Ware verfügbar?"/>
+      <label cell="s_rej" text="Absage senden"/>
+      <label cell="w_group" text="Lagerlogistik"/>
+      <label cell="w_ship" text="Ware versenden"/>
+      <label cell="b_inv" text="Rechnung erstellen"/>
+      <label cell="b_book" text="Zahlung verbuchen"/>
+      <label cell="b_end" text="Abgeschlossen"/>
+      <label cell="b_timer" text="30 Tage"/>
+      <label cell="sf3" text="nein"/>
+      <label cell="xf1" text="ja"/>
+      <label cell="mf1" text="Bestellung"/>
+      <label cell="mf5" text="Zahlung"/>
+      <label cell="bf9" text="erneut warten"/>
+    </page>
+  </fixture>
+  <fixture id="bpmn-incident-management" file="bpmn-incident-management.drawio" sha256="cab6a5391395cbf2004c2c0b189c105fa0a0c0032b9f3f3a914731c9d0c5171a" features="bpmn collaboration multi-instance-pool lanes message-flows inclusive-gateway conditional-flow default-flow expanded-subprocess event-subprocess boundary-events call-activity compensation ad-hoc multi-instance data-collection annotation xml-stencil umlauts" render="match" issue="">
+    <note>Incident management: multi-instance black-box pool (mxgraph.bpmn.swimlane), inclusive split and join, expanded subprocess with an error boundary event, event subprocess with a non-interrupting timer start, call activity, compensation, ad-hoc subprocess.</note>
+    <note>Reference rendered with --stencils js-bundle/upstream/stencils.min.js and --viewport 1800x1200.</note>
+    <page index="0" name="Störungsmanagement" vertices="33" edges="26" minScore="0.90" png="reference/bpmn-incident-management.png" pngSha256="b5b225c14fd535ca922dce061e84a59abb1a21e329f8f6547d662c4d82f8b8ff" svg="reference/bpmn-incident-management.svg" svgSha256="38e0a9af3e34ba6551445105d9351b5b84f1120e00ef953e4f4ed09f3d015474">
+      <shape name="mxgraph.bpmn.swimlane" count="1"/>
+      <shape name="mxgraph.bpmn.event" count="9"/>
+      <shape name="mxgraph.bpmn.task2" count="12"/>
+      <shape name="mxgraph.bpmn.gateway2" count="3"/>
+      <shape name="mxgraph.bpmn.data2" count="1"/>
+      <label cell="monitor" text="Monitoring-Systeme"/>
+      <label cell="it" text="IT-Betrieb"/>
+      <label cell="desk" text="Service Desk"/>
+      <label cell="l2" text="2nd-Level-Support"/>
+      <label cell="i_ticket" text="Ticket erfassen"/>
+      <label cell="i_prio" text="Priorität bestimmen"/>
+      <label cell="i_gw" text="Gelöst?"/>
+      <label cell="i_close" text="Ticket schließen"/>
+      <label cell="i_end" text="Störung behoben"/>
+      <label cell="evsub" text="SLA-Überwachung"/>
+      <label cell="sub" text="Fehler analysieren"/>
+      <label cell="a_check" text="Systeme prüfen"/>
+      <label cell="s2_call" text="Hardware tauschen"/>
+      <label cell="s2_undo" text="Fix zurücknehmen"/>
+      <label cell="logs" text="Fehlerprotokolle"/>
+      <label cell="sla_note" text="Zielzeit laut SLA: 4 Stunden"/>
+      <label cell="if5" text="Prio 1-2"/>
+      <label cell="xf1" text="nein"/>
+      <label cell="mf1" text="Alarm"/>
+      <label cell="mf2" text="Status"/>
+    </page>
+  </fixture>
   <fixture id="edges-arrows" file="edges-arrows.drawio" sha256="14a1abf1c29d1c88de1976a35336456eb1dbabb290a93ebfa0464a6c485374c2" features="edges arrows waypoints orthogonal elbow curved dashed dangling self-loop edge-labels" render="match" issue="">
     <page index="0" name="Kanten" vertices="17" edges="10" minScore="0.85" png="reference/edges-arrows.png" pngSha256="bc5edd14f6c05296d96a6a0f8d1a92e8efa4e83f34e619b775b063fdb712def5" svg="reference/edges-arrows.svg" svgSha256="2d0bbfaa66482ffc6ee4534811c1ac863ee59e945fa212f0975fa1c86e00bf04">
       <label cell="s0" text="Quelle 0"/>

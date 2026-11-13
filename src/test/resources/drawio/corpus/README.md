@@ -32,6 +32,13 @@ official draw.io reference images.
     them, such as the BPMN task markers `user`, `service` and `script`, appear
     without their marker in the reference. The external image in
     `images-data-uri` appears as a broken image.
+  - Exception: `bpmn-order-collaboration` and `bpmn-incident-management`
+    (added 2026-11-13) were rendered with
+    `--stencils js-bundle/upstream/stencils.min.js --viewport 1800x1200`.
+    The viewer then loads the pinned upstream stencil data offline, like the
+    draw.io offline app, so their references show the task markers. The wider
+    viewport keeps these diagrams at 1:1, because the viewer shrinks a diagram
+    to the width of its container.
 
 ## Layout
 

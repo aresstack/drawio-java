@@ -18,6 +18,40 @@ PNG or SVG. Consumers need no browser, no Node.js and no network access.
 > - Reference and regression corpus: [src/test/resources/drawio/corpus](src/test/resources/drawio/corpus/README.md)
 > - Milestones: [Epic #1](https://github.com/aresstack/drawio-java/issues/1)
 
+## Screenshots
+
+Complex BPMN collaborations rendered by drawio-java on Java 8 (GraalJS +
+Java2D, no browser). Both diagrams are part of the reference corpus and are
+compared with the official draw.io viewer on every build.
+
+**Order to cash** ([source](src/test/resources/drawio/corpus/bpmn-order-collaboration.drawio),
+[SVG](docs/screenshots/bpmn-order-collaboration.svg),
+[official viewer](src/test/resources/drawio/corpus/reference/bpmn-order-collaboration.png)):
+two pools, three lanes, message flows, interrupting and non-interrupting
+boundary events, event-based gateway, loop subprocess, data object, data
+store, group, annotation. Score against the official viewer: 0.994.
+
+![BPMN order-to-cash collaboration rendered by drawio-java](docs/screenshots/bpmn-order-collaboration.png)
+
+**Incident management** ([source](src/test/resources/drawio/corpus/bpmn-incident-management.drawio),
+[SVG](docs/screenshots/bpmn-incident-management.svg),
+[official viewer](src/test/resources/drawio/corpus/reference/bpmn-incident-management.png)):
+multi-instance black-box pool, inclusive split and join, conditional and
+default flows, expanded subprocess with an error boundary event, event
+subprocess, call activity, compensation, ad-hoc subprocess. Score: 0.996.
+
+![BPMN incident management rendered by drawio-java](docs/screenshots/bpmn-incident-management.png)
+
+Side by side, detail of the first diagram (left drawio-java, right the
+official draw.io viewer in Chromium):
+
+![drawio-java next to the official draw.io viewer](docs/screenshots/bpmn-order-comparison.png)
+
+The task markers (user, service, send, script, business rule, loop) are XML
+stencils and need the optional `drawio-java-stencils` artifact
+([Dependencies](#dependencies)). Regenerate the images with
+`./gradlew renderFiles -PrenderArgs="docs/screenshots <file.drawio> ..."`.
+
 ## Scope
 
 - Keep the public Java API independent of GraalJS, Swing/JavaFX, Confluence and network access.
