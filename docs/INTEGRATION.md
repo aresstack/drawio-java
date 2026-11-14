@@ -3,8 +3,19 @@
 Tracking: [Issue #16](https://github.com/aresstack/drawio-java/issues/16).
 
 This is a step-by-step plan for replacing JGraphX with drawio-java in both
-consumers. **No consumer code has been changed yet.** Everything below was
-checked against:
+consumers.
+
+> **Status (2026-11-14): done.** drawio-java 0.1.0 is on Maven Central, and
+> both consumers use it: enterprise-ai-client#222 and space-harvester#771.
+> Differences from the plan below: the owner decided to ship
+> `drawio-java-stencils` (EAC: `runtimeOnly` in `source-confluence`; SH:
+> `runtimeOnly` in app and server, `testRuntimeOnly` in the modules, not in
+> the library POMs), so `anXmlStencilNeedsTheOptionalStencilArtifact` became
+> a test that a BPMN XML stencil renders. drawio-java keeps `&nbsp;` as a
+> non-breaking space (U+00A0) in the SVG text, so the first EAC test expects
+> `Alpha\u00a0Eins`.
+
+Everything below was checked against:
 
 | Repository | Commit (`origin/main`) |
 |---|---|
